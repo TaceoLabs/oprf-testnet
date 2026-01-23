@@ -1,0 +1,27 @@
+[workspace]
+resolver = "3"
+members = ["example"
+]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.90"
+readme = "./README.md"
+homepage = "https://www.taceo.io"
+repository = "https://github.com/TaceoLabs/"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[workspace.dependencies]
+
+# This profile can be used for CI in pull requests.
+[profile.ci-dev]
+inherits = "dev"
+opt-level = 1
+debug = true
+incremental = false
+
+[profile.profiling]
+inherits = "bench"
+debug = true
+lto = "thin"
