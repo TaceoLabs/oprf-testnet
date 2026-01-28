@@ -165,7 +165,7 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
         });
 
         // verify ZK
-        let vk_path = "noir/prototype_oprf/out/vk";
+        let vk_path = "noir/blinded_query_proof/out/vk";
 
         let mut public_inputs =
             NamedTempFile::new().context("creating public inputs NameTempFile")?;
