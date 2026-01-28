@@ -101,7 +101,7 @@ pub async fn compute_proof(
     signature: Vec<u8>,
     hashed_msg: Vec<u8>,
 ) -> eyre::Result<(Vec<u8>, Vec<u8>)> {
-    let name_of_proof = "prototype_oprf";
+    let name_of_proof = "blinded_query_proof";
     let directory = format!("noir/{}", name_of_proof);
     let input_file_path = format!("{}/Prover.toml", directory);
     let witness_path = format!("target/{}.gz", name_of_proof);
