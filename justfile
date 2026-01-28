@@ -115,3 +115,8 @@ revoke-key-gen-admin-anvil:
 [working-directory('contracts/script')]
 register-key-gen-admin-anvil:
     forge script RegisterKeyGenAdmin.s.sol --broadcast --fork-url http://127.0.0.1:8545 -vvvvv --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+    
+[group('test')]
+noir-tests: 
+    cd noir/blinded_query_proof && nargo test
+    cd noir/verified_oprf_proof && nargo test
