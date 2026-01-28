@@ -13,7 +13,7 @@ pub fn generate_commitment(
     OprfNullifierOutputs { nullifier, id_commitment }
 }
 
-fn generate_nullifier(query: Field, oprf_response: BabyJubJubPoint) -> Field {
+pub fn generate_nullifier(query: Field, oprf_response: BabyJubJubPoint) -> Field {
     let state = perm::x5_4([DS_N, query, oprf_response.x, oprf_response.y]);
     state[1]
 }
