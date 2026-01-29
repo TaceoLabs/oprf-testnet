@@ -18,11 +18,10 @@ eyre.workspace = true
 humantime = { workspace = true }
 nodes-common = { workspace = true }
 nodes-observability = { workspace = true }
-oprf-service.workspace = true
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
-oprf-types.workspace = true
 rustls = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+taceo-oprf = { workspace = true, features = ["full"] }
 thiserror.workspace = true
 tokio = { workspace = true, features = [
   "net",
@@ -38,7 +37,6 @@ uuid = { workspace = true, features = ["serde", "v4"] }
 [dev-dependencies]
 axum-test = { workspace = true }
 eddsa-babyjubjub = { workspace = true }
-oprf-client = { package = "taceo-oprf-testnet-client", path = "../oprf-testnet-client/", version = "0.1" }
 # oprf-test = { package = "taceo-oprf-test", path = "../oprf-test", version = "0.1" }
 poseidon2 = { workspace = true }
 testcontainers-modules = { version = "0.14", features = ["localstack"] }

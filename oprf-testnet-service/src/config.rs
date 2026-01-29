@@ -3,7 +3,7 @@
 use std::{net::SocketAddr, time::Duration};
 
 use clap::Parser;
-use oprf_service::config::OprfNodeConfig;
+use taceo_oprf::service::config::OprfNodeConfig;
 
 /// The configuration for the OPRF node.
 ///

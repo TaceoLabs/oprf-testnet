@@ -7,7 +7,7 @@
 use std::{process::ExitCode, sync::Arc};
 
 use clap::Parser as _;
-use oprf_service::{config::Environment, secret_manager::aws::AwsSecretManager};
+use taceo_oprf::service::{config::Environment, secret_manager::aws::AwsSecretManager};
 use taceo_oprf_testnet_service::config::TestNetNodeConfig;
 
 #[tokio::main]
@@ -17,7 +17,7 @@ async fn main() -> eyre::Result<ExitCode> {
         .expect("can install");
     let tracing_config = nodes_observability::TracingConfig::try_from_env()?;
     let _tracing_handle = nodes_observability::initialize_tracing(&tracing_config)?;
-    oprf_service::metrics::describe_metrics();
+    taceo_oprf::service::metrics::describe_metrics();
 
     tracing::info!("{}", nodes_common::version_info!());
 

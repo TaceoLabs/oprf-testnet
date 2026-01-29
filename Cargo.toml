@@ -31,10 +31,6 @@ eyre = { version = "0.6" }
 humantime = "2"
 nodes-common = { package = "taceo-nodes-common", version = "0.2" }
 nodes-observability = { package = "taceo-nodes-observability", version = "0.1" }
-oprf-client = { package = "taceo-oprf-client", version = "0.3" }
-oprf-core = { package = "taceo-oprf-core", version = "0.3" }
-oprf-service = { package = "taceo-oprf-service", version = "0.3.0" }
-oprf-types = { package = "taceo-oprf-types", version = "0.4.0" }
 poseidon2 = { package = "taceo-poseidon2", version = "0.2", default-features = false }
 rand = { version = "0.8" }
 rand_chacha = { version = "0.3" }
@@ -45,7 +41,7 @@ reqwest = { version = "0.12", default-features = false, features = [
 rustls = "0.23"
 secrecy = "0.10"
 serde = { version = "1" }
-taceo-oprf = { package = "taceo-oprf", git = "https://github.com/TaceoLabs/oprf-service", rev = "11b7844", version = "0.1" }
+taceo-oprf = { package = "taceo-oprf", git = "https://github.com/TaceoLabs/oprf-service", rev = "2ba29f5b9119e4632dfd1cb195955ace77ebf632", version = "0.1" }
 thiserror = { version = "2" }
 tokio = { version = "1" }
 tracing = { version = "0.1" }

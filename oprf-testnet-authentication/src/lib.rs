@@ -1,10 +1,9 @@
 use async_trait::async_trait;
 use axum::response::IntoResponse;
 use eyre::Context;
-use oprf_service::OprfRequestAuthenticator;
-use oprf_types::api::v1::OprfRequest;
 use reqwest::{ClientBuilder, StatusCode};
 use serde::{Deserialize, Serialize};
+use taceo_oprf::types::api::{OprfRequest, OprfRequestAuthenticator};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TestNetRequestAuth;

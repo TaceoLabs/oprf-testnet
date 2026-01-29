@@ -4,8 +4,10 @@
 use std::sync::{Arc, atomic::Ordering};
 
 use eyre::Context;
-use oprf_service::{StartedServices, secret_manager::SecretManagerService};
 use oprf_testnet_authentication::TestNetRequestAuthenticator;
+use taceo_oprf::service::{
+    OprfServiceBuilder, StartedServices, secret_manager::SecretManagerService,
+};
 
 use crate::config::TestNetNodeConfig;
 
@@ -29,14 +31,15 @@ pub async fn start(
     );
 
     tracing::info!("init oprf service..");
-    let (oprf_service_router, key_event_watcher) = oprf_service::init(
+    let (oprf_service_router, key_event_watcher) = OprfServiceBuilder::init(
         service_config,
         secret_manager,
-        oprf_req_auth_service,
         StartedServices::default(),
         cancellation_token.clone(),
     )
-    .await?;
+    .await?
+    .module("/testnet", oprf_req_auth_service)
+    .build();
 
     let listener = tokio::net::TcpListener::bind(config.bind_addr).await?;
     let axum_cancel_token = cancellation_token.clone();

@@ -65,7 +65,7 @@ run-nodes:
     mkdir -p logs
     cargo build -p taceo-oprf-testnet-service --release
     # anvil wallet 7
-    RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_testnet_service_example=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10000 --rp-secret-id-prefix oprf/rp/n0 --environment dev --wallet-address 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955 --version-req ">=0.0.0" > logs/node0.log 2>&1 &
+    RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_service=trace,info" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10000 --rp-secret-id-prefix oprf/rp/n0 --environment dev --wallet-address 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955 --version-req ">=0.0.0" > logs/node0.log 2>&1 &
     pid0=$!
     echo "started node0 with PID $pid0"
     # anvil wallet 8
@@ -84,17 +84,17 @@ run-nodes:
 run-key-gen-instances:
     #!/usr/bin/env bash
     mkdir -p logs
-    # cargo build -p ../oprf-service/taceo-oprf-key-gen --release
+    cargo build -p taceo-oprf-key-gen --release
     # anvil wallet 7
-    RUST_LOG="taceo_oprf_key_gen=trace,warn" ./target/release/oprf-key-gen --bind-addr 127.0.0.1:20000 --rp-secret-id-prefix oprf/rp/n0 --environment dev --wallet-private-key-secret-id oprf/eth/n0 --key-gen-zkey-path ./circom/main/key-gen/OPRFKeyGen.13.arks.zkey --key-gen-witness-graph-path ./circom/main/key-gen/OPRFKeyGenGraph.13.bin  > logs/key-gen0.log 2>&1 &
+    RUST_LOG="taceo_oprf_key_gen=trace,warn" ./target/release/oprf-key-gen --confirmations-for-transaction 1 --bind-addr 127.0.0.1:20000 --rp-secret-id-prefix oprf/rp/n0 --environment dev --wallet-private-key-secret-id oprf/eth/n0 --key-gen-zkey-path ./circom/main/key-gen/OPRFKeyGen.13.arks.zkey --key-gen-witness-graph-path ./circom/main/key-gen/OPRFKeyGenGraph.13.bin  > logs/key-gen0.log 2>&1 &
     pid0=$!
     echo "started key-gen0 with PID $pid0"
     # anvil wallet 8
-    RUST_LOG="taceo_oprf_key_gen=trace,warn" ./target/release/oprf-key-gen --bind-addr 127.0.0.1:20001 --rp-secret-id-prefix oprf/rp/n1 --environment dev --wallet-private-key-secret-id oprf/eth/n1 --key-gen-zkey-path ./circom/main/key-gen/OPRFKeyGen.13.arks.zkey --key-gen-witness-graph-path ./circom/main/key-gen/OPRFKeyGenGraph.13.bin  > logs/key-gen1.log 2>&1 &
+    RUST_LOG="taceo_oprf_key_gen=trace,warn" ./target/release/oprf-key-gen --confirmations-for-transaction 1 --bind-addr 127.0.0.1:20001 --rp-secret-id-prefix oprf/rp/n1 --environment dev --wallet-private-key-secret-id oprf/eth/n1 --key-gen-zkey-path ./circom/main/key-gen/OPRFKeyGen.13.arks.zkey --key-gen-witness-graph-path ./circom/main/key-gen/OPRFKeyGenGraph.13.bin  > logs/key-gen1.log 2>&1 &
     pid1=$!
     echo "started key-gen1 with PID $pid1"
     # anvil wallet 9
-    RUST_LOG="taceo_oprf_key_gen=trace,warn" ./target/release/oprf-key-gen --bind-addr 127.0.0.1:20002 --rp-secret-id-prefix oprf/rp/n2 --environment dev --wallet-private-key-secret-id oprf/eth/n2 --key-gen-zkey-path ./circom/main/key-gen/OPRFKeyGen.13.arks.zkey --key-gen-witness-graph-path ./circom/main/key-gen/OPRFKeyGenGraph.13.bin  > logs/key-gen2.log 2>&1  &
+    RUST_LOG="taceo_oprf_key_gen=trace,warn" ./target/release/oprf-key-gen --confirmations-for-transaction 1 --bind-addr 127.0.0.1:20002 --rp-secret-id-prefix oprf/rp/n2 --environment dev --wallet-private-key-secret-id oprf/eth/n2 --key-gen-zkey-path ./circom/main/key-gen/OPRFKeyGen.13.arks.zkey --key-gen-witness-graph-path ./circom/main/key-gen/OPRFKeyGenGraph.13.bin  > logs/key-gen2.log 2>&1  &
     pid2=$!
     echo "started key-gen2 with PID $pid2"
     trap "kill $pid0 $pid1 $pid2" SIGINT SIGTERM

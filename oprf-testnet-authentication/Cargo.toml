@@ -13,12 +13,11 @@ publish.workspace = true
 async-trait = { workspace = true }
 axum = { workspace = true, features = ["ws"] }
 eyre.workspace = true
-oprf-service.workspace = true
-oprf-types = { workspace = true }
 reqwest = { workspace = true, features = [
   "json",
   "rustls-tls",
 ] }
 serde = { workspace = true, features = ["derive"] }
+taceo-oprf = { workspace = true, features = ["full"] }
 thiserror.workspace = true
 tracing.workspace = true

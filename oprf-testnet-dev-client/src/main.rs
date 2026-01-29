@@ -18,7 +18,7 @@ use taceo_oprf::{
     dev_client::{Command, StressTestCommand, oprf_test_utils::health_checks},
     types::{
         OprfKeyId, ShareEpoch,
-        api::v1::{OprfRequest, ShareIdentifier},
+        api::{OprfRequest, ShareIdentifier},
         crypto::OprfPublicKey,
     },
 };
@@ -70,7 +70,7 @@ pub struct OprfDevClientConfig {
 
     /// The share epoch. Will be ignored if `oprf_key_id` is `None`.
     #[clap(long, env = "OPRF_DEV_CLIENT_SHARE_EPOCH", default_value = "0")]
-    pub share_epoch: u128,
+    pub share_epoch: u32,
 
     /// max wait time for init key-gen/reshare to succeed.
     #[clap(long, env = "OPRF_DEV_CLIENT_WAIT_TIME", default_value="2min", value_parser=humantime::parse_duration)]
@@ -90,10 +90,7 @@ async fn run_oprf(
 ) -> eyre::Result<()> {
     let mut rng = rand_chacha::ChaCha12Rng::from_entropy();
 
-    // TODO compute a client-side proof and receive the encrypted unsalted nullifier
     let action = ark_babyjubjub::Fq::rand(&mut rng);
-    println!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    tracing::info!("hedre1");
 
     // the client example internally checks the DLog equality
     oprf_testnet_client::distributed_oprf(
@@ -107,7 +104,6 @@ async fn run_oprf(
     )
     .await?;
 
-    tracing::info!("hedre2");
     Ok(())
 }
 
@@ -154,8 +150,9 @@ async fn stress_test(
 
     tracing::info!("sending init requests..");
     let (sessions, finish_requests) = taceo_oprf::dev_client::send_init_requests(
-        threshold,
         nodes,
+        "testnet",
+        threshold,
         connector,
         cmd.sequential,
         init_requests,
@@ -295,7 +292,7 @@ async fn reshare_test(
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     nodes_observability::install_tracing(
-        "taceo_oprf=trace,taceo-oprf-testnet-dev-client=trace,warn,info",
+        "taceo_oprf=trace,taceo_oprf_testnet_dev_client=trace,warn,info,taceo_oprf_testnet_client=trace,info,warn",
     );
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()
@@ -320,7 +317,6 @@ async fn main() -> eyre::Result<()> {
         .context("while connecting to RPC")?
         .erased();
 
-    tracing::info!("fetching oprf key id");
     let (oprf_key_id, share_epoch, oprf_public_key) = if let Some(oprf_key_id) = config.oprf_key_id
     {
         let oprf_key_id = OprfKeyId::new(oprf_key_id);
@@ -344,7 +340,6 @@ async fn main() -> eyre::Result<()> {
         (oprf_key_id, ShareEpoch::default(), oprf_public_key)
     };
 
-    tracing::info!("setup tls..");
     // setup TLS config - even if we are http
     let mut root_store = RootCertStore::empty();
     root_store.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
