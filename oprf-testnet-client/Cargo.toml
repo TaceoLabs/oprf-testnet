@@ -10,11 +10,19 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+alloy = { workspace = true, features = [
+  "full",
+  "node-bindings",
+  "rpc",
+  "rpc-client-ws",
+  "serde",
+] }
 ark-babyjubjub = { workspace = true }
 ark-ec.workspace = true
 ark-ff = { workspace = true }
 eyre.workspace = true
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
 rand.workspace = true
+sha2.workspace = true
 taceo-oprf = { workspace = true, features = ["client"] }
 tracing.workspace = true

@@ -1,16 +1,28 @@
 use std::fs;
+use std::hash::Hasher;
 use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::{fs::File, process::Command};
 
+use alloy::network::EthereumWallet;
+use alloy::signers::SignerSync;
+use alloy::signers::k256::ecdsa::SigningKey;
+use alloy::signers::k256::elliptic_curve::point::AffineCoordinates;
+use alloy::signers::k256::elliptic_curve::sec1::ToEncodedPoint;
+use alloy::signers::local::{LocalSigner, PrivateKeySigner};
 use ark_ff::PrimeField as _;
 use eyre::Context;
 use oprf_testnet_authentication::{ProofInput, TestNetRequestAuth};
 use rand::{CryptoRng, Rng};
+use sha2::{Digest, Sha256};
 use taceo_oprf::{
     client::Connector,
     core::oprf::BlindingFactor,
     types::{OprfKeyId, ShareEpoch},
 };
+
+// /// A signer instantiated with a locally stored private key.
+// pub type PrivateKeySigner = LocalSigner<k256::ecdsa::SigningKey>;
 
 // #[instrument(level = "debug", skip_all)]
 pub async fn distributed_oprf<R: Rng + CryptoRng>(
@@ -27,7 +39,27 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     let blinding_factor = BlindingFactor::rand(rng);
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
 
-    //needed inputs:
+    let private_key = SigningKey::random(&mut rand::thread_rng());
+    let encoded_pubkey = private_key
+        .verifying_key()
+        .as_affine()
+        .to_encoded_point(false);
+    let y_affine = encoded_pubkey.y().unwrap().to_vec();
+    let x_affine = encoded_pubkey.x().unwrap().to_vec();
+
+    // Instantiate a signer
+    let signer = PrivateKeySigner::from_signing_key(private_key);
+
+    let ts = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs()
+        .to_string();
+    // Sign a message.
+    let msg = "TACEO Oprf Input: ".to_string() + &ts;
+    let signature = signer.sign_message_sync(msg.as_bytes())?;
+    let msg_hash = Sha256::digest(msg.as_bytes()).to_vec();
+
     //public key
     //signature of message
     //hash of message
