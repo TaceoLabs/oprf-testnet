@@ -2,7 +2,6 @@ use std::{fs, process::Command};
 
 use async_trait::async_trait;
 use axum::response::IntoResponse;
-use eyre::{Context, eyre};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use taceo_oprf::types::api::{OprfRequest, OprfRequestAuthenticator};

@@ -35,7 +35,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     let proof_input = compute_proof().await?;
     let auth = TestNetRequestAuth {
         proof_input,
-        api_key: api_key,
+        api_key,
     };
 
     let _verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
