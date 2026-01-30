@@ -105,7 +105,7 @@ run-dev-client *args:
     #!/usr/bin/env bash
     cargo build -p taceo-oprf-testnet-dev-client --release
     oprf_key_registry=$(grep -oP 'OprfKeyRegistry proxy deployed to: \K0x[a-fA-F0-9]+' logs/deploy_oprf_key_registry.log)
-    OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry ./target/release/taceo-oprf-testnet-dev-client --api-key 4ZFfKEExkG83PnzXdsCz4wdZ {{ args }}
+    OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry ./target/release/taceo-oprf-testnet-dev-client --api-key 3ZFfKEExkG83PnzXdsCz4wdZ {{ args }}
 
 [group('anvil')]
 [working-directory('contracts/script/deploy')]

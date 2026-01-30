@@ -5,6 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{fs::File, process::Command};
 
 use alloy::network::EthereumWallet;
+use alloy::primitives::eip191_hash_message;
 use alloy::signers::SignerSync;
 use alloy::signers::k256::ecdsa::SigningKey;
 use alloy::signers::k256::elliptic_curve::point::AffineCoordinates;
@@ -55,16 +56,21 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
         .expect("Time went backwards")
         .as_secs()
         .to_string();
-    // Sign a message.
+
     let msg = "TACEO Oprf Input: ".to_string() + &ts;
-    let signature = signer.sign_message_sync(msg.as_bytes())?;
-    let msg_hash = Sha256::digest(msg.as_bytes()).to_vec();
+    let msg_hash = eip191_hash_message(msg.as_bytes());
+    let mut signature = signer.sign_hash_sync(&msg_hash)?.as_bytes().to_vec();
+    //Remove recovery id
+    _ = signature.pop();
 
-    //public key
-    //signature of message
-    //hash of message
-
-    let proof_input = compute_proof().await?;
+    let proof_input = compute_proof(
+        blinding_factor.clone(),
+        x_affine,
+        y_affine,
+        signature,
+        msg_hash.to_vec(),
+    )
+    .await?;
     let auth = TestNetRequestAuth {
         proof_input,
         api_key,
@@ -87,21 +93,33 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     Ok(())
 }
 
-pub async fn compute_proof() -> eyre::Result<ProofInput> {
-    let name_of_proof = "einfallswinkel_ist_gleich_ausfallswinkel";
-    let input_file_path = format!("circuits/{}/Prover.toml", name_of_proof);
+pub async fn compute_proof(
+    beta: BlindingFactor,
+    pubkey_x: Vec<u8>,
+    pubkey_y: Vec<u8>,
+    signature: Vec<u8>,
+    hashed_msg: Vec<u8>,
+) -> eyre::Result<ProofInput> {
+    let name_of_proof = "prototype_oprf";
+    let directory = format!("noir/{}", name_of_proof);
+    let input_file_path = format!("{}/Prover.toml", directory);
     let witness_path = format!("target/{}.gz", name_of_proof);
     let bytecode_path = format!("target/{}.json", name_of_proof);
     let mut prover_toml_file = File::create(input_file_path)?;
+
     let _ = write!(
         prover_toml_file,
-        "ausfallswinkel = {}\neinfallswinkel = {}",
-        20, 20
+        "beta = \"{}\"\npub_key_x = {}\npub_key_y = {}\nsignature = {}\nhashed_message = {}",
+        beta.beta().to_string(),
+        format!("{:?}", pubkey_x),
+        format!("{:?}", pubkey_y),
+        format!("{:?}", signature),
+        format!("{:?}", hashed_msg)
     );
 
     let nargo_exec_status = Command::new("nargo")
         .arg("execute")
-        .current_dir(format!("circuits/{}/", name_of_proof))
+        .current_dir(&directory)
         .status();
 
     if nargo_exec_status.is_err() || !nargo_exec_status.unwrap().success() {
@@ -112,7 +130,7 @@ pub async fn compute_proof() -> eyre::Result<ProofInput> {
         .arg("write_vk")
         .arg("-b")
         .arg(&bytecode_path)
-        .current_dir(format!("circuits/{}/", name_of_proof))
+        .current_dir(&directory)
         .status();
 
     if bb_write_vk_status.is_err() || !bb_write_vk_status.unwrap().success() {
@@ -127,15 +145,15 @@ pub async fn compute_proof() -> eyre::Result<ProofInput> {
         .arg("out/vk")
         .arg("-w")
         .arg(witness_path)
-        .current_dir(format!("circuits/{}/", name_of_proof))
+        .current_dir(&directory)
         .status();
 
     if bb_prove_status.is_err() || !bb_prove_status.unwrap().success() {
         return Err(eyre::eyre!("bb prove failed"));
     }
 
-    let public_inputs = fs::read(format!("circuits/{}/out/public_inputs", name_of_proof))?;
-    let proof = fs::read(format!("circuits/{}/out/proof", name_of_proof))?;
+    let public_inputs = fs::read(format!("{}/out/public_inputs", &directory))?;
+    let proof = fs::read(format!("{}/out/proof", &directory))?;
     Ok(ProofInput {
         public_inputs,
         proof,

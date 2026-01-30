@@ -96,7 +96,7 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
         let file_prefix = Uuid::new_v4();
         let proof_path = format!("/tmp/{}_proof_input", file_prefix);
         let public_inputs_path = format!("/tmp/{}_public_inputs", file_prefix);
-        let vk_path = "circuits/einfallswinkel_ist_gleich_ausfallswinkel/out/vk";
+        let vk_path = "noir/prototype_oprf/out/vk";
         let _ = fs::write(
             &public_inputs_path,
             &request_auth.auth.proof_input.public_inputs,
