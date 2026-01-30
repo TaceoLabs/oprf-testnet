@@ -65,15 +65,15 @@ run-nodes:
     mkdir -p logs
     cargo build -p taceo-oprf-testnet-service --release
     # anvil wallet 7
-    RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_service=trace,info" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10000 --rp-secret-id-prefix oprf/rp/n0 --environment dev --wallet-address 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955 --version-req ">=0.0.0" > logs/node0.log 2>&1 &
+    RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10000 --rp-secret-id-prefix oprf/rp/n0 --unkey-root-key unkey_3ZZVCWkAFwCYXkn1bRNq2Mrp --ws-max-message-size 51200 --environment dev --wallet-address 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955 --version-req ">=0.0.0" > logs/node0.log 2>&1 &
     pid0=$!
     echo "started node0 with PID $pid0"
     # anvil wallet 8
-    RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_testnet_service_example=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10001 --rp-secret-id-prefix oprf/rp/n1 --environment dev --wallet-address 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f --version-req ">=0.0.0" > logs/node1.log 2>&1 &
+    RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_testnet_service_example=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10001 --rp-secret-id-prefix oprf/rp/n1 --unkey-root-key unkey_3ZZVCWkAFwCYXkn1bRNq2Mrp --ws-max-message-size 51200 --environment dev --wallet-address 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f --version-req ">=0.0.0" > logs/node1.log 2>&1 &
     pid1=$!
     echo "started node1 with PID $pid1"
     # anvil wallet 9
-    RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_testnet_service_example=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10002 --rp-secret-id-prefix oprf/rp/n2 --environment dev --wallet-address 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 --version-req ">=0.0.0" > logs/node2.log 2>&1  &
+    RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_testnet_service_example=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10002 --rp-secret-id-prefix oprf/rp/n2 --unkey-root-key unkey_3ZZVCWkAFwCYXkn1bRNq2Mrp --ws-max-message-size 51200 --environment dev --wallet-address 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 --version-req ">=0.0.0" > logs/node2.log 2>&1  &
     pid2=$!
     echo "started node2 with PID $pid2"
     trap "kill $pid0 $pid1 $pid2" SIGINT SIGTERM
@@ -105,7 +105,7 @@ run-dev-client *args:
     #!/usr/bin/env bash
     cargo build -p taceo-oprf-testnet-dev-client --release
     oprf_key_registry=$(grep -oP 'OprfKeyRegistry proxy deployed to: \K0x[a-fA-F0-9]+' logs/deploy_oprf_key_registry.log)
-    OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry ./target/release/taceo-oprf-testnet-dev-client {{ args }}
+    OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry ./target/release/taceo-oprf-testnet-dev-client --api-key 4ZFfKEExkG83PnzXdsCz4wdZ {{ args }}
 
 [group('anvil')]
 [working-directory('contracts/script/deploy')]

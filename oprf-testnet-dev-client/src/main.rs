@@ -76,6 +76,10 @@ pub struct OprfDevClientConfig {
     #[clap(long, env = "OPRF_DEV_CLIENT_WAIT_TIME", default_value="2min", value_parser=humantime::parse_duration)]
     pub max_wait_time: Duration,
 
+    /// The API Key
+    #[clap(long, env = "OPRF_DEV_CLIENT_API_KEY")]
+    pub api_key: String,
+
     /// Command
     #[command(subcommand)]
     pub command: Command,
@@ -84,6 +88,7 @@ pub struct OprfDevClientConfig {
 async fn run_oprf(
     nodes: &[String],
     threshold: usize,
+    api_key: String,
     oprf_key_id: OprfKeyId,
     share_epoch: ShareEpoch,
     connector: Connector,
@@ -96,6 +101,7 @@ async fn run_oprf(
     oprf_testnet_client::distributed_oprf(
         nodes,
         threshold,
+        api_key,
         oprf_key_id,
         share_epoch,
         action,
@@ -189,6 +195,7 @@ async fn stress_test(
 async fn reshare_test(
     nodes: &[String],
     threshold: usize,
+    api_key: String,
     oprf_key_registry: Address,
     oprf_key_id: OprfKeyId,
     share_epoch: ShareEpoch,
@@ -201,6 +208,7 @@ async fn reshare_test(
     run_oprf(
         nodes,
         threshold,
+        api_key.clone(),
         oprf_key_id,
         share_epoch,
         connector.clone(),
@@ -223,6 +231,7 @@ async fn reshare_test(
     run_oprf(
         nodes,
         threshold,
+        api_key.clone(),
         oprf_key_id,
         share_epoch,
         connector.clone(),
@@ -234,6 +243,7 @@ async fn reshare_test(
     run_oprf(
         nodes,
         threshold,
+        api_key.clone(),
         oprf_key_id,
         share_epoch_1,
         connector.clone(),
@@ -256,6 +266,7 @@ async fn reshare_test(
     run_oprf(
         nodes,
         threshold,
+        api_key.clone(),
         oprf_key_id,
         share_epoch_1,
         connector.clone(),
@@ -267,6 +278,7 @@ async fn reshare_test(
     run_oprf(
         nodes,
         threshold,
+        api_key.clone(),
         oprf_key_id,
         share_epoch_2,
         connector.clone(),
@@ -278,6 +290,7 @@ async fn reshare_test(
     let _ = run_oprf(
         nodes,
         threshold,
+        api_key.clone(),
         oprf_key_id,
         share_epoch,
         connector.clone(),
@@ -354,6 +367,7 @@ async fn main() -> eyre::Result<()> {
             run_oprf(
                 &config.nodes,
                 config.threshold,
+                config.api_key,
                 oprf_key_id,
                 share_epoch,
                 connector,
@@ -379,6 +393,7 @@ async fn main() -> eyre::Result<()> {
             reshare_test(
                 &config.nodes,
                 config.threshold,
+                config.api_key,
                 config.oprf_key_registry_contract,
                 oprf_key_id,
                 share_epoch,

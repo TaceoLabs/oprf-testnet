@@ -21,3 +21,4 @@ serde = { workspace = true, features = ["derive"] }
 taceo-oprf = { workspace = true, features = ["full"] }
 thiserror.workspace = true
 tracing.workspace = true
+uuid.workspace = true

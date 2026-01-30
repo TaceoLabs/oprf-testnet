@@ -1,5 +1,5 @@
-fn main(einfallswinkel: u64, ausfallswinkel: u64) -> pub bool {
+fn main(einfallswinkel: u64, ausfallswinkel: u64) {
     assert(einfallswinkel < 360);
     assert(ausfallswinkel < 360);
-    einfallswinkel == ausfallswinkel
+    assert(einfallswinkel == ausfallswinkel);
 }
