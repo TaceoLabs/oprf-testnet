@@ -52,10 +52,12 @@ run-setup:
     echo "oprf_key_registry=$oprf_key_registry"
     echo "register oprf-nodes..."
     OPRF_KEY_REGISTRY_PROXY=$oprf_key_registry just register-participants-anvil
+    # echo "starting OPRF key-gen instances..."
+    export OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry 
+    # OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry just run-key-gen-instances
+    OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry docker compose -f ./oprf-testnet-service/deploy/docker-compose.yml up -d oprf-key-gen0 oprf-key-gen1 oprf-key-gen2
     echo "starting OPRF nodes..."
-    OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry just run-nodes &
-    echo "starting OPRF key-gen instances..."
-    OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry just run-key-gen-instances
+    OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry just run-nodes 
     echo "stopping containers..."
     docker compose -f ./oprf-testnet-service/deploy/docker-compose.yml down
 
@@ -76,27 +78,6 @@ run-nodes:
     RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_testnet_service_example=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10002 --rp-secret-id-prefix oprf/rp/n2 --unkey-root-key unkey_3ZZVCWkAFwCYXkn1bRNq2Mrp --ws-max-message-size 51200 --environment dev --wallet-address 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 --version-req ">=0.0.0" > logs/node2.log 2>&1  &
     pid2=$!
     echo "started node2 with PID $pid2"
-    trap "kill $pid0 $pid1 $pid2" SIGINT SIGTERM
-    wait $pid0 $pid1 $pid2
-
-[group('local-setup')]
-[working-directory('/Users/guggi/Documents/projects/oprf-service/')]
-run-key-gen-instances:
-    #!/usr/bin/env bash
-    mkdir -p logs
-    cargo build -p taceo-oprf-key-gen --release
-    # anvil wallet 7
-    RUST_LOG="taceo_oprf_key_gen=trace,warn" ./target/release/oprf-key-gen --confirmations-for-transaction 1 --bind-addr 127.0.0.1:20000 --rp-secret-id-prefix oprf/rp/n0 --environment dev --wallet-private-key-secret-id oprf/eth/n0 --key-gen-zkey-path ./circom/main/key-gen/OPRFKeyGen.13.arks.zkey --key-gen-witness-graph-path ./circom/main/key-gen/OPRFKeyGenGraph.13.bin  > logs/key-gen0.log 2>&1 &
-    pid0=$!
-    echo "started key-gen0 with PID $pid0"
-    # anvil wallet 8
-    RUST_LOG="taceo_oprf_key_gen=trace,warn" ./target/release/oprf-key-gen --confirmations-for-transaction 1 --bind-addr 127.0.0.1:20001 --rp-secret-id-prefix oprf/rp/n1 --environment dev --wallet-private-key-secret-id oprf/eth/n1 --key-gen-zkey-path ./circom/main/key-gen/OPRFKeyGen.13.arks.zkey --key-gen-witness-graph-path ./circom/main/key-gen/OPRFKeyGenGraph.13.bin  > logs/key-gen1.log 2>&1 &
-    pid1=$!
-    echo "started key-gen1 with PID $pid1"
-    # anvil wallet 9
-    RUST_LOG="taceo_oprf_key_gen=trace,warn" ./target/release/oprf-key-gen --confirmations-for-transaction 1 --bind-addr 127.0.0.1:20002 --rp-secret-id-prefix oprf/rp/n2 --environment dev --wallet-private-key-secret-id oprf/eth/n2 --key-gen-zkey-path ./circom/main/key-gen/OPRFKeyGen.13.arks.zkey --key-gen-witness-graph-path ./circom/main/key-gen/OPRFKeyGenGraph.13.bin  > logs/key-gen2.log 2>&1  &
-    pid2=$!
-    echo "started key-gen2 with PID $pid2"
     trap "kill $pid0 $pid1 $pid2" SIGINT SIGTERM
     wait $pid0 $pid1 $pid2
 

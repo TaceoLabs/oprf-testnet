@@ -1,42 +1,49 @@
-use std::fs;
-use std::hash::Hasher;
-use std::io::Write;
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::{fs::File, process::Command};
-
-use alloy::network::EthereumWallet;
 use alloy::primitives::eip191_hash_message;
 use alloy::signers::SignerSync;
 use alloy::signers::k256::ecdsa::SigningKey;
-use alloy::signers::k256::elliptic_curve::point::AffineCoordinates;
 use alloy::signers::k256::elliptic_curve::sec1::ToEncodedPoint;
-use alloy::signers::local::{LocalSigner, PrivateKeySigner};
+use alloy::signers::local::PrivateKeySigner;
 use ark_ff::PrimeField as _;
 use eyre::Context;
-use oprf_testnet_authentication::{ProofInput, TestNetRequestAuth};
+use oprf_testnet_authentication::TestNetRequestAuth;
 use rand::{CryptoRng, Rng};
-use sha2::{Digest, Sha256};
+use std::fs;
+use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::{fs::File, process::Command};
 use taceo_oprf::{
     client::Connector,
     core::oprf::BlindingFactor,
     types::{OprfKeyId, ShareEpoch},
 };
+use tracing::instrument;
 
 // /// A signer instantiated with a locally stored private key.
 // pub type PrivateKeySigner = LocalSigner<k256::ecdsa::SigningKey>;
 
-// #[instrument(level = "debug", skip_all)]
+pub struct DistributedOprfArgs<'a> {
+    pub services: &'a [String],
+    pub threshold: usize,
+    pub api_key: String,
+    pub oprf_key_id: OprfKeyId,
+    pub share_epoch: ShareEpoch,
+    pub action: ark_babyjubjub::Fq,
+    pub connector: Connector,
+}
+
+#[instrument(level = "debug", skip_all)]
 pub async fn distributed_oprf<R: Rng + CryptoRng>(
-    services: &[String],
-    threshold: usize,
-    api_key: String,
-    oprf_key_id: OprfKeyId,
-    share_epoch: ShareEpoch,
-    action: ark_babyjubjub::Fq,
-    connector: Connector,
-    rng: &mut R,
+    distributed_oprf_args: DistributedOprfArgs<'_>,
+    rng: &mut R, // services: &[String],
+                 // threshold: usize,
+                 // api_key: String,
+                 // oprf_key_id: OprfKeyId,
+                 // share_epoch: ShareEpoch,
+                 // action: ark_babyjubjub::Fq,
+                 // connector: Connector,
+                 // rng: &mut R,
 ) -> eyre::Result<()> {
-    let query = action;
+    let query = distributed_oprf_args.action;
     let blinding_factor = BlindingFactor::rand(rng);
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
 
@@ -63,7 +70,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     //Remove recovery id
     _ = signature.pop();
 
-    let proof_input = compute_proof(
+    let (public_inputs, proof) = compute_proof(
         blinding_factor.clone(),
         x_affine,
         y_affine,
@@ -72,21 +79,22 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     )
     .await?;
     let auth = TestNetRequestAuth {
-        proof_input,
-        api_key,
+        public_inputs,
+        proof,
+        api_key: distributed_oprf_args.api_key,
     };
 
     let _verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
-        services,
+        distributed_oprf_args.services,
         "testnet",
-        threshold,
-        oprf_key_id,
-        share_epoch,
+        distributed_oprf_args.threshold,
+        distributed_oprf_args.oprf_key_id,
+        distributed_oprf_args.share_epoch,
         query,
         blinding_factor,
         domain_separator,
         auth,
-        connector,
+        distributed_oprf_args.connector,
     )
     .await
     .context("cannot get verifiable oprf output")?;
@@ -99,7 +107,7 @@ pub async fn compute_proof(
     pubkey_y: Vec<u8>,
     signature: Vec<u8>,
     hashed_msg: Vec<u8>,
-) -> eyre::Result<ProofInput> {
+) -> eyre::Result<(Vec<u8>, Vec<u8>)> {
     let name_of_proof = "prototype_oprf";
     let directory = format!("noir/{}", name_of_proof);
     let input_file_path = format!("{}/Prover.toml", directory);
@@ -109,12 +117,12 @@ pub async fn compute_proof(
 
     let _ = write!(
         prover_toml_file,
-        "beta = \"{}\"\npub_key_x = {}\npub_key_y = {}\nsignature = {}\nhashed_message = {}",
-        beta.beta().to_string(),
-        format!("{:?}", pubkey_x),
-        format!("{:?}", pubkey_y),
-        format!("{:?}", signature),
-        format!("{:?}", hashed_msg)
+        "beta = \"{:?}\"\npub_key_x = {:?}\npub_key_y = {:?}\nsignature = {:?}\nhashed_message = {:?}",
+        beta.beta(),
+        pubkey_x,
+        pubkey_y,
+        signature,
+        hashed_msg
     );
 
     let nargo_exec_status = Command::new("nargo")
@@ -123,7 +131,7 @@ pub async fn compute_proof(
         .status();
 
     if nargo_exec_status.is_err() || !nargo_exec_status.unwrap().success() {
-        return Err(eyre::eyre!("nargo execute failed"));
+        eyre::bail!("nargo execute failed");
     }
 
     let bb_write_vk_status = Command::new("bb")
@@ -134,7 +142,7 @@ pub async fn compute_proof(
         .status();
 
     if bb_write_vk_status.is_err() || !bb_write_vk_status.unwrap().success() {
-        return Err(eyre::eyre!("bb write_vk failed"));
+        eyre::bail!("bb write_vk failed");
     }
 
     let bb_prove_status = Command::new("bb")
@@ -149,13 +157,10 @@ pub async fn compute_proof(
         .status();
 
     if bb_prove_status.is_err() || !bb_prove_status.unwrap().success() {
-        return Err(eyre::eyre!("bb prove failed"));
+        eyre::bail!("bb prove failed");
     }
 
     let public_inputs = fs::read(format!("{}/out/public_inputs", &directory))?;
     let proof = fs::read(format!("{}/out/proof", &directory))?;
-    Ok(ProofInput {
-        public_inputs,
-        proof,
-    })
+    Ok((public_inputs, proof))
 }

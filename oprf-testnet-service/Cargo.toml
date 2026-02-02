@@ -20,8 +20,9 @@ nodes-common = { workspace = true }
 nodes-observability = { workspace = true }
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
 rustls = { workspace = true }
+secrecy = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
-taceo-oprf = { workspace = true, features = ["full"] }
+taceo-oprf = { workspace = true, features = ["service"] }
 thiserror.workspace = true
 tokio = { workspace = true, features = [
   "net",

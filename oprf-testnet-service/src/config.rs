@@ -3,6 +3,7 @@
 use std::{net::SocketAddr, time::Duration};
 
 use clap::Parser;
+use secrecy::SecretString;
 use taceo_oprf::service::config::OprfNodeConfig;
 
 /// The configuration for the OPRF node.
@@ -26,7 +27,7 @@ pub struct TestNetNodeConfig {
 
     /// The Unkey root key
     #[clap(long, env = "OPRF_NODE_UNKEY_ROOT_KEY")]
-    pub unkey_root_key: String,
+    pub unkey_root_key: SecretString,
 
     /// The OPRF service config
     #[clap(flatten)]

@@ -25,4 +25,5 @@ oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", p
 rand.workspace = true
 sha2.workspace = true
 taceo-oprf = { workspace = true, features = ["client"] }
+tempfile.workspace = true
 tracing.workspace = true

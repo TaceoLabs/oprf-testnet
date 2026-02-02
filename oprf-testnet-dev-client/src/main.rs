@@ -9,6 +9,7 @@ use alloy::{
 use ark_ff::UniformRand as _;
 use clap::Parser;
 use eyre::Context as _;
+use oprf_testnet_client::DistributedOprfArgs;
 use rand::SeedableRng as _;
 use rustls::{ClientConfig, RootCertStore};
 use secrecy::{ExposeSecret as _, SecretString};
@@ -99,13 +100,15 @@ async fn run_oprf(
 
     // the client example internally checks the DLog equality
     oprf_testnet_client::distributed_oprf(
-        nodes,
-        threshold,
-        api_key,
-        oprf_key_id,
-        share_epoch,
-        action,
-        connector,
+        DistributedOprfArgs {
+            services: nodes,
+            threshold,
+            api_key,
+            oprf_key_id,
+            share_epoch,
+            action,
+            connector,
+        },
         &mut rng,
     )
     .await?;
