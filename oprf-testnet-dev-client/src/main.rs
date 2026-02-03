@@ -1,4 +1,12 @@
-use std::{collections::HashMap, str::FromStr as _, sync::Arc, time::Duration};
+use std::{
+    collections::HashMap,
+    str::FromStr as _,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Duration,
+};
 
 use alloy::{
     network::EthereumWallet,
@@ -16,13 +24,13 @@ use secrecy::{ExposeSecret as _, SecretString};
 use taceo_oprf::{
     client::Connector,
     core::oprf::{BlindedOprfRequest, BlindingFactor},
-    dev_client::{Command, StressTestCommand, oprf_test_utils::health_checks},
-    types::{
-        OprfKeyId, ShareEpoch,
-        api::{OprfRequest, ShareIdentifier},
-        crypto::OprfPublicKey,
+    dev_client::{
+        Command, StressTestCommand,
+        oprf_test_utils::{self, health_checks},
     },
+    types::{OprfKeyId, ShareEpoch, api::OprfRequest, crypto::OprfPublicKey},
 };
+use tokio::sync::mpsc;
 use uuid::Uuid;
 
 /// The configuration for the OPRF client.
@@ -91,21 +99,19 @@ async fn run_oprf(
     threshold: usize,
     api_key: String,
     oprf_key_id: OprfKeyId,
-    share_epoch: ShareEpoch,
     connector: Connector,
-) -> eyre::Result<()> {
+) -> eyre::Result<ShareEpoch> {
     let mut rng = rand_chacha::ChaCha12Rng::from_entropy();
 
     let action = ark_babyjubjub::Fq::rand(&mut rng);
 
     // the client example internally checks the DLog equality
-    oprf_testnet_client::distributed_oprf(
+    let verifiable_oprf = oprf_testnet_client::distributed_oprf(
         DistributedOprfArgs {
             services: nodes,
             threshold,
             api_key,
             oprf_key_id,
-            share_epoch,
             action,
             connector,
         },
@@ -113,7 +119,7 @@ async fn run_oprf(
     )
     .await?;
 
-    Ok(())
+    Ok(verifiable_oprf.epoch)
 }
 
 fn prepare_oprf_stress_test_oprf_request(
@@ -129,10 +135,7 @@ fn prepare_oprf_stress_test_oprf_request(
     let oprf_req = OprfRequest {
         request_id,
         blinded_query: blinded_request.blinded_query(),
-        share_identifier: ShareIdentifier {
-            oprf_key_id,
-            share_epoch: ShareEpoch::default(),
-        },
+        oprf_key_id,
         auth: (),
     };
 
@@ -201,114 +204,112 @@ async fn reshare_test(
     api_key: String,
     oprf_key_registry: Address,
     oprf_key_id: OprfKeyId,
-    share_epoch: ShareEpoch,
-    oprf_public_key: OprfPublicKey,
     connector: Connector,
     provider: DynProvider,
+    acceptance_num: usize,
     max_wait_time: Duration,
 ) -> eyre::Result<()> {
-    tracing::info!("running single OPRF");
-    run_oprf(
+    tracing::info!("running OPRF to get current epoch..");
+    let current_epoch = run_oprf(
         nodes,
         threshold,
         api_key.clone(),
         oprf_key_id,
-        share_epoch,
         connector.clone(),
     )
     .await?;
-    tracing::info!("OPRF successful");
+    tracing::info!("current epoch: {current_epoch}");
 
-    let (share_epoch_1, oprf_public_key_1) = taceo_oprf::dev_client::reshare(
-        nodes,
-        oprf_key_registry,
-        provider.clone(),
+    tracing::info!("start OPRF client task");
+    let (tx, mut rx) = mpsc::channel(32);
+    // we need this so that we don't get random warnings when we kill the task abruptly
+    let shutdown_signal = Arc::new(AtomicBool::new(false));
+    let oprf_client_task = tokio::task::spawn({
+        let nodes = nodes.to_vec();
+        let connector = connector.clone();
+        let shutdown_signal = Arc::clone(&shutdown_signal);
+        async move {
+            let nodes = nodes.to_vec();
+            let mut counter = 0;
+            loop {
+                if shutdown_signal.load(Ordering::Relaxed) {
+                    break;
+                }
+                let result = run_oprf(
+                    &nodes,
+                    threshold,
+                    api_key.clone(),
+                    oprf_key_id,
+                    connector.clone(),
+                )
+                .await;
+                counter += 1;
+                if counter % 50 == 0 {
+                    tracing::debug!("send OPRF: {}", counter);
+                }
+                if tx.send(result).await.is_err() {
+                    break;
+                }
+            }
+        }
+    });
+
+    tracing::info!("Doing reshare!");
+    oprf_test_utils::init_reshare(provider.clone(), oprf_key_registry, oprf_key_id).await?;
+    tokio::time::timeout(
         max_wait_time,
-        oprf_key_id,
-        share_epoch,
+        wait_for_epoch(&mut rx, acceptance_num, current_epoch.next()),
     )
-    .await?;
-    assert_eq!(oprf_public_key, oprf_public_key_1);
+    .await??;
 
-    tracing::info!("running OPRF with epoch 0 after 1st reshare");
-    run_oprf(
-        nodes,
-        threshold,
-        api_key.clone(),
-        oprf_key_id,
-        share_epoch,
-        connector.clone(),
-    )
-    .await?;
-    tracing::info!("OPRF successful");
-
-    tracing::info!("running OPRF with epoch 1 after 1st reshare");
-    run_oprf(
-        nodes,
-        threshold,
-        api_key.clone(),
-        oprf_key_id,
-        share_epoch_1,
-        connector.clone(),
-    )
-    .await?;
-    tracing::info!("OPRF successful");
-
-    let (share_epoch_2, oprf_public_key_2) = taceo_oprf::dev_client::reshare(
-        nodes,
-        oprf_key_registry,
-        provider,
+    tracing::info!("Doing reshare!");
+    oprf_test_utils::init_reshare(provider.clone(), oprf_key_registry, oprf_key_id).await?;
+    tokio::time::timeout(
         max_wait_time,
-        oprf_key_id,
-        share_epoch_1,
+        wait_for_epoch(&mut rx, acceptance_num, current_epoch.next().next()),
     )
-    .await?;
-    assert_eq!(oprf_public_key, oprf_public_key_2);
+    .await??;
+    shutdown_signal.store(true, Ordering::Relaxed);
 
-    tracing::info!("running OPRF with epoch 1 after 2nd reshare");
-    run_oprf(
-        nodes,
-        threshold,
-        api_key.clone(),
-        oprf_key_id,
-        share_epoch_1,
-        connector.clone(),
-    )
-    .await?;
-    tracing::info!("OPRF successful");
-
-    tracing::info!("running OPRF with epoch 2 after 2nd reshare");
-    run_oprf(
-        nodes,
-        threshold,
-        api_key.clone(),
-        oprf_key_id,
-        share_epoch_2,
-        connector.clone(),
-    )
-    .await?;
-    tracing::info!("OPRF successful");
-
-    tracing::info!("running OPRF with epoch 0 after 2nd reshare - should fail");
-    let _ = run_oprf(
-        nodes,
-        threshold,
-        api_key.clone(),
-        oprf_key_id,
-        share_epoch,
-        connector.clone(),
-    )
-    .await
-    .expect_err("should fail");
-    tracing::info!("OPRF failed as expected");
-
+    if tokio::time::timeout(Duration::from_secs(5), oprf_client_task)
+        .await
+        .is_err()
+    {
+        tracing::warn!("test succeeded but could not finish client tasks in 5 seconds?")
+    };
     Ok(())
+}
+async fn wait_for_epoch(
+    rx: &mut mpsc::Receiver<Result<ShareEpoch, eyre::Report>>,
+    acceptance_num: usize,
+    target_epoch: ShareEpoch,
+) -> eyre::Result<()> {
+    let mut new_epoch_found = 0;
+    while let Some(result) = rx.recv().await {
+        match result {
+            Ok(epoch) if epoch == target_epoch => {
+                new_epoch_found += 1;
+                if new_epoch_found == acceptance_num {
+                    tracing::info!(
+                        "successfully used new epoch {} {acceptance_num} times!",
+                        target_epoch
+                    );
+                    return Ok(());
+                }
+            }
+            Ok(_) => continue,
+            Err(err) => {
+                return Err(err);
+            }
+        }
+    }
+    eyre::bail!("Channel closed without getting {acceptance_num}");
 }
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     nodes_observability::install_tracing(
-        "taceo_oprf=trace,taceo_oprf_testnet_dev_client=trace,warn,info,taceo_oprf_testnet_client=trace,info,warn",
+        "taceo_oprf=trace,taceo_oprf_testnet_dev_client=trace,warn,info,debug,taceo_oprf_testnet_client=debug,trace,info,warn",
     );
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()
@@ -333,8 +334,7 @@ async fn main() -> eyre::Result<()> {
         .context("while connecting to RPC")?
         .erased();
 
-    let (oprf_key_id, share_epoch, oprf_public_key) = if let Some(oprf_key_id) = config.oprf_key_id
-    {
+    let (oprf_key_id, oprf_public_key) = if let Some(oprf_key_id) = config.oprf_key_id {
         let oprf_key_id = OprfKeyId::new(oprf_key_id);
         let share_epoch = ShareEpoch::from(config.share_epoch);
         let oprf_public_key = health_checks::oprf_public_key_from_services(
@@ -344,7 +344,7 @@ async fn main() -> eyre::Result<()> {
             config.max_wait_time,
         )
         .await?;
-        (oprf_key_id, share_epoch, oprf_public_key)
+        (oprf_key_id, oprf_public_key)
     } else {
         let (oprf_key_id, oprf_public_key) = taceo_oprf::dev_client::init_key_gen(
             &config.nodes,
@@ -353,7 +353,7 @@ async fn main() -> eyre::Result<()> {
             config.max_wait_time,
         )
         .await?;
-        (oprf_key_id, ShareEpoch::default(), oprf_public_key)
+        (oprf_key_id, oprf_public_key)
     };
 
     // setup TLS config - even if we are http
@@ -372,7 +372,6 @@ async fn main() -> eyre::Result<()> {
                 config.threshold,
                 config.api_key,
                 oprf_key_id,
-                share_epoch,
                 connector,
             )
             .await?;
@@ -391,7 +390,7 @@ async fn main() -> eyre::Result<()> {
             .await?;
             tracing::info!("stress-test successful");
         }
-        Command::ReshareTest => {
+        Command::ReshareTest(cmd) => {
             tracing::info!("running reshare-test");
             reshare_test(
                 &config.nodes,
@@ -399,10 +398,9 @@ async fn main() -> eyre::Result<()> {
                 config.api_key,
                 config.oprf_key_registry_contract,
                 oprf_key_id,
-                share_epoch,
-                oprf_public_key,
                 connector,
                 provider,
+                cmd.acceptance_num,
                 config.max_wait_time,
             )
             .await?;

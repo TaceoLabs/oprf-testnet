@@ -26,7 +26,7 @@ aws-config = "1"
 axum = "0.8"
 axum-test = "18"
 clap = "4"
-eddsa-babyjubjub = { package = "taceo-eddsa-babyjubjub", version = "^0.5.3" }
+eddsa-babyjubjub = { package = "taceo-eddsa-babyjubjub", version = "=0.5.4" }
 eyre = { version = "0.6" }
 humantime = "2"
 nodes-common = { package = "taceo-nodes-common", version = "0.2" }
@@ -40,7 +40,7 @@ secrecy = "0.10"
 serde = { version = "1" }
 serde_json = { version = "1" }
 sha2 = "0.10.9"
-taceo-oprf = { package = "taceo-oprf", git = "https://github.com/TaceoLabs/oprf-service", rev = "2ba29f5b9119e4632dfd1cb195955ace77ebf632", version = "0.1" }
+taceo-oprf = { package = "taceo-oprf", version = "0.2", default-features = false }
 tempfile = "3"
 thiserror = { version = "2" }
 tokio = { version = "1" }

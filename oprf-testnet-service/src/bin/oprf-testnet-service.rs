@@ -7,7 +7,8 @@
 use std::{process::ExitCode, sync::Arc};
 
 use clap::Parser as _;
-use taceo_oprf::service::{config::Environment, secret_manager::aws::AwsSecretManager};
+use eyre::Context;
+use taceo_oprf::service::secret_manager::postgres::PostgresSecretManager;
 use taceo_oprf_testnet_service::config::TestNetNodeConfig;
 
 #[tokio::main]
@@ -23,14 +24,15 @@ async fn main() -> eyre::Result<ExitCode> {
 
     let config = TestNetNodeConfig::parse();
 
-    let aws_config = match config.service_config.environment {
-        Environment::Prod => aws_config::load_from_env().await,
-        Environment::Dev => nodes_common::localstack_aws_config().await,
-    };
-
     // Load the AWS secret manager.
     let secret_manager = Arc::new(
-        AwsSecretManager::init(aws_config, &config.service_config.rp_secret_id_prefix).await,
+        PostgresSecretManager::init(
+            &config.service_config.db_connection_string,
+            &config.service_config.db_schema,
+            config.service_config.db_max_connections,
+        )
+        .await
+        .context("while starting postgres secret-manager")?,
     );
 
     let result = taceo_oprf_testnet_service::start(

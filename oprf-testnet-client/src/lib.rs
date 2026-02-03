@@ -11,11 +11,8 @@ use std::fs;
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{fs::File, process::Command};
-use taceo_oprf::{
-    client::Connector,
-    core::oprf::BlindingFactor,
-    types::{OprfKeyId, ShareEpoch},
-};
+use taceo_oprf::client::VerifiableOprfOutput;
+use taceo_oprf::{client::Connector, core::oprf::BlindingFactor, types::OprfKeyId};
 use tracing::instrument;
 
 // /// A signer instantiated with a locally stored private key.
@@ -26,7 +23,6 @@ pub struct DistributedOprfArgs<'a> {
     pub threshold: usize,
     pub api_key: String,
     pub oprf_key_id: OprfKeyId,
-    pub share_epoch: ShareEpoch,
     pub action: ark_babyjubjub::Fq,
     pub connector: Connector,
 }
@@ -34,16 +30,8 @@ pub struct DistributedOprfArgs<'a> {
 #[instrument(level = "debug", skip_all)]
 pub async fn distributed_oprf<R: Rng + CryptoRng>(
     distributed_oprf_args: DistributedOprfArgs<'_>,
-    rng: &mut R, // services: &[String],
-                 // threshold: usize,
-                 // api_key: String,
-                 // oprf_key_id: OprfKeyId,
-                 // share_epoch: ShareEpoch,
-                 // action: ark_babyjubjub::Fq,
-                 // connector: Connector,
-                 // rng: &mut R,
-) -> eyre::Result<()> {
-    let query = distributed_oprf_args.action;
+    rng: &mut R,
+) -> eyre::Result<VerifiableOprfOutput> {
     let blinding_factor = BlindingFactor::rand(rng);
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
     dbg!(&domain_separator);
@@ -61,6 +49,8 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
 
     // Instantiate a signer
     let signer = PrivateKeySigner::from_signing_key(private_key);
+    // let query = ark_babyjubjub::fq::Fq::from_be_bytes_mod_order(signer.address().as_ref());
+    let query = distributed_oprf_args.action;
 
     let ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -76,6 +66,8 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
 
     dbg!(&signature);
     dbg!(&msg_hash);
+    println!("msg hash as bytes: {:?}", msg_hash.to_vec());
+
     let (public_inputs, proof) = compute_proof(
         blinding_factor.clone(),
         x_affine,
@@ -95,7 +87,6 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
         "testnet",
         distributed_oprf_args.threshold,
         distributed_oprf_args.oprf_key_id,
-        distributed_oprf_args.share_epoch,
         query,
         blinding_factor,
         domain_separator,
@@ -105,7 +96,8 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     .await
     .context("cannot get verifiable oprf output")?;
     dbg!(&verifiable_oprf_output);
-    Ok(())
+
+    Ok(verifiable_oprf_output)
 }
 
 pub async fn compute_proof(
