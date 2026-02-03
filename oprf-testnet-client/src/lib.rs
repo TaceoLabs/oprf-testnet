@@ -46,6 +46,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     let query = distributed_oprf_args.action;
     let blinding_factor = BlindingFactor::rand(rng);
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
+    dbg!(&domain_separator);
 
     let private_key = SigningKey::random(&mut rand::thread_rng());
     let encoded_pubkey = private_key
@@ -54,6 +55,9 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
         .to_encoded_point(false);
     let y_affine = encoded_pubkey.y().unwrap().to_vec();
     let x_affine = encoded_pubkey.x().unwrap().to_vec();
+    dbg!(&x_affine);
+    dbg!(&y_affine);
+    dbg!(&blinding_factor);
 
     // Instantiate a signer
     let signer = PrivateKeySigner::from_signing_key(private_key);
@@ -70,6 +74,8 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     //Remove recovery id
     _ = signature.pop();
 
+    dbg!(&signature);
+    dbg!(&msg_hash);
     let (public_inputs, proof) = compute_proof(
         blinding_factor.clone(),
         x_affine,
@@ -84,7 +90,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
         api_key: distributed_oprf_args.api_key,
     };
 
-    let _verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
+    let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
         distributed_oprf_args.services,
         "testnet",
         distributed_oprf_args.threshold,
@@ -98,6 +104,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     )
     .await
     .context("cannot get verifiable oprf output")?;
+    dbg!(&verifiable_oprf_output);
     Ok(())
 }
 
