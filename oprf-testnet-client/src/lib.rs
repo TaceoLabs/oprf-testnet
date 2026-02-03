@@ -34,7 +34,6 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
 ) -> eyre::Result<VerifiableOprfOutput> {
     let blinding_factor = BlindingFactor::rand(rng);
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
-    dbg!(&domain_separator);
 
     let private_key = SigningKey::random(&mut rand::thread_rng());
     let encoded_pubkey = private_key
@@ -43,9 +42,6 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
         .to_encoded_point(false);
     let y_affine = encoded_pubkey.y().unwrap().to_vec();
     let x_affine = encoded_pubkey.x().unwrap().to_vec();
-    dbg!(&x_affine);
-    dbg!(&y_affine);
-    dbg!(&blinding_factor);
 
     // Instantiate a signer
     let signer = PrivateKeySigner::from_signing_key(private_key);
@@ -63,10 +59,6 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     let mut signature = signer.sign_hash_sync(&msg_hash)?.as_bytes().to_vec();
     //Remove recovery id
     _ = signature.pop();
-
-    dbg!(&signature);
-    dbg!(&msg_hash);
-    println!("msg hash as bytes: {:?}", msg_hash.to_vec());
 
     let (public_inputs, proof) = compute_proof(
         blinding_factor.clone(),
@@ -95,7 +87,6 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     )
     .await
     .context("cannot get verifiable oprf output")?;
-    dbg!(&verifiable_oprf_output);
 
     Ok(verifiable_oprf_output)
 }
@@ -114,7 +105,7 @@ pub async fn compute_proof(
     let bytecode_path = format!("target/{}.json", name_of_proof);
     let mut prover_toml_file = File::create(input_file_path)?;
 
-    let _ = write!(
+    write!(
         prover_toml_file,
         "beta = \"{:?}\"\npub_key_x = {:?}\npub_key_y = {:?}\nsignature = {:?}\nhashed_message = {:?}",
         beta.beta(),
@@ -122,7 +113,7 @@ pub async fn compute_proof(
         pubkey_y,
         signature,
         hashed_msg
-    );
+    )?;
 
     let nargo_exec_status = Command::new("nargo")
         .arg("execute")

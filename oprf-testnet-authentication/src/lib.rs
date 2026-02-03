@@ -133,7 +133,7 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
                 if !resp_data.data.valid {
                     return Err(TestNetRequestAuthError::ApiVerificationFailed);
                 }
-                return Ok(());
+                Ok(())
             }
             Err(err) => {
                 tracing::debug!("Unkey response parse error: {}", err);
