@@ -18,7 +18,7 @@ pub async fn start(
     secret_manager: SecretManagerService,
     shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
 ) -> eyre::Result<()> {
-    tracing::info!("starting oprf-service with config: {config:#?}");
+    tracing::info!("starting oprf-testnet-node with config: {config:#?}");
     let service_config = config.service_config;
     let (cancellation_token, is_graceful_shutdown) =
         nodes_common::spawn_shutdown_task(shutdown_signal);
@@ -26,7 +26,6 @@ pub async fn start(
     tracing::info!("init oprf request auth service..");
     let oprf_req_auth_service = Arc::new(
         TestNetRequestAuthenticator::init(config.unkey_root_key)
-            .await
             .context("while spawning authenticator")?,
     );
 

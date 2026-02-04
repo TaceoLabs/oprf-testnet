@@ -5,19 +5,24 @@ use std::{
         Arc,
         atomic::{AtomicBool, Ordering},
     },
-    time::Duration,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 use alloy::{
     network::EthereumWallet,
-    primitives::{Address, U160},
+    primitives::{Address, U160, eip191_hash_message},
     providers::{DynProvider, Provider as _, ProviderBuilder},
-    signers::local::PrivateKeySigner,
+    signers::{
+        SignerSync,
+        k256::{ecdsa::SigningKey, elliptic_curve::sec1::ToEncodedPoint},
+        local::PrivateKeySigner,
+    },
 };
-use ark_ff::UniformRand as _;
+use ark_ff::{PrimeField, UniformRand as _};
 use clap::Parser;
 use eyre::Context as _;
-use oprf_testnet_client::DistributedOprfArgs;
+use oprf_testnet_authentication::TestNetRequestAuth;
+use oprf_testnet_client::{DistributedOprfArgs, compute_proof};
 use rand::SeedableRng as _;
 use rustls::{ClientConfig, RootCertStore};
 use secrecy::{ExposeSecret as _, SecretString};
@@ -122,21 +127,61 @@ async fn run_oprf(
     Ok(verifiable_oprf.epoch)
 }
 
-fn prepare_oprf_stress_test_oprf_request(
+async fn prepare_oprf_stress_test_oprf_request(
     oprf_key_id: OprfKeyId,
-) -> eyre::Result<(Uuid, BlindedOprfRequest, OprfRequest<()>)> {
+    api_key: String,
+) -> eyre::Result<(Uuid, BlindedOprfRequest, OprfRequest<TestNetRequestAuth>)> {
     let mut rng = rand_chacha::ChaCha12Rng::from_entropy();
 
     let request_id = Uuid::new_v4();
-    let action = ark_babyjubjub::Fq::rand(&mut rng);
     let blinding_factor = BlindingFactor::rand(&mut rng);
+
+    let private_key = SigningKey::random(&mut rand::thread_rng());
+    let ts = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs();
+    let encoded_pubkey = private_key
+        .verifying_key()
+        .as_affine()
+        .to_encoded_point(false);
+    let y_affine = encoded_pubkey
+        .y()
+        .expect("should be possible to get y from publickey")
+        .to_vec();
+    let x_affine = encoded_pubkey
+        .x()
+        .expect("should be possible to get x from publickey")
+        .to_vec();
+
+    let signer = PrivateKeySigner::from_signing_key(private_key);
+    let msg = format!("TACEO Oprf Input: {ts}");
+    let msg_hash = eip191_hash_message(msg.as_bytes());
+    let mut signature = signer.sign_hash_sync(&msg_hash)?.as_bytes().to_vec();
+    //Remove recovery id
+    _ = signature.pop();
+    let action = ark_babyjubjub::fq::Fq::from_be_bytes_mod_order(signer.address().as_ref());
+    let (public_inputs, proof) = compute_proof(
+        blinding_factor.clone(),
+        x_affine,
+        y_affine,
+        signature,
+        msg_hash.to_vec(),
+    )
+    .await?;
+
+    let auth = TestNetRequestAuth {
+        public_inputs,
+        proof,
+        api_key,
+    };
     let query = action;
     let blinded_request = taceo_oprf::core::oprf::client::blind_query(query, blinding_factor);
     let oprf_req = OprfRequest {
         request_id,
         blinded_query: blinded_request.blinded_query(),
         oprf_key_id,
-        auth: (),
+        auth,
     };
 
     Ok((request_id, blinded_request, oprf_req))
@@ -146,6 +191,7 @@ async fn stress_test(
     cmd: StressTestCommand,
     nodes: &[String],
     threshold: usize,
+    api_key: String,
     oprf_key_id: OprfKeyId,
     oprf_public_key: OprfPublicKey,
     connector: Connector,
@@ -155,7 +201,8 @@ async fn stress_test(
 
     tracing::info!("preparing requests..");
     for _ in 0..cmd.runs {
-        let (request_id, blinded_req, req) = prepare_oprf_stress_test_oprf_request(oprf_key_id)?;
+        let (request_id, blinded_req, req) =
+            prepare_oprf_stress_test_oprf_request(oprf_key_id, api_key.clone()).await?;
         blinded_requests.insert(request_id, blinded_req);
         init_requests.insert(request_id, req);
     }
@@ -309,7 +356,7 @@ async fn wait_for_epoch(
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     nodes_observability::install_tracing(
-        "taceo_oprf=trace,taceo_oprf_testnet_dev_client=trace,warn,info,debug,taceo_oprf_testnet_client=debug,trace,info,warn",
+        "taceo_oprf=info,taceo_oprf_testnet_dev_client=info,taceo_oprf_testnet_client=info",
     );
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()
@@ -383,6 +430,7 @@ async fn main() -> eyre::Result<()> {
                 cmd,
                 &config.nodes,
                 config.threshold,
+                config.api_key,
                 oprf_key_id,
                 oprf_public_key,
                 connector,

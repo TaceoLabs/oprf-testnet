@@ -24,4 +24,3 @@ taceo-oprf = { workspace = true, features = ["service"] }
 tempfile.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
-uuid.workspace = true

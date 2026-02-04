@@ -15,9 +15,6 @@ use taceo_oprf::client::VerifiableOprfOutput;
 use taceo_oprf::{client::Connector, core::oprf::BlindingFactor, types::OprfKeyId};
 use tracing::instrument;
 
-// /// A signer instantiated with a locally stored private key.
-// pub type PrivateKeySigner = LocalSigner<k256::ecdsa::SigningKey>;
-
 pub struct DistributedOprfArgs<'a> {
     pub services: &'a [String],
     pub threshold: usize,
@@ -40,21 +37,25 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
         .verifying_key()
         .as_affine()
         .to_encoded_point(false);
-    let y_affine = encoded_pubkey.y().unwrap().to_vec();
-    let x_affine = encoded_pubkey.x().unwrap().to_vec();
+    let y_affine = encoded_pubkey
+        .y()
+        .expect("should be possible to get y from publickey")
+        .to_vec();
+    let x_affine = encoded_pubkey
+        .x()
+        .expect("should be possible to get x from publickey")
+        .to_vec();
 
     // Instantiate a signer
     let signer = PrivateKeySigner::from_signing_key(private_key);
-    // let query = ark_babyjubjub::fq::Fq::from_be_bytes_mod_order(signer.address().as_ref());
-    let query = distributed_oprf_args.action;
+    let query = ark_babyjubjub::fq::Fq::from_be_bytes_mod_order(signer.address().as_ref());
 
     let ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards")
-        .as_secs()
-        .to_string();
+        .as_secs();
 
-    let msg = "TACEO Oprf Input: ".to_string() + &ts;
+    let msg = format!("TACEO Oprf Input: {ts}");
     let msg_hash = eip191_hash_message(msg.as_bytes());
     let mut signature = signer.sign_hash_sync(&msg_hash)?.as_bytes().to_vec();
     //Remove recovery id
@@ -118,10 +119,14 @@ pub async fn compute_proof(
     let nargo_exec_status = Command::new("nargo")
         .arg("execute")
         .current_dir(&directory)
-        .status();
+        .status()
+        .context("while spawning nargo execute")?;
 
-    if nargo_exec_status.is_err() || !nargo_exec_status.unwrap().success() {
-        eyre::bail!("nargo execute failed");
+    if !nargo_exec_status.success() {
+        eyre::bail!(
+            "'nargo execute' failed with status code: {:?}",
+            nargo_exec_status.code()
+        );
     }
 
     let bb_write_vk_status = Command::new("bb")
@@ -129,10 +134,14 @@ pub async fn compute_proof(
         .arg("-b")
         .arg(&bytecode_path)
         .current_dir(&directory)
-        .status();
+        .status()
+        .context("while spawning bb write_vk")?;
 
-    if bb_write_vk_status.is_err() || !bb_write_vk_status.unwrap().success() {
-        eyre::bail!("bb write_vk failed");
+    if !bb_write_vk_status.success() {
+        eyre::bail!(
+            "'bb write_vk' failed with status code: {:?}",
+            bb_write_vk_status.code()
+        );
     }
 
     let bb_prove_status = Command::new("bb")
@@ -144,10 +153,14 @@ pub async fn compute_proof(
         .arg("-w")
         .arg(witness_path)
         .current_dir(&directory)
-        .status();
+        .status()
+        .context("while spawning bb prove")?;
 
-    if bb_prove_status.is_err() || !bb_prove_status.unwrap().success() {
-        eyre::bail!("bb prove failed");
+    if !bb_prove_status.success() {
+        eyre::bail!(
+            "'bb prove' failed with status code: {:?}",
+            bb_prove_status.code()
+        );
     }
 
     let public_inputs = fs::read(format!("{}/out/public_inputs", &directory))?;

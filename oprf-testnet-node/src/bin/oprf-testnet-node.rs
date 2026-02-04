@@ -9,7 +9,7 @@ use std::{process::ExitCode, sync::Arc};
 use clap::Parser as _;
 use eyre::Context;
 use taceo_oprf::service::secret_manager::postgres::PostgresSecretManager;
-use taceo_oprf_testnet_service::config::TestNetNodeConfig;
+use taceo_oprf_testnet_node::config::TestNetNodeConfig;
 
 #[tokio::main]
 async fn main() -> eyre::Result<ExitCode> {
@@ -35,7 +35,7 @@ async fn main() -> eyre::Result<ExitCode> {
         .context("while starting postgres secret-manager")?,
     );
 
-    let result = taceo_oprf_testnet_service::start(
+    let result = taceo_oprf_testnet_node::start(
         config,
         secret_manager,
         nodes_common::default_shutdown_signal(),

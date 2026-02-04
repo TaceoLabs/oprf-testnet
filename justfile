@@ -42,7 +42,7 @@ run-setup:
     #!/usr/bin/env bash
     mkdir -p logs
     echo "starting localstack and anvil"
-    docker compose -f ./oprf-testnet-service/deploy/docker-compose.yml up -d localstack anvil postgres oprf-node-db0 oprf-node-db1 oprf-node-db2
+    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d localstack anvil postgres oprf-node-db0 oprf-node-db1 oprf-node-db2
     sleep 1
     echo "preparing localstack"
     just prepare-localstack-secrets
@@ -52,30 +52,28 @@ run-setup:
     echo "oprf_key_registry=$oprf_key_registry"
     echo "register oprf-nodes..."
     OPRF_KEY_REGISTRY_PROXY=$oprf_key_registry just register-participants-anvil
-    # echo "starting OPRF key-gen instances..."
-    export OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry 
-    # OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry just run-key-gen-instances
-    OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry docker compose -f ./oprf-testnet-service/deploy/docker-compose.yml up -d oprf-key-gen0 oprf-key-gen1 oprf-key-gen2
+    echo "starting OPRF key-gen instances..."
+    OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d oprf-key-gen0 oprf-key-gen1 oprf-key-gen2
     echo "starting OPRF nodes..."
     OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry just run-nodes 
     echo "stopping containers..."
-    docker compose -f ./oprf-testnet-service/deploy/docker-compose.yml down
+    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml down
 
 [group('local-setup')]
 run-nodes:
     #!/usr/bin/env bash
     mkdir -p logs
-    cargo build -p taceo-oprf-testnet-service --release
+    cargo build -p taceo-oprf-testnet-node --release
     # anvil wallet 7
-    RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10000  --unkey-root-key unkey_3ZZVCWkAFwCYXkn1bRNq2Mrp --ws-max-message-size 51200 --db-connection-string postgres://postgres:postgres@localhost:5440/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node0.log 2>&1 &
+    RUST_LOG="taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10000 --ws-max-message-size 51200 --db-connection-string postgres://postgres:postgres@localhost:5440/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node0.log 2>&1 &
     pid0=$!
     echo "started node0 with PID $pid0"
     # anvil wallet 8
-    RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_testnet_service_example=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10001 --unkey-root-key unkey_3ZZVCWkAFwCYXkn1bRNq2Mrp --ws-max-message-size 51200 --db-connection-string postgres://postgres:postgres@localhost:5441/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node1.log 2>&1 &
+    RUST_LOG="taceo_oprf_testnet_node=traceoprf_service_example=trace,warn" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10001 --ws-max-message-size 51200 --db-connection-string postgres://postgres:postgres@localhost:5441/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node1.log 2>&1 &
     pid1=$!
     echo "started node1 with PID $pid1"
     # anvil wallet 9
-    RUST_LOG="taceo_oprf_testnet_service=trace,taceo_oprf_testnet_service_example=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-service --bind-addr 127.0.0.1:10002 --unkey-root-key unkey_3ZZVCWkAFwCYXkn1bRNq2Mrp --ws-max-message-size 51200 --db-connection-string postgres://postgres:postgres@localhost:5442/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node2.log 2>&1  &
+    RUST_LOG="taceo_oprf_testnet_node=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10002 --ws-max-message-size 51200 --db-connection-string postgres://postgres:postgres@localhost:5442/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node2.log 2>&1  &
     pid2=$!
     echo "started node2 with PID $pid2"
     trap "kill $pid0 $pid1 $pid2" SIGINT SIGTERM
@@ -84,9 +82,14 @@ run-nodes:
 [group('dev-client')]
 run-dev-client *args:
     #!/usr/bin/env bash
-    # cargo build -p taceo-oprf-testnet-dev-client --release
     oprf_key_registry=$(grep -oP 'OprfKeyRegistry proxy deployed to: \K0x[a-fA-F0-9]+' logs/deploy_oprf_key_registry.log)
-    OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry cargo run --bin taceo-oprf-testnet-dev-client --release -- --api-key 3ZFfKEExkG83PnzXdsCz4wdZ {{ args }}
+    OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry cargo run --bin taceo-oprf-testnet-dev-client --release {{ args }}
+
+run-client *args:
+    #!/usr/bin/env bash
+    cargo build -p taceo-oprf-testnet-client --release
+    oprf_key_registry=$(grep -oP 'OprfKeyRegistry proxy deployed to: \K0x[a-fA-F0-9]+' logs/deploy_oprf_key_registry.log)
+    OPRF_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry ./target/release/taceo-oprf-testnet-public-client {{ args }}
 
 [group('anvil')]
 [working-directory('contracts/script/deploy')]

@@ -18,12 +18,9 @@ alloy = { workspace = true, features = [
   "serde",
 ] }
 ark-babyjubjub = { workspace = true }
-ark-ec.workspace = true
 ark-ff = { workspace = true }
 eyre.workspace = true
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
 rand.workspace = true
-sha2.workspace = true
 taceo-oprf = { workspace = true, features = ["client"] }
-tempfile.workspace = true
 tracing.workspace = true

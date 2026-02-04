@@ -1,5 +1,5 @@
 [package]
-name = "taceo-oprf-testnet-service"
+name = "taceo-oprf-testnet-node"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -10,8 +10,6 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-async-trait = { workspace = true }
-aws-config = { workspace = true, features = ["behavior-version-latest"] }
 axum = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 eyre.workspace = true
@@ -21,9 +19,7 @@ nodes-observability = { workspace = true }
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
 rustls = { workspace = true }
 secrecy = { workspace = true, features = ["serde"] }
-serde = { workspace = true, features = ["derive"] }
 taceo-oprf = { workspace = true, features = ["service"] }
-thiserror.workspace = true
 tokio = { workspace = true, features = [
   "net",
   "rt-multi-thread",
@@ -33,7 +29,6 @@ tokio = { workspace = true, features = [
   "tokio-macros",
 ] }
 tracing.workspace = true
-uuid = { workspace = true, features = ["serde", "v4"] }
 
 [dev-dependencies]
 axum-test = { workspace = true }
