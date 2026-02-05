@@ -1,6 +1,11 @@
 [workspace]
 resolver = "3"
-members = ["example"
+members = [
+  "oprf-testnet-authentication",
+  "oprf-testnet-client",
+  "oprf-testnet-dev-client",
+  "oprf-testnet-node",
+  "oprf-testnet-public-client",
 ]
 
 [workspace.package]
@@ -13,6 +18,33 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [workspace.dependencies]
+alloy = { version = "1.4", default-features = false }
+ark-babyjubjub = { package = "taceo-ark-babyjubjub", version = "^0.5.3" }
+ark-ff = "0.5"
+async-trait = "0.1"
+axum = "0.8"
+axum-test = "18"
+clap = "4"
+eddsa-babyjubjub = { package = "taceo-eddsa-babyjubjub", version = "^0.5.4" }
+eyre = { version = "0.6" }
+humantime = "2"
+nodes-common = { package = "taceo-nodes-common", version = "0.2" }
+nodes-observability = { package = "taceo-nodes-observability", version = "0.1" }
+poseidon2 = { package = "taceo-poseidon2", version = "0.2", default-features = false }
+rand = { version = "0.8" }
+rand_chacha = { version = "0.3" }
+reqwest = { version = "0.12", default-features = false }
+rustls = "0.23"
+secrecy = "0.10"
+serde = { version = "1" }
+serde_json = { version = "1" }
+taceo-oprf = { package = "taceo-oprf", version = "0.2", default-features = false }
+tempfile = "3"
+thiserror = { version = "2" }
+tokio = { version = "1" }
+tracing = { version = "0.1" }
+uuid = { version = "1" }
+webpki-roots = { version = "1.0" }
 
 # This profile can be used for CI in pull requests.
 [profile.ci-dev]

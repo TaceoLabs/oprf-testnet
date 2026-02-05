@@ -1,0 +1,9 @@
+[package]
+authors = ["@colinnielsen"]
+compiler_version = ">=0.30.0"
+name = "ecrecover"
+notes = "AMDG"
+type = "lib"
+
+[dependencies]
+keccak256 = { tag = "v0.1.2", git = "https://github.com/noir-lang/keccak256" }
