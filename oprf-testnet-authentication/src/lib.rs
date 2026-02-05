@@ -137,12 +137,20 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
     ) -> Result<(), Self::RequestAuthError> {
         tracing::info!("Authenticating with API Key and Proof");
         //call API
-        let api_valid = verify_api_key(
-            self.client.clone(),
-            self.root_api_key.clone(),
-            &req.auth.api_key,
-            self.env,
-        );
+        // let api_valid = verify_api_key(
+        //     &self.client,
+        //     self.root_api_key.clone(),
+        //     &req.auth.api_key,
+        //     self.env,
+        // );
+
+        let api_valid = tokio::task::spawn({
+            let client = self.client.clone();
+            let root_api_key = self.root_api_key.clone();
+            let api_key = req.auth.api_key.clone();
+            let env = self.env;
+            async move { verify_api_key(client, root_api_key, api_key, env).await }
+        });
 
         // verify ZK
         let vk_path = "noir/prototype_oprf/out/vk";
@@ -177,9 +185,10 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
             return Err(TestNetRequestAuthError::ProofInvalid);
         }
 
-        if !api_valid.await? {
-            return Err(TestNetRequestAuthError::ApiVerificationFailed);
-        }
+        let asdf = api_valid.await.context("awaiting api verification")??;
+        //if !api_valid.await? {
+        //  return Err(TestNetRequestAuthError::ApiVerificationFailed);
+        //}
         Ok(())
     }
 }
@@ -195,17 +204,19 @@ impl OprfRequestAuthenticator for TestNetApiOnlyRequestAuthenticator {
     ) -> Result<(), Self::RequestAuthError> {
         tracing::info!("Authenticating with only API");
         //call API
-        let api_valid = verify_api_key(
-            self.client.clone(),
-            self.root_api_key.clone(),
-            &req.auth.api_key,
-            self.env,
-        )
-        .await?;
+        let api_valid = tokio::task::spawn({
+            let client = self.client.clone();
+            let root_api_key = self.root_api_key.clone();
+            let api_key = req.auth.api_key.clone();
+            let env = self.env;
+            async move { verify_api_key(client, root_api_key, api_key, env).await }
+        });
 
-        if !api_valid {
-            return Err(TestNetApiOnlyRequestAuthError::ApiVerificationFailed);
-        }
+        let asdf = api_valid.await.context("awaiting api verification")??; //TODO: no bool return
+        //in Result
+        //if !api_valid {
+        //   return Err(TestNetApiOnlyRequestAuthError::ApiVerificationFailed);
+        // }
         Ok(())
     }
 }
@@ -213,9 +224,10 @@ impl OprfRequestAuthenticator for TestNetApiOnlyRequestAuthenticator {
 async fn verify_api_key(
     client: Client,
     verify_key: SecretString,
-    api_key: &String,
+    api_key: String,
     env: Environment,
 ) -> Result<bool, eyre::Report> {
+    //TODO: no bool return
     // if env == Environment::Dev {
     //     return Ok();
     // }

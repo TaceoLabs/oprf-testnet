@@ -23,4 +23,5 @@ serde_json.workspace = true
 taceo-oprf = { workspace = true, features = ["service"] }
 tempfile.workspace = true
 thiserror.workspace = true
+tokio.workspace = true
 tracing.workspace = true
