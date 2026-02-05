@@ -1,6 +1,0 @@
-[package]
-name = "einfallswinkel_ist_gleich_ausfallswinkel"
-type = "bin"
-authors = [""]
-
-[dependencies]

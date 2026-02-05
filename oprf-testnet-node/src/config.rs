@@ -26,8 +26,8 @@ pub struct TestNetNodeConfig {
     pub max_wait_time_shutdown: Duration,
 
     /// The Unkey root key
-    #[clap(long, env = "OPRF_NODE_UNKEY_ROOT_KEY")]
-    pub unkey_root_key: SecretString,
+    #[clap(long, env = "OPRF_NODE_UNKEY_VERIFY_KEY")]
+    pub unkey_verify_key: SecretString,
 
     /// The OPRF service config
     #[clap(flatten)]

@@ -25,7 +25,7 @@ pub async fn start(
 
     tracing::info!("init oprf request auth service..");
     let oprf_req_auth_service = Arc::new(
-        TestNetRequestAuthenticator::init(config.unkey_root_key)
+        TestNetRequestAuthenticator::init(config.unkey_verify_key)
             .context("while spawning authenticator")?,
     );
 

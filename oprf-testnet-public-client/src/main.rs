@@ -1,4 +1,4 @@
-use alloy::primitives::{Address, U160};
+use alloy::primitives::U160;
 use ark_ff::UniformRand as _;
 use clap::Parser;
 use oprf_testnet_client::DistributedOprfArgs;
@@ -13,21 +13,12 @@ use taceo_oprf::{client::Connector, types::OprfKeyId};
 #[derive(Parser, Debug)]
 pub struct OprfDevClientConfig {
     /// The URLs to all OPRF nodes
-    #[clap(
-        long,
-        env = "OPRF_CLIENT_NODES",
-        value_delimiter = ',',
-        default_value = "http://127.0.0.1:10000,http://127.0.0.1:10001,http://127.0.0.1:10002"
-    )]
+    #[clap(long, env = "OPRF_CLIENT_NODES", value_delimiter = ',')]
     pub nodes: Vec<String>,
 
     /// The threshold of services that need to respond
     #[clap(long, env = "OPRF_CLIENT_THRESHOLD", default_value = "2")]
     pub threshold: usize,
-
-    /// The Address of the OprfKeyRegistry contract.
-    #[clap(long, env = "OPRF_CLIENT_OPRF_KEY_REGISTRY_CONTRACT")]
-    pub oprf_key_registry_contract: Address,
 
     /// rp id of already registered rp
     #[clap(long, env = "OPRF_CLIENT_OPRF_KEY_ID")]

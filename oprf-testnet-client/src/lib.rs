@@ -37,13 +37,13 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
         .verifying_key()
         .as_affine()
         .to_encoded_point(false);
-    let y_affine = encoded_pubkey
-        .y()
-        .expect("should be possible to get y from publickey")
-        .to_vec();
     let x_affine = encoded_pubkey
         .x()
         .expect("should be possible to get x from publickey")
+        .to_vec();
+    let y_affine = encoded_pubkey
+        .y()
+        .expect("should be possible to get y from publickey")
         .to_vec();
 
     // Instantiate a signer
@@ -58,6 +58,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     let msg = format!("TACEO Oprf Input: {ts}");
     let msg_hash = eip191_hash_message(msg.as_bytes());
     let mut signature = signer.sign_hash_sync(&msg_hash)?.as_bytes().to_vec();
+
     //Remove recovery id
     _ = signature.pop();
 
@@ -69,6 +70,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
         msg_hash.to_vec(),
     )
     .await?;
+
     let auth = TestNetRequestAuth {
         public_inputs,
         proof,

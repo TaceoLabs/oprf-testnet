@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use axum::response::IntoResponse;
+use eyre::Context as _;
 use reqwest::StatusCode;
 use secrecy::ExposeSecret as _;
 use secrecy::SecretString;
@@ -39,14 +40,10 @@ pub struct TestNetRequestAuth {
 pub enum TestNetRequestAuthError {
     #[error("Proof invalid")]
     ProofInvalid,
-    #[error("Proof verification failed")]
-    ProofVerificationFailed,
-    #[error(transparent)]
-    ApiRequestFailed(#[from] reqwest::Error),
-    #[error("Internal Server Error")]
-    InternalServerError(String),
     #[error("API Key not valid")]
     ApiVerificationFailed,
+    #[error(transparent)]
+    InternalServerError(#[from] eyre::Report),
 }
 
 impl IntoResponse for TestNetRequestAuthError {
@@ -54,14 +51,12 @@ impl IntoResponse for TestNetRequestAuthError {
         tracing::debug!("{self:?}");
         match self {
             Self::ProofInvalid => (StatusCode::BAD_REQUEST, "Proof is invalid").into_response(),
-            Self::ApiRequestFailed(_) | Self::InternalServerError(_) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
-            }
             Self::ApiVerificationFailed => {
                 (StatusCode::UNAUTHORIZED, "API Key not valid").into_response()
             }
-            Self::ProofVerificationFailed => {
-                (StatusCode::BAD_REQUEST, "Could not verify proof").into_response()
+            Self::InternalServerError(err) => {
+                tracing::error!("Internal server error: {err:?}");
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
             }
         }
     }
@@ -91,16 +86,29 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
         &self,
         req: &OprfRequest<Self::RequestAuth>,
     ) -> Result<(), Self::RequestAuthError> {
+        //call API
+        let client = self.client.clone();
+        let api_result = client
+            .post("https://api.unkey.com/v2/keys.verifyKey")
+            .bearer_auth(self.root_api_key.expose_secret())
+            .json(&serde_json::json!({"key": req.auth.api_key}))
+            .send();
+
         // verify ZK
         let vk_path = "noir/prototype_oprf/out/vk";
-        let mut public_inputs = NamedTempFile::new().expect("NamedTempFile creation should work");
-        let mut proof = NamedTempFile::new().expect("NamedTempFile creation should work");
+
+        let mut public_inputs =
+            NamedTempFile::new().context("creating public inputs NameTempFile")?;
+
+        let mut proof = NamedTempFile::new().context("creating proof NameTempFile")?;
+
         public_inputs
             .write_all(&req.auth.public_inputs)
-            .expect("TempFile write for public_inputs should work");
+            .context("writing public inputs to temp file")?;
+
         proof
             .write_all(&req.auth.proof)
-            .expect("TempFile write for proof should work");
+            .context("writing proof to temp file")?;
 
         let bb_verify_status = Command::new("bb")
             .arg("verify")
@@ -112,45 +120,25 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
             .arg(public_inputs.path())
             .arg("-k")
             .arg(vk_path)
-            .status();
+            .status()
+            .context("while spawning bb verify")?;
 
-        match bb_verify_status {
-            Ok(status) => {
-                if !status.success() {
-                    tracing::error!(
-                        "'bb verify' failed with status code: {}",
-                        status.code().expect("'bb verify' not terminated by signal")
-                    );
-                    return Err(TestNetRequestAuthError::ProofVerificationFailed);
-                }
-            }
-            Err(_) => {
-                return Err(TestNetRequestAuthError::ProofInvalid);
-            }
+        if !bb_verify_status.success() {
+            return Err(TestNetRequestAuthError::ProofInvalid);
         }
 
-        //verify API
-        let client = self.client.clone();
-        let result = client
-            .post("https://api.unkey.com/v2/keys.verifyKey")
-            .bearer_auth(self.root_api_key.expose_secret())
-            .json(&serde_json::json!({"key": req.auth.api_key}))
-            .send()
-            .await?;
+        // await API response
+        let api_response = api_result.await.context("Unkey API request error")?;
 
-        match result.json::<UnkeyRespRoot>().await {
-            Ok(resp_data) => {
-                if !resp_data.data.valid {
-                    return Err(TestNetRequestAuthError::ApiVerificationFailed);
-                }
-                Ok(())
-            }
-            Err(err) => {
-                tracing::debug!("Unkey response parse error: {}", err);
-                Err(TestNetRequestAuthError::InternalServerError(
-                    "Failed to parse Unkey response".to_owned(),
-                ))
-            }
+        // parse and verify API response
+        let unkey_response = api_response
+            .json::<UnkeyRespRoot>()
+            .await
+            .context("Unkey response parse error")?;
+
+        if !unkey_response.data.valid {
+            return Err(TestNetRequestAuthError::ApiVerificationFailed);
         }
+        Ok(())
     }
 }
