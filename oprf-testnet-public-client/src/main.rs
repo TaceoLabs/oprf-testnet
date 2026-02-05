@@ -33,6 +33,7 @@ async fn run_oprf(
     nodes: &[String],
     threshold: usize,
     api_key: String,
+    module: &str,
     oprf_key_id: OprfKeyId,
     connector: Connector,
 ) -> eyre::Result<()> {
@@ -46,6 +47,7 @@ async fn run_oprf(
             services: nodes,
             threshold,
             api_key,
+            module,
             oprf_key_id,
             action,
             connector,
@@ -71,15 +73,18 @@ async fn main() -> eyre::Result<()> {
         .with_root_certificates(root_store)
         .with_no_client_auth();
     let connector = Connector::Rustls(Arc::new(rustls_config));
+    let module = "testnet_api_only"; //TODO: make this configurable
 
     run_oprf(
         &config.nodes,
         config.threshold,
         config.api_key,
+        module,
         config.oprf_key_id.into(),
         connector,
     )
     .await?;
     tracing::info!("oprf-test successful");
+
     Ok(())
 }

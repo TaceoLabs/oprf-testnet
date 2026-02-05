@@ -1,12 +1,14 @@
 use async_trait::async_trait;
 use axum::response::IntoResponse;
 use eyre::Context as _;
+use reqwest::Client;
 use reqwest::StatusCode;
 use secrecy::ExposeSecret as _;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use std::io::Write as _;
 use std::process::Command;
+use taceo_oprf::service::config::Environment;
 use taceo_oprf::types::api::{OprfRequest, OprfRequestAuthenticator};
 use tempfile::NamedTempFile;
 
@@ -36,6 +38,19 @@ pub struct TestNetRequestAuth {
     pub api_key: String,
 }
 
+#[derive(Clone, Serialize, Deserialize)]
+pub struct TestNetApiOnlyRequestAuth {
+    pub api_key: String,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum TestNetApiOnlyRequestAuthError {
+    #[error("API Key not valid")]
+    ApiVerificationFailed,
+    #[error(transparent)]
+    InternalServerError(#[from] eyre::Report),
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum TestNetRequestAuthError {
     #[error("Proof invalid")]
@@ -62,17 +77,51 @@ impl IntoResponse for TestNetRequestAuthError {
     }
 }
 
+impl IntoResponse for TestNetApiOnlyRequestAuthError {
+    fn into_response(self) -> axum::response::Response {
+        tracing::debug!("{self:?}");
+        match self {
+            Self::ApiVerificationFailed => {
+                (StatusCode::UNAUTHORIZED, "API Key not valid").into_response()
+            }
+            Self::InternalServerError(err) => {
+                tracing::error!("Internal server error: {err:?}");
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
+            }
+        }
+    }
+}
+
 pub struct TestNetRequestAuthenticator {
     client: reqwest::Client,
     root_api_key: SecretString,
+    env: Environment,
+}
+
+pub struct TestNetApiOnlyRequestAuthenticator {
+    client: reqwest::Client,
+    root_api_key: SecretString,
+    env: Environment,
 }
 
 impl TestNetRequestAuthenticator {
-    pub fn init(root_api_key: SecretString) -> eyre::Result<Self> {
+    pub fn init(root_api_key: SecretString, env: Environment) -> eyre::Result<Self> {
         let client = reqwest::Client::new();
         Ok(Self {
             client,
             root_api_key,
+            env,
+        })
+    }
+}
+
+impl TestNetApiOnlyRequestAuthenticator {
+    pub fn init(root_api_key: SecretString, env: Environment) -> eyre::Result<Self> {
+        let client = reqwest::Client::new();
+        Ok(Self {
+            client,
+            root_api_key,
+            env,
         })
     }
 }
@@ -86,13 +135,14 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
         &self,
         req: &OprfRequest<Self::RequestAuth>,
     ) -> Result<(), Self::RequestAuthError> {
+        tracing::info!("Authenticating with API Key and Proof");
         //call API
-        let client = self.client.clone();
-        let api_result = client
-            .post("https://api.unkey.com/v2/keys.verifyKey")
-            .bearer_auth(self.root_api_key.expose_secret())
-            .json(&serde_json::json!({"key": req.auth.api_key}))
-            .send();
+        let api_valid = verify_api_key(
+            self.client.clone(),
+            self.root_api_key.clone(),
+            &req.auth.api_key,
+            self.env,
+        );
 
         // verify ZK
         let vk_path = "noir/prototype_oprf/out/vk";
@@ -127,18 +177,61 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
             return Err(TestNetRequestAuthError::ProofInvalid);
         }
 
-        // await API response
-        let api_response = api_result.await.context("Unkey API request error")?;
-
-        // parse and verify API response
-        let unkey_response = api_response
-            .json::<UnkeyRespRoot>()
-            .await
-            .context("Unkey response parse error")?;
-
-        if !unkey_response.data.valid {
+        if !api_valid.await? {
             return Err(TestNetRequestAuthError::ApiVerificationFailed);
         }
         Ok(())
     }
+}
+
+#[async_trait]
+impl OprfRequestAuthenticator for TestNetApiOnlyRequestAuthenticator {
+    type RequestAuth = TestNetApiOnlyRequestAuth;
+    type RequestAuthError = TestNetApiOnlyRequestAuthError;
+
+    async fn verify(
+        &self,
+        req: &OprfRequest<Self::RequestAuth>,
+    ) -> Result<(), Self::RequestAuthError> {
+        tracing::info!("Authenticating with only API");
+        //call API
+        let api_valid = verify_api_key(
+            self.client.clone(),
+            self.root_api_key.clone(),
+            &req.auth.api_key,
+            self.env,
+        )
+        .await?;
+
+        if !api_valid {
+            return Err(TestNetApiOnlyRequestAuthError::ApiVerificationFailed);
+        }
+        Ok(())
+    }
+}
+
+async fn verify_api_key(
+    client: Client,
+    verify_key: SecretString,
+    api_key: &String,
+    env: Environment,
+) -> Result<bool, eyre::Report> {
+    // if env == Environment::Dev {
+    //     return Ok();
+    // }
+    let result = client
+        .post("https://api.unkey.com/v2/keys.verifyKey")
+        .bearer_auth(verify_key.expose_secret())
+        .json(&serde_json::json!({"key": api_key}))
+        .send()
+        .await
+        .context("Unkey API request error")?;
+
+    // parse API response
+    let unkey_response = result
+        .json::<UnkeyRespRoot>()
+        .await
+        .context("Unkey response parse error")?;
+
+    Ok(unkey_response.data.valid)
 }

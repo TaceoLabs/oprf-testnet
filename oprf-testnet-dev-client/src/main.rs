@@ -94,6 +94,10 @@ pub struct OprfDevClientConfig {
     #[clap(long, env = "OPRF_DEV_CLIENT_API_KEY")]
     pub api_key: String,
 
+    /// If we use the API only use-case
+    #[clap(long, env = "OPRF_DEV_CLIENT_API_ONLY", default_value = "false")]
+    pub api_only: bool,
+
     /// Command
     #[command(subcommand)]
     pub command: Command,
@@ -103,6 +107,7 @@ async fn run_oprf(
     nodes: &[String],
     threshold: usize,
     api_key: String,
+    module: &str,
     oprf_key_id: OprfKeyId,
     connector: Connector,
 ) -> eyre::Result<ShareEpoch> {
@@ -116,6 +121,7 @@ async fn run_oprf(
             services: nodes,
             threshold,
             api_key,
+            module,
             oprf_key_id,
             action,
             connector,
@@ -145,13 +151,13 @@ async fn prepare_oprf_stress_test_oprf_request(
         .verifying_key()
         .as_affine()
         .to_encoded_point(false);
-    let y_affine = encoded_pubkey
-        .y()
-        .expect("should be possible to get y from publickey")
-        .to_vec();
     let x_affine = encoded_pubkey
         .x()
         .expect("should be possible to get x from publickey")
+        .to_vec();
+    let y_affine = encoded_pubkey
+        .y()
+        .expect("should be possible to get y from publickey")
         .to_vec();
 
     let signer = PrivateKeySigner::from_signing_key(private_key);
@@ -192,6 +198,7 @@ async fn stress_test(
     nodes: &[String],
     threshold: usize,
     api_key: String,
+    module: &str,
     oprf_key_id: OprfKeyId,
     oprf_public_key: OprfPublicKey,
     connector: Connector,
@@ -210,7 +217,7 @@ async fn stress_test(
     tracing::info!("sending init requests..");
     let (sessions, finish_requests) = taceo_oprf::dev_client::send_init_requests(
         nodes,
-        "testnet",
+        module,
         threshold,
         connector,
         cmd.sequential,
@@ -249,6 +256,7 @@ async fn reshare_test(
     nodes: &[String],
     threshold: usize,
     api_key: String,
+    module: &str,
     oprf_key_registry: Address,
     oprf_key_id: OprfKeyId,
     connector: Connector,
@@ -261,6 +269,7 @@ async fn reshare_test(
         nodes,
         threshold,
         api_key.clone(),
+        module,
         oprf_key_id,
         connector.clone(),
     )
@@ -271,6 +280,7 @@ async fn reshare_test(
     let (tx, mut rx) = mpsc::channel(32);
     // we need this so that we don't get random warnings when we kill the task abruptly
     let shutdown_signal = Arc::new(AtomicBool::new(false));
+    let module = module.to_string();
     let oprf_client_task = tokio::task::spawn({
         let nodes = nodes.to_vec();
         let connector = connector.clone();
@@ -286,6 +296,7 @@ async fn reshare_test(
                     &nodes,
                     threshold,
                     api_key.clone(),
+                    &module,
                     oprf_key_id,
                     connector.clone(),
                 )
@@ -410,6 +421,10 @@ async fn main() -> eyre::Result<()> {
         .with_root_certificates(root_store)
         .with_no_client_auth();
     let connector = Connector::Rustls(Arc::new(rustls_config));
+    let module = match config.api_only {
+        true => "testnet_api_only",
+        false => "testnet",
+    };
 
     match config.command.clone() {
         Command::Test => {
@@ -418,6 +433,7 @@ async fn main() -> eyre::Result<()> {
                 &config.nodes,
                 config.threshold,
                 config.api_key,
+                module,
                 oprf_key_id,
                 connector,
             )
@@ -431,6 +447,7 @@ async fn main() -> eyre::Result<()> {
                 &config.nodes,
                 config.threshold,
                 config.api_key,
+                module,
                 oprf_key_id,
                 oprf_public_key,
                 connector,
@@ -444,6 +461,7 @@ async fn main() -> eyre::Result<()> {
                 &config.nodes,
                 config.threshold,
                 config.api_key,
+                module,
                 config.oprf_key_registry_contract,
                 oprf_key_id,
                 connector,

@@ -4,7 +4,9 @@
 use std::sync::{Arc, atomic::Ordering};
 
 use eyre::Context;
-use oprf_testnet_authentication::TestNetRequestAuthenticator;
+use oprf_testnet_authentication::{
+    TestNetApiOnlyRequestAuthenticator, TestNetRequestAuthenticator,
+};
 use taceo_oprf::service::{
     OprfServiceBuilder, StartedServices, secret_manager::SecretManagerService,
 };
@@ -25,8 +27,18 @@ pub async fn start(
 
     tracing::info!("init oprf request auth service..");
     let oprf_req_auth_service = Arc::new(
-        TestNetRequestAuthenticator::init(config.unkey_verify_key)
-            .context("while spawning authenticator")?,
+        TestNetRequestAuthenticator::init(
+            config.unkey_verify_key.clone(),
+            service_config.environment.clone(),
+        )
+        .context("while spawning authenticator")?,
+    );
+    let oprf_req_api_only_auth_service = Arc::new(
+        TestNetApiOnlyRequestAuthenticator::init(
+            config.unkey_verify_key.clone(),
+            service_config.environment.clone(),
+        )
+        .context("while spawning authenticator")?,
     );
 
     tracing::info!("init oprf service..");
@@ -38,6 +50,7 @@ pub async fn start(
     )
     .await?
     .module("/testnet", oprf_req_auth_service)
+    .module("/testnet_api_only", oprf_req_api_only_auth_service)
     .build();
 
     let listener = tokio::net::TcpListener::bind(config.bind_addr).await?;

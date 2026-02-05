@@ -5,7 +5,7 @@ use alloy::signers::k256::elliptic_curve::sec1::ToEncodedPoint;
 use alloy::signers::local::PrivateKeySigner;
 use ark_ff::PrimeField as _;
 use eyre::Context;
-use oprf_testnet_authentication::TestNetRequestAuth;
+use oprf_testnet_authentication::{TestNetApiOnlyRequestAuth, TestNetRequestAuth};
 use rand::{CryptoRng, Rng};
 use std::fs;
 use std::io::Write;
@@ -19,16 +19,66 @@ pub struct DistributedOprfArgs<'a> {
     pub services: &'a [String],
     pub threshold: usize,
     pub api_key: String,
+    pub module: &'a str,
     pub oprf_key_id: OprfKeyId,
     pub action: ark_babyjubjub::Fq,
     pub connector: Connector,
 }
 
-#[instrument(level = "debug", skip_all)]
 pub async fn distributed_oprf<R: Rng + CryptoRng>(
     distributed_oprf_args: DistributedOprfArgs<'_>,
     rng: &mut R,
 ) -> eyre::Result<VerifiableOprfOutput> {
+    tracing::info!(
+        "Starting distributed OPRF with args: {}",
+        distributed_oprf_args.module
+    );
+    match distributed_oprf_args.module {
+        "testnet" => distributed_oprf_api_and_proof(distributed_oprf_args, rng).await,
+        "testnet_api_only" => distributed_oprf_api_only(distributed_oprf_args, rng).await,
+        _ => Err(eyre::eyre!(
+            "Unsupported module: {}",
+            distributed_oprf_args.module
+        )),
+    }
+}
+
+#[instrument(level = "debug", skip_all)]
+pub async fn distributed_oprf_api_only<R: Rng + CryptoRng>(
+    distributed_oprf_args: DistributedOprfArgs<'_>,
+    rng: &mut R,
+) -> eyre::Result<VerifiableOprfOutput> {
+    tracing::info!("Running distributed OPRF with API only authentication");
+    let blinding_factor = BlindingFactor::rand(rng);
+    let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
+
+    let auth = TestNetApiOnlyRequestAuth {
+        api_key: distributed_oprf_args.api_key,
+    };
+
+    let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
+        distributed_oprf_args.services,
+        distributed_oprf_args.module,
+        distributed_oprf_args.threshold,
+        distributed_oprf_args.oprf_key_id,
+        distributed_oprf_args.action,
+        blinding_factor,
+        domain_separator,
+        auth,
+        distributed_oprf_args.connector,
+    )
+    .await
+    .context("cannot get verifiable oprf output")?;
+
+    Ok(verifiable_oprf_output)
+}
+
+#[instrument(level = "debug", skip_all)]
+pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
+    distributed_oprf_args: DistributedOprfArgs<'_>,
+    rng: &mut R,
+) -> eyre::Result<VerifiableOprfOutput> {
+    tracing::info!("Running distributed OPRF with API and Proof authentication");
     let blinding_factor = BlindingFactor::rand(rng);
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
 
@@ -79,7 +129,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
 
     let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
         distributed_oprf_args.services,
-        "testnet",
+        distributed_oprf_args.module,
         distributed_oprf_args.threshold,
         distributed_oprf_args.oprf_key_id,
         query,
