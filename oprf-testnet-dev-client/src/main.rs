@@ -21,7 +21,7 @@ use alloy::{
 use ark_ff::{PrimeField, UniformRand as _};
 use clap::Parser;
 use eyre::Context as _;
-use oprf_testnet_authentication::TestNetRequestAuth;
+use oprf_testnet_authentication::{AuthModule, TestNetRequestAuth};
 use oprf_testnet_client::{DistributedOprfArgs, compute_proof};
 use rand::SeedableRng as _;
 use rustls::{ClientConfig, RootCertStore};
@@ -107,7 +107,7 @@ async fn run_oprf(
     nodes: &[String],
     threshold: usize,
     api_key: String,
-    module: &str,
+    module: AuthModule,
     oprf_key_id: OprfKeyId,
     connector: Connector,
 ) -> eyre::Result<ShareEpoch> {
@@ -193,12 +193,13 @@ async fn prepare_oprf_stress_test_oprf_request(
     Ok((request_id, blinded_request, oprf_req))
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn stress_test(
     cmd: StressTestCommand,
     nodes: &[String],
     threshold: usize,
     api_key: String,
-    module: &str,
+    module: AuthModule,
     oprf_key_id: OprfKeyId,
     oprf_public_key: OprfPublicKey,
     connector: Connector,
@@ -217,7 +218,7 @@ async fn stress_test(
     tracing::info!("sending init requests..");
     let (sessions, finish_requests) = taceo_oprf::dev_client::send_init_requests(
         nodes,
-        module,
+        &module.to_string(),
         threshold,
         connector,
         cmd.sequential,
@@ -256,7 +257,7 @@ async fn reshare_test(
     nodes: &[String],
     threshold: usize,
     api_key: String,
-    module: &str,
+    module: AuthModule,
     oprf_key_registry: Address,
     oprf_key_id: OprfKeyId,
     connector: Connector,
@@ -269,7 +270,7 @@ async fn reshare_test(
         nodes,
         threshold,
         api_key.clone(),
-        module,
+        module.clone(),
         oprf_key_id,
         connector.clone(),
     )
@@ -280,11 +281,11 @@ async fn reshare_test(
     let (tx, mut rx) = mpsc::channel(32);
     // we need this so that we don't get random warnings when we kill the task abruptly
     let shutdown_signal = Arc::new(AtomicBool::new(false));
-    let module = module.to_string();
     let oprf_client_task = tokio::task::spawn({
         let nodes = nodes.to_vec();
         let connector = connector.clone();
         let shutdown_signal = Arc::clone(&shutdown_signal);
+        let module = module.clone();
         async move {
             let nodes = nodes.to_vec();
             let mut counter = 0;
@@ -296,7 +297,7 @@ async fn reshare_test(
                     &nodes,
                     threshold,
                     api_key.clone(),
-                    &module,
+                    module.clone(),
                     oprf_key_id,
                     connector.clone(),
                 )
@@ -422,8 +423,8 @@ async fn main() -> eyre::Result<()> {
         .with_no_client_auth();
     let connector = Connector::Rustls(Arc::new(rustls_config));
     let module = match config.api_only {
-        true => "testnet_api_only",
-        false => "testnet",
+        true => AuthModule::TestNetApiOnly,
+        false => AuthModule::TestNet,
     };
 
     match config.command.clone() {

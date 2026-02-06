@@ -6,11 +6,39 @@ use reqwest::StatusCode;
 use secrecy::ExposeSecret as _;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::io::Write as _;
 use std::process::Command;
+use std::str::FromStr;
 use taceo_oprf::service::config::Environment;
 use taceo_oprf::types::api::{OprfRequest, OprfRequestAuthenticator};
 use tempfile::NamedTempFile;
+
+#[derive(Debug, Clone)]
+pub enum AuthModule {
+    TestNet,
+    TestNetApiOnly,
+}
+impl fmt::Display for AuthModule {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            AuthModule::TestNet => "TestNet",
+            AuthModule::TestNetApiOnly => "TestNetApiOnly",
+        };
+        write!(f, "{s}")
+    }
+}
+impl FromStr for AuthModule {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "TestNet" => Ok(AuthModule::TestNet),
+            "TestNetApiOnly" => Ok(AuthModule::TestNetApiOnly),
+            _ => Err(format!("Unknown AuthModule: {s}")),
+        }
+    }
+}
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

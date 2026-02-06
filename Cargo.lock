@@ -6438,6 +6438,7 @@ dependencies = [
  "rustls 0.23.36",
  "taceo-ark-babyjubjub",
  "taceo-oprf",
+ "taceo-oprf-testnet-authentication",
  "taceo-oprf-testnet-client",
  "tokio",
  "tracing",

@@ -5,7 +5,7 @@ use std::sync::{Arc, atomic::Ordering};
 
 use eyre::Context;
 use oprf_testnet_authentication::{
-    TestNetApiOnlyRequestAuthenticator, TestNetRequestAuthenticator,
+    AuthModule, TestNetApiOnlyRequestAuthenticator, TestNetRequestAuthenticator,
 };
 use taceo_oprf::service::{
     OprfServiceBuilder, StartedServices, secret_manager::SecretManagerService,
@@ -29,14 +29,14 @@ pub async fn start(
     let oprf_req_auth_service = Arc::new(
         TestNetRequestAuthenticator::init(
             config.unkey_verify_key.clone(),
-            service_config.environment.clone(),
+            service_config.environment,
         )
         .context("while spawning authenticator")?,
     );
     let oprf_req_api_only_auth_service = Arc::new(
         TestNetApiOnlyRequestAuthenticator::init(
             config.unkey_verify_key.clone(),
-            service_config.environment.clone(),
+            service_config.environment,
         )
         .context("while spawning authenticator")?,
     );
@@ -49,8 +49,11 @@ pub async fn start(
         cancellation_token.clone(),
     )
     .await?
-    .module("/testnet", oprf_req_auth_service)
-    .module("/testnet_api_only", oprf_req_api_only_auth_service)
+    .module(&AuthModule::TestNet.to_string(), oprf_req_auth_service)
+    .module(
+        &AuthModule::TestNetApiOnly.to_string(),
+        oprf_req_api_only_auth_service,
+    )
     .build();
 
     let listener = tokio::net::TcpListener::bind(config.bind_addr).await?;

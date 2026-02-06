@@ -5,7 +5,7 @@ use alloy::signers::k256::elliptic_curve::sec1::ToEncodedPoint;
 use alloy::signers::local::PrivateKeySigner;
 use ark_ff::PrimeField as _;
 use eyre::Context;
-use oprf_testnet_authentication::{TestNetApiOnlyRequestAuth, TestNetRequestAuth};
+use oprf_testnet_authentication::{AuthModule, TestNetApiOnlyRequestAuth, TestNetRequestAuth};
 use rand::{CryptoRng, Rng};
 use std::fs;
 use std::io::Write;
@@ -19,7 +19,7 @@ pub struct DistributedOprfArgs<'a> {
     pub services: &'a [String],
     pub threshold: usize,
     pub api_key: String,
-    pub module: &'a str,
+    pub module: AuthModule,
     pub oprf_key_id: OprfKeyId,
     pub action: ark_babyjubjub::Fq,
     pub connector: Connector,
@@ -34,9 +34,8 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
         distributed_oprf_args.module
     );
     match distributed_oprf_args.module {
-        "testnet" => distributed_oprf_api_and_proof(distributed_oprf_args, rng).await,
-        "testnet_api_only" => distributed_oprf_api_only(distributed_oprf_args, rng).await,
-        _ => eyre::bail!("Unsupported module: {}", distributed_oprf_args.module),
+        AuthModule::TestNet => distributed_oprf_api_and_proof(distributed_oprf_args, rng).await,
+        AuthModule::TestNetApiOnly => distributed_oprf_api_only(distributed_oprf_args, rng).await,
     }
 }
 
@@ -55,7 +54,7 @@ pub async fn distributed_oprf_api_only<R: Rng + CryptoRng>(
 
     let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
         distributed_oprf_args.services,
-        distributed_oprf_args.module,
+        &distributed_oprf_args.module.to_string(),
         distributed_oprf_args.threshold,
         distributed_oprf_args.oprf_key_id,
         distributed_oprf_args.action,
@@ -126,7 +125,7 @@ pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
 
     let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
         distributed_oprf_args.services,
-        distributed_oprf_args.module,
+        &distributed_oprf_args.module.to_string(),
         distributed_oprf_args.threshold,
         distributed_oprf_args.oprf_key_id,
         query,

@@ -1,6 +1,7 @@
 use alloy::primitives::U160;
 use ark_ff::UniformRand as _;
 use clap::Parser;
+use oprf_testnet_authentication::AuthModule;
 use oprf_testnet_client::DistributedOprfArgs;
 use rand::SeedableRng as _;
 use rustls::{ClientConfig, RootCertStore};
@@ -27,13 +28,17 @@ pub struct OprfDevClientConfig {
     /// The API Key
     #[clap(long, env = "OPRF_CLIENT_API_KEY")]
     pub api_key: String,
+
+    /// If we use the API only use-case
+    #[clap(long, env = "OPRF_DEV_CLIENT_API_ONLY", default_value = "false")]
+    pub api_only: bool,
 }
 
 async fn run_oprf(
     nodes: &[String],
     threshold: usize,
     api_key: String,
-    module: &str,
+    module: AuthModule,
     oprf_key_id: OprfKeyId,
     connector: Connector,
 ) -> eyre::Result<()> {
@@ -73,7 +78,10 @@ async fn main() -> eyre::Result<()> {
         .with_root_certificates(root_store)
         .with_no_client_auth();
     let connector = Connector::Rustls(Arc::new(rustls_config));
-    let module = "testnet_api_only"; //TODO: make this configurable
+    let module = match config.api_only {
+        true => AuthModule::TestNetApiOnly,
+        false => AuthModule::TestNet,
+    };
 
     run_oprf(
         &config.nodes,
