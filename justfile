@@ -65,15 +65,15 @@ run-nodes:
     mkdir -p logs
     cargo build -p taceo-oprf-testnet-node --release
     # anvil wallet 7
-    RUST_LOG="taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10000 --ws-max-message-size 51200 --db-connection-string postgres://postgres:postgres@localhost:5440/postgres --db-schema oprf --environment prod --version-req ">=0.0.0" > logs/node0.log 2>&1 &
+    RUST_LOG="taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10000 --db-connection-string postgres://postgres:postgres@localhost:5440/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node0.log 2>&1 &
     pid0=$!
     echo "started node0 with PID $pid0"
     # anvil wallet 8
-    RUST_LOG="taceo_oprf_testnet_node=traceoprf_service_example=trace,warn" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10001 --ws-max-message-size 51200 --db-connection-string postgres://postgres:postgres@localhost:5441/postgres --db-schema oprf --environment prod --version-req ">=0.0.0" > logs/node1.log 2>&1 &
+    RUST_LOG="taceo_oprf_testnet_node=traceoprf_service_example=trace,warn" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10001 --db-connection-string postgres://postgres:postgres@localhost:5441/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node1.log 2>&1 &
     pid1=$!
     echo "started node1 with PID $pid1"
     # anvil wallet 9
-    RUST_LOG="taceo_oprf_testnet_node=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10002 --ws-max-message-size 51200 --db-connection-string postgres://postgres:postgres@localhost:5442/postgres --db-schema oprf --environment prod --version-req ">=0.0.0" > logs/node2.log 2>&1  &
+    RUST_LOG="taceo_oprf_testnet_node=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10002 --db-connection-string postgres://postgres:postgres@localhost:5442/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node2.log 2>&1  &
     pid2=$!
     echo "started node2 with PID $pid2"
     trap "kill $pid0 $pid1 $pid2" SIGINT SIGTERM
@@ -116,8 +116,8 @@ revoke-key-gen-admin-anvil:
 [working-directory('contracts/script')]
 register-key-gen-admin-anvil:
     forge script RegisterKeyGenAdmin.s.sol --broadcast --fork-url http://127.0.0.1:8545 -vvvvv --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-    
+
 [group('test')]
-noir-tests: 
+noir-tests:
     cd noir/blinded_query_proof && nargo test
     cd noir/verified_oprf_proof && nargo test

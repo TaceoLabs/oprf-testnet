@@ -170,12 +170,11 @@ pub async fn compute_proof(
         .status()
         .context("while spawning nargo execute")?;
 
-    if !nargo_exec_status.success() {
-        eyre::bail!(
-            "'nargo execute' failed with status code: {:?}",
-            nargo_exec_status.code()
-        );
-    }
+    eyre::ensure!(
+        nargo_exec_status.success(),
+        "'nargo execute' failed with status code: {:?}",
+        nargo_exec_status.code()
+    );
 
     let bb_write_vk_status = Command::new("bb")
         .arg("write_vk")
@@ -185,12 +184,11 @@ pub async fn compute_proof(
         .status()
         .context("while spawning bb write_vk")?;
 
-    if !bb_write_vk_status.success() {
-        eyre::bail!(
-            "'bb write_vk' failed with status code: {:?}",
-            bb_write_vk_status.code()
-        );
-    }
+    eyre::ensure!(
+        bb_write_vk_status.success(),
+        "'bb write_vk' failed with status code: {:?}",
+        bb_write_vk_status.code()
+    );
 
     let bb_prove_status = Command::new("bb")
         .arg("prove")
@@ -204,12 +202,11 @@ pub async fn compute_proof(
         .status()
         .context("while spawning bb prove")?;
 
-    if !bb_prove_status.success() {
-        eyre::bail!(
-            "'bb prove' failed with status code: {:?}",
-            bb_prove_status.code()
-        );
-    }
+    eyre::ensure!(
+        bb_prove_status.success(),
+        "'bb prove' failed with status code: {:?}",
+        bb_prove_status.code()
+    );
 
     let public_inputs = fs::read(format!("{}/out/public_inputs", &directory))?;
     let proof = fs::read(format!("{}/out/proof", &directory))?;

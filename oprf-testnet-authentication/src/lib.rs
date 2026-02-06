@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use axum::response;
 use axum::response::IntoResponse;
 use eyre::Context as _;
 use reqwest::Client;
@@ -21,14 +22,14 @@ pub enum AuthModule {
 }
 impl AuthModule {
     pub fn to_path(&self) -> String {
-        format!("/{}", self)
+        format!("/{self}")
     }
 }
 impl fmt::Display for AuthModule {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            AuthModule::TestNet => "testnet",
-            AuthModule::TestNetApiOnly => "testnet-api-only",
+            Self::TestNet => "testnet",
+            Self::TestNetApiOnly => "testnet-api-only",
         };
         write!(f, "{s}")
     }
@@ -103,7 +104,7 @@ pub enum TestNetRequestAuthError {
 }
 
 impl IntoResponse for ApiVerificationError {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> response::Response {
         tracing::debug!("{self:?}");
         match self {
             Self::ApiVerificationFailed => {
@@ -118,7 +119,7 @@ impl IntoResponse for ApiVerificationError {
 }
 
 impl IntoResponse for TestNetRequestAuthError {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> response::Response {
         tracing::debug!("{self:?}");
         match self {
             Self::ProofInvalid => (StatusCode::BAD_REQUEST, "Proof is invalid").into_response(),
@@ -132,7 +133,7 @@ impl IntoResponse for TestNetRequestAuthError {
 }
 
 impl IntoResponse for TestNetApiOnlyRequestAuthError {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> response::Response {
         tracing::debug!("{self:?}");
         match self {
             Self::InternalServerError(err) => {
@@ -187,7 +188,7 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
         &self,
         req: &OprfRequest<Self::RequestAuth>,
     ) -> Result<(), Self::RequestAuthError> {
-        tracing::info!("Authenticating with API Key and Proof");
+        tracing::debug!("Authenticating with API Key and Proof");
         //call API
         let api_valid = tokio::task::spawn({
             let client = self.client.clone();
@@ -265,7 +266,7 @@ async fn verify_api_key(
     api_key: String,
     env: Environment,
 ) -> Result<(), ApiVerificationError> {
-    if let Environment::Dev = env {
+    if matches!(env, Environment::Dev) {
         tracing::info!("Skipping API key verification in dev environment");
         return Ok(());
     }
