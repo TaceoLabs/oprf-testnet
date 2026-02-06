@@ -19,8 +19,20 @@ alloy = { workspace = true, features = [
 ] }
 ark-babyjubjub = { workspace = true }
 ark-ff = { workspace = true }
+clap = { workspace = true, features = ["derive", "env"] }
 eyre.workspace = true
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
 rand.workspace = true
+rand_chacha.workspace = true
+rustls.workspace = true
 taceo-oprf = { workspace = true, features = ["client"] }
+tokio = { workspace = true, features = [
+  "net",
+  "rt-multi-thread",
+  "signal",
+  "sync",
+  "time",
+  "tokio-macros",
+] }
 tracing.workspace = true
+webpki-roots.workspace = true

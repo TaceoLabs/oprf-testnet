@@ -88,9 +88,8 @@ run-dev-client *args:
 
 run-client *args:
     #!/usr/bin/env bash
-    cargo build -p taceo-oprf-testnet-client --release
-    oprf_key_registry=$(grep -oP 'OprfKeyRegistry proxy deployed to: \K0x[a-fA-F0-9]+' logs/deploy_oprf_key_registry.log)
-    OPRF_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry ./target/release/taceo-oprf-testnet-public-client {{ args }}
+    cargo build -p taceo-oprf-testnet-public-client --release
+    RUST_LOG="taceo_oprf_testnet_client=trace,debug,info" ./target/release/taceo-oprf-testnet-public-client {{ args }}
 
 [group('anvil')]
 [working-directory('contracts/script/deploy')]

@@ -6371,12 +6371,17 @@ version = "0.1.0"
 dependencies = [
  "alloy",
  "ark-ff 0.5.0",
+ "clap",
  "eyre",
  "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "rustls 0.23.36",
  "taceo-ark-babyjubjub",
  "taceo-oprf",
  "taceo-oprf-testnet-authentication",
+ "tokio",
  "tracing",
+ "webpki-roots 1.0.5",
 ]
 
 [[package]]
@@ -6423,26 +6428,6 @@ dependencies = [
  "testcontainers-modules",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "taceo-oprf-testnet-public-client"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "ark-ff 0.5.0",
- "clap",
- "eyre",
- "rand 0.8.5",
- "rand_chacha 0.3.1",
- "rustls 0.23.36",
- "taceo-ark-babyjubjub",
- "taceo-oprf",
- "taceo-oprf-testnet-authentication",
- "taceo-oprf-testnet-client",
- "tokio",
- "tracing",
- "webpki-roots 1.0.5",
 ]
 
 [[package]]

@@ -5,7 +5,6 @@ members = [
   "oprf-testnet-client",
   "oprf-testnet-dev-client",
   "oprf-testnet-node",
-  "oprf-testnet-public-client",
 ]
 
 [workspace.package]
