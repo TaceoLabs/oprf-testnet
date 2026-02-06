@@ -44,9 +44,17 @@ pub struct TestNetApiOnlyRequestAuth {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum TestNetApiOnlyRequestAuthError {
+pub enum ApiVerificationError {
     #[error("API Key not valid")]
     ApiVerificationFailed,
+    #[error(transparent)]
+    InternalServerError(#[from] eyre::Report),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum TestNetApiOnlyRequestAuthError {
+    #[error(transparent)]
+    ApiVerificationError(#[from] ApiVerificationError),
     #[error(transparent)]
     InternalServerError(#[from] eyre::Report),
 }
@@ -55,17 +63,16 @@ pub enum TestNetApiOnlyRequestAuthError {
 pub enum TestNetRequestAuthError {
     #[error("Proof invalid")]
     ProofInvalid,
-    #[error("API Key not valid")]
-    ApiVerificationFailed,
+    #[error(transparent)]
+    ApiVerificationError(#[from] ApiVerificationError),
     #[error(transparent)]
     InternalServerError(#[from] eyre::Report),
 }
 
-impl IntoResponse for TestNetRequestAuthError {
+impl IntoResponse for ApiVerificationError {
     fn into_response(self) -> axum::response::Response {
         tracing::debug!("{self:?}");
         match self {
-            Self::ProofInvalid => (StatusCode::BAD_REQUEST, "Proof is invalid").into_response(),
             Self::ApiVerificationFailed => {
                 (StatusCode::UNAUTHORIZED, "API Key not valid").into_response()
             }
@@ -77,17 +84,29 @@ impl IntoResponse for TestNetRequestAuthError {
     }
 }
 
-impl IntoResponse for TestNetApiOnlyRequestAuthError {
+impl IntoResponse for TestNetRequestAuthError {
     fn into_response(self) -> axum::response::Response {
         tracing::debug!("{self:?}");
         match self {
-            Self::ApiVerificationFailed => {
-                (StatusCode::UNAUTHORIZED, "API Key not valid").into_response()
-            }
+            Self::ProofInvalid => (StatusCode::BAD_REQUEST, "Proof is invalid").into_response(),
             Self::InternalServerError(err) => {
                 tracing::error!("Internal server error: {err:?}");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
             }
+            Self::ApiVerificationError(err) => err.into_response(),
+        }
+    }
+}
+
+impl IntoResponse for TestNetApiOnlyRequestAuthError {
+    fn into_response(self) -> axum::response::Response {
+        tracing::debug!("{self:?}");
+        match self {
+            Self::InternalServerError(err) => {
+                tracing::error!("Internal server error: {err:?}");
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
+            }
+            Self::ApiVerificationError(err) => err.into_response(),
         }
     }
 }
@@ -185,10 +204,7 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
             return Err(TestNetRequestAuthError::ProofInvalid);
         }
 
-        let asdf = api_valid.await.context("awaiting api verification")??;
-        //if !api_valid.await? {
-        //  return Err(TestNetRequestAuthError::ApiVerificationFailed);
-        //}
+        api_valid.await.context("awaiting api verification")??;
         Ok(())
     }
 }
@@ -212,11 +228,7 @@ impl OprfRequestAuthenticator for TestNetApiOnlyRequestAuthenticator {
             async move { verify_api_key(client, root_api_key, api_key, env).await }
         });
 
-        let asdf = api_valid.await.context("awaiting api verification")??; //TODO: no bool return
-        //in Result
-        //if !api_valid {
-        //   return Err(TestNetApiOnlyRequestAuthError::ApiVerificationFailed);
-        // }
+        api_valid.await.context("awaiting api verification")??;
         Ok(())
     }
 }
@@ -226,7 +238,7 @@ async fn verify_api_key(
     verify_key: SecretString,
     api_key: String,
     env: Environment,
-) -> Result<bool, eyre::Report> {
+) -> Result<(), ApiVerificationError> {
     //TODO: no bool return
     // if env == Environment::Dev {
     //     return Ok();
@@ -245,5 +257,8 @@ async fn verify_api_key(
         .await
         .context("Unkey response parse error")?;
 
-    Ok(unkey_response.data.valid)
+    if !unkey_response.data.valid {
+        return Err(ApiVerificationError::ApiVerificationFailed);
+    }
+    Ok(())
 }
