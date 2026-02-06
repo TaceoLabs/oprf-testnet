@@ -166,7 +166,7 @@ async fn prepare_oprf_stress_test_oprf_request(
     let mut signature = signer.sign_hash_sync(&msg_hash)?.as_bytes().to_vec();
     //Remove recovery id
     _ = signature.pop();
-    let action = ark_babyjubjub::fq::Fq::from_be_bytes_mod_order(signer.address().as_ref());
+    let action = ark_babyjubjub::Fq::from_be_bytes_mod_order(signer.address().as_ref());
     let (public_inputs, proof) = compute_proof(
         blinding_factor.clone(),
         x_affine,

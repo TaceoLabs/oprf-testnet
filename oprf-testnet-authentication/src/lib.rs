@@ -242,7 +242,9 @@ async fn verify_api_key(
         .json(&serde_json::json!({"key": api_key}))
         .send()
         .await
-        .context("Unkey API request error")?;
+        .context("Unkey API request error")?
+        .error_for_status()
+        .context("Unkey API status code error")?;
 
     // parse API response
     let unkey_response = result

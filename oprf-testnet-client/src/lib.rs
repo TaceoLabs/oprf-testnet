@@ -95,7 +95,7 @@ pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
 
     // Instantiate a signer
     let signer = PrivateKeySigner::from_signing_key(private_key);
-    let query = ark_babyjubjub::fq::Fq::from_be_bytes_mod_order(signer.address().as_ref());
+    let query = ark_babyjubjub::Fq::from_be_bytes_mod_order(signer.address().as_ref());
 
     let ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
