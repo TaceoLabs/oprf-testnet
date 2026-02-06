@@ -19,11 +19,16 @@ pub enum AuthModule {
     TestNet,
     TestNetApiOnly,
 }
+impl AuthModule {
+    pub fn to_path(&self) -> String {
+        format!("/{}", self)
+    }
+}
 impl fmt::Display for AuthModule {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            AuthModule::TestNet => "TestNet",
-            AuthModule::TestNetApiOnly => "TestNetApiOnly",
+            AuthModule::TestNet => "testnet",
+            AuthModule::TestNetApiOnly => "testnet-api-only",
         };
         write!(f, "{s}")
     }
@@ -33,8 +38,8 @@ impl FromStr for AuthModule {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "TestNet" => Ok(AuthModule::TestNet),
-            "TestNetApiOnly" => Ok(AuthModule::TestNetApiOnly),
+            "testnet" => Ok(AuthModule::TestNet),
+            "testnet-api-only" => Ok(AuthModule::TestNetApiOnly),
             _ => Err(format!("Unknown AuthModule: {s}")),
         }
     }

@@ -49,9 +49,9 @@ pub async fn start(
         cancellation_token.clone(),
     )
     .await?
-    .module(&AuthModule::TestNet.to_string(), oprf_req_auth_service)
+    .module(&AuthModule::TestNet.to_path(), oprf_req_auth_service)
     .module(
-        &AuthModule::TestNetApiOnly.to_string(),
+        &AuthModule::TestNetApiOnly.to_path(),
         oprf_req_api_only_auth_service,
     )
     .build();
