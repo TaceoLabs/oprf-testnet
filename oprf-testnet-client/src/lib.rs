@@ -36,10 +36,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     match distributed_oprf_args.module {
         "testnet" => distributed_oprf_api_and_proof(distributed_oprf_args, rng).await,
         "testnet_api_only" => distributed_oprf_api_only(distributed_oprf_args, rng).await,
-        _ => Err(eyre::eyre!(
-            "Unsupported module: {}",
-            distributed_oprf_args.module
-        )),
+        _ => eyre::bail!("Unsupported module: {}", distributed_oprf_args.module),
     }
 }
 

@@ -156,13 +156,6 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
     ) -> Result<(), Self::RequestAuthError> {
         tracing::info!("Authenticating with API Key and Proof");
         //call API
-        // let api_valid = verify_api_key(
-        //     &self.client,
-        //     self.root_api_key.clone(),
-        //     &req.auth.api_key,
-        //     self.env,
-        // );
-
         let api_valid = tokio::task::spawn({
             let client = self.client.clone();
             let root_api_key = self.root_api_key.clone();
@@ -203,8 +196,8 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
         if !bb_verify_status.success() {
             return Err(TestNetRequestAuthError::ProofInvalid);
         }
-
         api_valid.await.context("awaiting api verification")??;
+        tracing::info!("Authentication successful");
         Ok(())
     }
 }
@@ -219,16 +212,16 @@ impl OprfRequestAuthenticator for TestNetApiOnlyRequestAuthenticator {
         req: &OprfRequest<Self::RequestAuth>,
     ) -> Result<(), Self::RequestAuthError> {
         tracing::info!("Authenticating with only API");
-        //call API
-        let api_valid = tokio::task::spawn({
-            let client = self.client.clone();
-            let root_api_key = self.root_api_key.clone();
-            let api_key = req.auth.api_key.clone();
-            let env = self.env;
-            async move { verify_api_key(client, root_api_key, api_key, env).await }
-        });
 
-        api_valid.await.context("awaiting api verification")??;
+        //call API
+        verify_api_key(
+            self.client.clone(),
+            self.root_api_key.clone(),
+            req.auth.api_key.clone(),
+            self.env,
+        )
+        .await?;
+        tracing::info!("Authentication successful");
         Ok(())
     }
 }
@@ -239,10 +232,10 @@ async fn verify_api_key(
     api_key: String,
     env: Environment,
 ) -> Result<(), ApiVerificationError> {
-    //TODO: no bool return
-    // if env == Environment::Dev {
-    //     return Ok();
-    // }
+    if let Environment::Dev = env {
+        tracing::info!("Skipping API key verification in dev environment");
+        return Ok(());
+    }
     let result = client
         .post("https://api.unkey.com/v2/keys.verifyKey")
         .bearer_auth(verify_key.expose_secret())

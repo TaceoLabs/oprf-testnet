@@ -129,7 +129,7 @@ async fn run_oprf(
         &mut rng,
     )
     .await?;
-
+    tracing::info!("OPRF output: {:?}", verifiable_oprf);
     Ok(verifiable_oprf.epoch)
 }
 
