@@ -6095,9 +6095,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-ark-serde-compat"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51f9b64004b819c656f1c5bb439894faf7cc8abb9f315ccf50f19cba14ba12c8"
+checksum = "07528b4dd1a0c9e49ef352f96219c611af0aa2f7cbd97ddb7276dcf3c2cf8dd0"
 dependencies = [
  "ark-bn254",
  "ark-ec",
@@ -6110,9 +6110,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-circom-types"
-version = "0.2.0"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "769ac948012e3a64526c1ab29e214d8cf718bc52b30411e01adacd68596f6843"
+checksum = "677eb3ed8275b2f179d4b1a93126a51c5b4f409c5ea9d7bc50398b13e517e30b"
 dependencies = [
  "ark-bn254",
  "ark-ec",
@@ -6169,9 +6169,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-nodes-common"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f5dd5091853d26e0b665a7949fce6c3203f1cd42d02fed7536f02c1cd54a316"
+checksum = "b367a1b249843f1f58f9a9fde1830b3754959e9df64d94ef5764381d5df4b0ec"
 dependencies = [
  "aws-config",
  "aws-sdk-secretsmanager",
@@ -6201,22 +6201,22 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "626b62fccd428ffe6874c57d8cea0b2ccd153c7e9c77c16b7230e1190f3deb87"
+checksum = "d0b72bf18a6887c4ebb8b6ab26caa7c7efbdbb1493efd6e64f3b5c76580a5aae"
 dependencies = [
  "taceo-oprf-client",
  "taceo-oprf-core",
  "taceo-oprf-dev-client",
  "taceo-oprf-service",
- "taceo-oprf-types",
+ "taceo-oprf-types 0.7.0",
 ]
 
 [[package]]
 name = "taceo-oprf-client"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cd72c7408a8ae114a96ddc939c4140abbc16b3209de942b5fc988d724d839ec"
+checksum = "35c970d34235130ce19d2b026e1a7ca0e027f8d6c5aaedef23f3699a4722e350"
 dependencies = [
  "ark-ec",
  "ciborium",
@@ -6224,7 +6224,7 @@ dependencies = [
  "serde",
  "taceo-ark-babyjubjub",
  "taceo-oprf-core",
- "taceo-oprf-types",
+ "taceo-oprf-types 0.7.0",
  "taceo-poseidon2",
  "thiserror 2.0.18",
  "tokio",
@@ -6257,9 +6257,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf-dev-client"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f1df73b530a0b4aeb2a6aa20f064eaefb8c6d4731c6a0846fe0514f3ade4732"
+checksum = "e6aa71b6ce3fdb030ffbb87a5627bd4ad79fa4455ed8bb82c7fc4c708d8ba437"
 dependencies = [
  "alloy",
  "clap",
@@ -6269,7 +6269,7 @@ dependencies = [
  "taceo-oprf-client",
  "taceo-oprf-core",
  "taceo-oprf-test-utils",
- "taceo-oprf-types",
+ "taceo-oprf-types 0.7.0",
  "tokio",
  "tracing",
  "uuid",
@@ -6277,9 +6277,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf-service"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c72a1448e0fc2329854ac1d0f5c305d348cc968f71038cc198cf25ddb296ad9e"
+checksum = "8bdd697d3fe814bba82d8f764423b5e705ed5e6843aafce53fd7a00e94596703"
 dependencies = [
  "alloy",
  "ark-serialize 0.5.0",
@@ -6305,7 +6305,7 @@ dependencies = [
  "taceo-ark-babyjubjub",
  "taceo-nodes-common",
  "taceo-oprf-core",
- "taceo-oprf-types",
+ "taceo-oprf-types 0.7.0",
  "thiserror 2.0.18",
  "tokio",
  "tokio-util",
@@ -6340,7 +6340,7 @@ dependencies = [
  "sqlx",
  "taceo-ark-babyjubjub",
  "taceo-oprf-core",
- "taceo-oprf-types",
+ "taceo-oprf-types 0.6.0",
  "testcontainers-modules",
  "tokio",
  "tokio-util",
@@ -6448,6 +6448,28 @@ name = "taceo-oprf-types"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "91b01a7fef47bdd15cf3cfc3af4cfbb52378fd3105097d860ac2d96f08f94f2b"
+dependencies = [
+ "alloy",
+ "ark-ff 0.5.0",
+ "ark-serialize 0.5.0",
+ "async-trait",
+ "eyre",
+ "http 1.4.0",
+ "serde",
+ "taceo-ark-babyjubjub",
+ "taceo-ark-serde-compat",
+ "taceo-circom-types",
+ "taceo-groth16-sol",
+ "taceo-oprf-core",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "taceo-oprf-types"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d8bb3332990b063920bf34e7391b56942daab551a45871d440023ebc3956d8d"
 dependencies = [
  "alloy",
  "ark-ff 0.5.0",
