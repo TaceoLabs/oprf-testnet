@@ -1,4 +1,4 @@
-[private]
+# [private]
 default:
     @just --justfile {{ justfile() }} --list --list-heading $'Project commands:\n'
 
@@ -88,8 +88,8 @@ run-dev-client *args:
 
 run-client *args:
     #!/usr/bin/env bash
-    cargo build -p taceo-oprf-testnet-public-client --release
-    RUST_LOG="taceo_oprf_testnet_client=trace,debug,info" ./target/release/taceo-oprf-testnet-public-client {{ args }}
+    cargo build -p taceo-oprf-testnet-client --release
+    RUST_LOG="taceo_oprf_testnet_client=trace,debug,info" ./target/release/taceo-oprf-testnet-client {{ args }}
 
 [group('anvil')]
 [working-directory('contracts/script/deploy')]
