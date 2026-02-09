@@ -82,7 +82,6 @@ async fn main() -> eyre::Result<()> {
         true => AuthModule::TestNetApiOnly,
         false => AuthModule::TestNet,
     };
-    println!("asdfasdf");
 
     run_oprf(
         &config.nodes,

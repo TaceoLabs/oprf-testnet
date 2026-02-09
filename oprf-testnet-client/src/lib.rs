@@ -7,9 +7,9 @@ use ark_ff::PrimeField as _;
 use eyre::Context;
 use oprf_testnet_authentication::{AuthModule, TestNetApiOnlyRequestAuth, TestNetRequestAuth};
 use rand::{CryptoRng, Rng};
-use std::fs;
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{fs, process};
 use std::{fs::File, process::Command};
 use taceo_oprf::client::VerifiableOprfOutput;
 use taceo_oprf::{client::Connector, core::oprf::BlindingFactor, types::OprfKeyId};
@@ -50,13 +50,13 @@ pub async fn distributed_oprf_api_only<R: Rng + CryptoRng>(
 
     let auth = TestNetApiOnlyRequestAuth {
         api_key: distributed_oprf_args.api_key,
+        oprf_key_id: distributed_oprf_args.oprf_key_id,
     };
 
     let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
         distributed_oprf_args.services,
         &distributed_oprf_args.module.to_string(),
         distributed_oprf_args.threshold,
-        distributed_oprf_args.oprf_key_id,
         distributed_oprf_args.action,
         blinding_factor,
         domain_separator,
@@ -120,6 +120,7 @@ pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
     let auth = TestNetRequestAuth {
         public_inputs,
         proof,
+        oprf_key_id: distributed_oprf_args.oprf_key_id,
         api_key: distributed_oprf_args.api_key,
     };
 
@@ -127,7 +128,6 @@ pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
         distributed_oprf_args.services,
         &distributed_oprf_args.module.to_string(),
         distributed_oprf_args.threshold,
-        distributed_oprf_args.oprf_key_id,
         query,
         blinding_factor,
         domain_separator,
@@ -167,6 +167,8 @@ pub async fn compute_proof(
     let nargo_exec_status = Command::new("nargo")
         .arg("execute")
         .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
         .status()
         .context("while spawning nargo execute")?;
 
@@ -181,6 +183,8 @@ pub async fn compute_proof(
         .arg("-b")
         .arg(&bytecode_path)
         .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
         .status()
         .context("while spawning bb write_vk")?;
 
@@ -199,6 +203,8 @@ pub async fn compute_proof(
         .arg("-w")
         .arg(witness_path)
         .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
         .status()
         .context("while spawning bb prove")?;
 

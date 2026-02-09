@@ -30,12 +30,12 @@ use taceo_oprf::{
     client::Connector,
     core::oprf::{BlindedOprfRequest, BlindingFactor},
     dev_client::{
-        Command, StressTestCommand,
+        Command, StressTestKeyGenCommand, StressTestOprfCommand,
         oprf_test_utils::{self, health_checks},
     },
     types::{OprfKeyId, ShareEpoch, api::OprfRequest, crypto::OprfPublicKey},
 };
-use tokio::sync::mpsc;
+use tokio::{sync::mpsc, task::JoinSet};
 use uuid::Uuid;
 
 /// The configuration for the OPRF client.
@@ -129,7 +129,7 @@ async fn run_oprf(
         &mut rng,
     )
     .await?;
-    tracing::info!("OPRF output: {:?}", verifiable_oprf);
+    tracing::debug!("OPRF output: {:?}", verifiable_oprf);
     Ok(verifiable_oprf.epoch)
 }
 
@@ -180,13 +180,13 @@ async fn prepare_oprf_stress_test_oprf_request(
         public_inputs,
         proof,
         api_key,
+        oprf_key_id,
     };
     let query = action;
     let blinded_request = taceo_oprf::core::oprf::client::blind_query(query, blinding_factor);
     let oprf_req = OprfRequest {
         request_id,
         blinded_query: blinded_request.blinded_query(),
-        oprf_key_id,
         auth,
     };
 
@@ -194,8 +194,8 @@ async fn prepare_oprf_stress_test_oprf_request(
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn stress_test(
-    cmd: StressTestCommand,
+async fn stress_test_oprf(
+    cmd: StressTestOprfCommand,
     nodes: &[String],
     threshold: usize,
     api_key: String,
@@ -249,6 +249,70 @@ async fn stress_test(
         }
     }
 
+    Ok(())
+}
+
+async fn stress_test_key_gen(
+    cmd: StressTestKeyGenCommand,
+    nodes: &[String],
+    oprf_key_registry: Address,
+    provider: DynProvider,
+    max_wait_time: Duration,
+) -> eyre::Result<()> {
+    // initiate key-gens and reshares
+    let mut key_gens = JoinSet::new();
+    for _ in 0..cmd.runs {
+        let oprf_key_id_u32: u32 = rand::random();
+        let oprf_key_id = OprfKeyId::new(U160::from(oprf_key_id_u32));
+        tracing::debug!("init OPRF key gen with: {oprf_key_id}");
+        oprf_test_utils::init_key_gen(provider.clone(), oprf_key_registry, oprf_key_id).await?;
+        key_gens.spawn({
+            let nodes = nodes.to_vec();
+            async move {
+                health_checks::oprf_public_key_from_services(
+                    oprf_key_id,
+                    ShareEpoch::default(),
+                    &nodes,
+                    max_wait_time,
+                )
+                .await?;
+                eyre::Ok(oprf_key_id)
+            }
+        });
+    }
+    tracing::info!("finished init key-gens, now starting reshares");
+    let mut reshares = JoinSet::new();
+    while let Some(key_gen_result) = key_gens.join_next().await {
+        let key_id = key_gen_result
+            .expect("Can join")
+            .context("Could not fetch oprf-key-gen")?;
+        tracing::debug!("init OPRF reshare for {key_id}");
+        oprf_test_utils::init_reshare(provider.clone(), oprf_key_registry, key_id).await?;
+        // do an oprf to check if correct
+        reshares.spawn({
+            let nodes = nodes.to_vec();
+            async move {
+                health_checks::oprf_public_key_from_services(
+                    key_id,
+                    ShareEpoch::default().next(),
+                    &nodes,
+                    max_wait_time,
+                )
+                .await?;
+                eyre::Ok(())
+            }
+        });
+    }
+    tracing::info!(
+        "started {} key-gens + reshare - waiting to finish",
+        cmd.runs
+    );
+    reshares
+        .join_all()
+        .await
+        .into_iter()
+        .collect::<eyre::Result<Vec<_>>>()
+        .context("cannot finish reshares")?;
     Ok(())
 }
 
@@ -441,9 +505,9 @@ async fn main() -> eyre::Result<()> {
             .await?;
             tracing::info!("oprf-test successful");
         }
-        Command::StressTest(cmd) => {
+        Command::StressTestOprf(cmd) => {
             tracing::info!("running stress-test");
-            stress_test(
+            stress_test_oprf(
                 cmd,
                 &config.nodes,
                 config.threshold,
@@ -452,6 +516,18 @@ async fn main() -> eyre::Result<()> {
                 oprf_key_id,
                 oprf_public_key,
                 connector,
+            )
+            .await?;
+            tracing::info!("stress-test successful");
+        }
+        Command::StressTestKeyGen(cmd) => {
+            tracing::info!("running key-gen stress-test");
+            stress_test_key_gen(
+                cmd,
+                &config.nodes,
+                config.oprf_key_registry_contract,
+                provider,
+                config.max_wait_time,
             )
             .await?;
             tracing::info!("stress-test successful");

@@ -9,9 +9,11 @@ use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::io::Write as _;
+use std::process;
 use std::process::Command;
 use std::str::FromStr;
 use taceo_oprf::service::config::Environment;
+use taceo_oprf::types::OprfKeyId;
 use taceo_oprf::types::api::{OprfRequest, OprfRequestAuthenticator};
 use tempfile::NamedTempFile;
 
@@ -69,12 +71,14 @@ struct UnkeyMeta {
 pub struct TestNetRequestAuth {
     pub public_inputs: Vec<u8>,
     pub proof: Vec<u8>,
+    pub oprf_key_id: OprfKeyId,
     pub api_key: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TestNetApiOnlyRequestAuth {
     pub api_key: String,
+    pub oprf_key_id: OprfKeyId,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -184,10 +188,10 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
     type RequestAuth = TestNetRequestAuth;
     type RequestAuthError = TestNetRequestAuthError;
 
-    async fn verify(
+    async fn authenticate(
         &self,
         req: &OprfRequest<Self::RequestAuth>,
-    ) -> Result<(), Self::RequestAuthError> {
+    ) -> Result<OprfKeyId, Self::RequestAuthError> {
         tracing::debug!("Authenticating with API Key and Proof");
         //call API
         let api_valid = tokio::task::spawn({
@@ -214,6 +218,7 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
             .write_all(&req.auth.proof)
             .context("writing proof to temp file")?;
 
+        tracing::debug!("Verifying proof with bb");
         let bb_verify_status = Command::new("bb")
             .arg("verify")
             .arg("-t")
@@ -224,6 +229,8 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
             .arg(public_inputs.path())
             .arg("-k")
             .arg(vk_path)
+            .stdout(process::Stdio::null())
+            .stderr(process::Stdio::null())
             .status()
             .context("while spawning bb verify")?;
 
@@ -232,7 +239,7 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
         }
         api_valid.await.context("awaiting api verification")??;
         tracing::info!("Authentication successful");
-        Ok(())
+        Ok(req.auth.oprf_key_id)
     }
 }
 
@@ -241,11 +248,11 @@ impl OprfRequestAuthenticator for TestNetApiOnlyRequestAuthenticator {
     type RequestAuth = TestNetApiOnlyRequestAuth;
     type RequestAuthError = TestNetApiOnlyRequestAuthError;
 
-    async fn verify(
+    async fn authenticate(
         &self,
         req: &OprfRequest<Self::RequestAuth>,
-    ) -> Result<(), Self::RequestAuthError> {
-        tracing::info!("Authenticating with only API");
+    ) -> Result<OprfKeyId, Self::RequestAuthError> {
+        tracing::debug!("Authenticating with only API");
 
         //call API
         verify_api_key(
@@ -256,7 +263,7 @@ impl OprfRequestAuthenticator for TestNetApiOnlyRequestAuthenticator {
         )
         .await?;
         tracing::info!("Authentication successful");
-        Ok(())
+        Ok(req.auth.oprf_key_id)
     }
 }
 
@@ -270,6 +277,8 @@ async fn verify_api_key(
         tracing::info!("Skipping API key verification in dev environment");
         return Ok(());
     }
+
+    tracing::debug!("Verifying API");
     let result = client
         .post("https://api.unkey.com/v2/keys.verifyKey")
         .bearer_auth(verify_key.expose_secret())
@@ -281,6 +290,7 @@ async fn verify_api_key(
         .context("Unkey API status code error")?;
 
     // parse API response
+    tracing::debug!("Parsing API response");
     let unkey_response = result
         .json::<UnkeyRespRoot>()
         .await
