@@ -47,7 +47,7 @@ async fn run_oprf(
     let action = ark_babyjubjub::Fq::rand(&mut rng);
 
     // the client example internally checks the DLog equality
-    let _verifiable_oprf = distributed_oprf(
+    let verifiable_oprf = distributed_oprf(
         DistributedOprfArgs {
             services: nodes,
             threshold,
@@ -60,6 +60,7 @@ async fn run_oprf(
         &mut rng,
     )
     .await?;
+    tracing::info!("Received verified oprf output: {}", verifiable_oprf.output);
     Ok(())
 }
 
@@ -92,7 +93,7 @@ async fn main() -> eyre::Result<()> {
         connector,
     )
     .await?;
-    tracing::info!("oprf-test successful");
+    tracing::info!("oprf successful");
 
     Ok(())
 }

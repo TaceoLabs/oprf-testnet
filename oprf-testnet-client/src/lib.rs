@@ -29,7 +29,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     distributed_oprf_args: DistributedOprfArgs<'_>,
     rng: &mut R,
 ) -> eyre::Result<VerifiableOprfOutput> {
-    tracing::info!(
+    tracing::debug!(
         "Starting distributed OPRF with args: {}",
         distributed_oprf_args.module
     );
@@ -114,8 +114,7 @@ pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
         y_affine,
         signature,
         msg_hash.to_vec(),
-    )
-    .await?;
+    )?;
 
     let auth = TestNetRequestAuth {
         public_inputs,
@@ -140,7 +139,7 @@ pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
     Ok(verifiable_oprf_output)
 }
 
-pub async fn compute_proof(
+pub fn compute_proof(
     beta: BlindingFactor,
     pubkey_x: Vec<u8>,
     pubkey_y: Vec<u8>,

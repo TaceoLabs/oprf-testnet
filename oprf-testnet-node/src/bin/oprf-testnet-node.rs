@@ -22,11 +22,6 @@ async fn main() -> eyre::Result<ExitCode> {
 
     tracing::info!("{}", nodes_common::version_info!());
 
-    // Hardcode the maximum websocket msg size, as we need it bigger than the default for the OPRF
-    // service. Otherwise the user has to set it manually every time.
-    unsafe {
-        std::env::set_var("OPRF_NODE_MAX_MESSAGE_SIZE", "51200");
-    }
     let config = TestNetNodeConfig::parse();
 
     // Load the AWS secret manager.

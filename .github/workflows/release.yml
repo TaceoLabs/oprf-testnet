@@ -30,6 +30,7 @@ jobs:
 
   upload-testnet-client-binary:
     # if: startsWith(github.event.release.tag_name, 'co-circom-v')
+    needs: create-release
     strategy:
       matrix:
         include:

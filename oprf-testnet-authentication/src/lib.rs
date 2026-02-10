@@ -22,11 +22,13 @@ pub enum AuthModule {
     TestNet,
     TestNetApiOnly,
 }
+
 impl AuthModule {
     pub fn to_path(&self) -> String {
         format!("/{self}")
     }
 }
+
 impl fmt::Display for AuthModule {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
@@ -36,6 +38,7 @@ impl fmt::Display for AuthModule {
         write!(f, "{s}")
     }
 }
+
 impl FromStr for AuthModule {
     type Err = String;
 
@@ -162,24 +165,24 @@ pub struct TestNetApiOnlyRequestAuthenticator {
 }
 
 impl TestNetRequestAuthenticator {
-    pub fn init(root_api_key: SecretString, env: Environment) -> eyre::Result<Self> {
+    pub fn init(root_api_key: SecretString, env: Environment) -> Self {
         let client = reqwest::Client::new();
-        Ok(Self {
+        Self {
             client,
             root_api_key,
             env,
-        })
+        }
     }
 }
 
 impl TestNetApiOnlyRequestAuthenticator {
-    pub fn init(root_api_key: SecretString, env: Environment) -> eyre::Result<Self> {
+    pub fn init(root_api_key: SecretString, env: Environment) -> Self {
         let client = reqwest::Client::new();
-        Ok(Self {
+        Self {
             client,
             root_api_key,
             env,
-        })
+        }
     }
 }
 
@@ -238,7 +241,7 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
             return Err(TestNetRequestAuthError::ProofInvalid);
         }
         api_valid.await.context("awaiting api verification")??;
-        tracing::info!("Authentication successful");
+        tracing::debug!("Authentication successful");
         Ok(req.auth.oprf_key_id)
     }
 }
@@ -262,7 +265,7 @@ impl OprfRequestAuthenticator for TestNetApiOnlyRequestAuthenticator {
             self.env,
         )
         .await?;
-        tracing::info!("Authentication successful");
+        tracing::debug!("Authentication successful");
         Ok(req.auth.oprf_key_id)
     }
 }

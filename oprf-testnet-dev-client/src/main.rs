@@ -173,8 +173,7 @@ async fn prepare_oprf_stress_test_oprf_request(
         y_affine,
         signature,
         msg_hash.to_vec(),
-    )
-    .await?;
+    )?;
 
     let auth = TestNetRequestAuth {
         public_inputs,
@@ -193,7 +192,7 @@ async fn prepare_oprf_stress_test_oprf_request(
     Ok((request_id, blinded_request, oprf_req))
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 async fn stress_test_oprf(
     cmd: StressTestOprfCommand,
     nodes: &[String],
