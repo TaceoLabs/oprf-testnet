@@ -1,4 +1,43 @@
 services:
+  oprf-node0:
+    container_name: oprf-node0
+    image: node
+    network_mode: "host"
+    environment:
+      - RUST_LOG=taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace
+      - OPRF_NODE_UNKEY_VERIFY_KEY=unkey_3ZjJj4zjeS8NNUGg2g9W3Tre
+      - OPRF_NODE_BIND_ADDR=0.0.0.0:10000
+      - OPRF_NODE_DB_CONNECTION_STRING=postgres://postgres:postgres@localhost:5440/postgres
+      - OPRF_NODE_DB_SCHEMA=oprf
+      - OPRF_NODE_ENVIRONMENT=prod
+      - OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT}
+      - OPRF_NODE_ACCEPTED_VERSIONS=>=0.0.0
+  oprf-node1:
+    container_name: oprf-node1
+    image: node
+    network_mode: "host"
+    environment:
+      - RUST_LOG=taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace
+      - OPRF_NODE_UNKEY_VERIFY_KEY=unkey_3ZjJj4zjeS8NNUGg2g9W3Tre
+      - OPRF_NODE_BIND_ADDR=0.0.0.0:10001
+      - OPRF_NODE_DB_CONNECTION_STRING=postgres://postgres:postgres@localhost:5441/postgres
+      - OPRF_NODE_DB_SCHEMA=oprf
+      - OPRF_NODE_ENVIRONMENT=prod
+      - OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT}
+      - OPRF_NODE_ACCEPTED_VERSIONS=>=0.0.0
+  oprf-node2:
+    container_name: oprf-node2
+    image: node
+    network_mode: "host"
+    environment:
+      - RUST_LOG=taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace
+      - OPRF_NODE_UNKEY_VERIFY_KEY=unkey_3ZjJj4zjeS8NNUGg2g9W3Tre
+      - OPRF_NODE_BIND_ADDR=0.0.0.0:10002
+      - OPRF_NODE_DB_CONNECTION_STRING=postgres://postgres:postgres@localhost:5442/postgres
+      - OPRF_NODE_DB_SCHEMA=oprf
+      - OPRF_NODE_ENVIRONMENT=prod
+      - OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT}
+      - OPRF_NODE_ACCEPTED_VERSIONS=>=0.0.0
   localstack:
     image: localstack/localstack
     container_name: localstack
