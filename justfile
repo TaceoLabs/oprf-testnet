@@ -56,9 +56,9 @@ run-setup:
     OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d oprf-key-gen0 oprf-key-gen1 oprf-key-gen2
     echo "starting OPRF nodes..."
     echo $oprf_key_registry
-    OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d oprf-node0 oprf-node1 oprf-node2
-    sleep 40
-    # OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry just run-nodes 
+    # OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d oprf-node0 oprf-node1 oprf-node2
+    # sleep 200
+    OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry just run-nodes 
     echo "stopping containers..."
     docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml down
 
@@ -68,15 +68,15 @@ run-nodes:
     mkdir -p logs
     cargo build -p taceo-oprf-testnet-node --release
     # anvil wallet 7
-    # RUST_LOG="taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10000 --db-connection-string postgres://postgres:postgres@localhost:5440/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node0.log 2>&1 &
-    # pid0=$!
-    # echo "started node0 with PID $pid0"
+    RUST_LOG="taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace" ./target/release/oprf-testnet-node --ws-max-message-size 51200 --bind-addr 127.0.0.1:10000 --db-connection-string postgres://postgres:postgres@localhost:5440/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node0.log 2>&1 &
+    pid0=$!
+    echo "started node0 with PID $pid0"
     # anvil wallet 8
-    RUST_LOG="taceo_oprf_testnet_node=traceoprf_service_example=trace,warn" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10001 --db-connection-string postgres://postgres:postgres@localhost:5441/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node1.log 2>&1 &
+    RUST_LOG="taceo_oprf_testnet_node=traceoprf_service_example=trace,warn" ./target/release/oprf-testnet-node --ws-max-message-size 51200 --bind-addr 127.0.0.1:10001 --db-connection-string postgres://postgres:postgres@localhost:5441/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node1.log 2>&1 &
     pid1=$!
     echo "started node1 with PID $pid1"
     # anvil wallet 9
-    RUST_LOG="taceo_oprf_testnet_node=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-node --bind-addr 127.0.0.1:10002 --db-connection-string postgres://postgres:postgres@localhost:5442/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node2.log 2>&1  &
+    RUST_LOG="taceo_oprf_testnet_node=trace,oprf_service_example=trace,warn" ./target/release/oprf-testnet-node --ws-max-message-size 51200 --bind-addr 127.0.0.1:10002 --db-connection-string postgres://postgres:postgres@localhost:5442/postgres --db-schema oprf --environment dev --version-req ">=0.0.0" > logs/node2.log 2>&1  &
     pid2=$!
     echo "started node2 with PID $pid2"
     trap "kill $pid0 $pid1 $pid2" SIGINT SIGTERM

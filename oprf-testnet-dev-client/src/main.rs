@@ -548,6 +548,7 @@ async fn main() -> eyre::Result<()> {
             .await?;
             tracing::info!("reshare-test successful");
         }
+        Command::DeleteTest => {}
     }
 
     Ok(())
