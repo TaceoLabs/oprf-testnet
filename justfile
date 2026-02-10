@@ -1,4 +1,4 @@
-# [private]
+[private]
 default:
     @just --justfile {{ justfile() }} --list --list-heading $'Project commands:\n'
 
@@ -11,7 +11,7 @@ all-rust-tests:
     cargo test --release --workspace --all-features --all-targets
 
 [group('ci')]
-check-pr: lint all-rust-tests
+check-pr: lint all-rust-tests noir-tests
 
 [group('ci')]
 lint:
