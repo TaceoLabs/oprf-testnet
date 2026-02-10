@@ -5,7 +5,7 @@ services:
     network_mode: "host"
     environment:
       - RUST_LOG=taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace
-      - OPRF_NODE_UNKEY_VERIFY_KEY=unkey_3ZjJj4zjeS8NNUGg2g9W3Tre
+      - OPRF_NODE_UNKEY_VERIFY_KEY=${OPRF_NODE_UNKEY_VERIFY_KEY}
       - OPRF_NODE_BIND_ADDR=0.0.0.0:10000
       - OPRF_NODE_DB_CONNECTION_STRING=postgres://postgres:postgres@localhost:5440/postgres
       - OPRF_NODE_DB_SCHEMA=oprf
@@ -19,7 +19,7 @@ services:
     network_mode: "host"
     environment:
       - RUST_LOG=taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace
-      - OPRF_NODE_UNKEY_VERIFY_KEY=unkey_3ZjJj4zjeS8NNUGg2g9W3Tre
+      - OPRF_NODE_UNKEY_VERIFY_KEY=${OPRF_NODE_UNKEY_VERIFY_KEY}
       - OPRF_NODE_BIND_ADDR=0.0.0.0:10001
       - OPRF_NODE_DB_CONNECTION_STRING=postgres://postgres:postgres@localhost:5441/postgres
       - OPRF_NODE_DB_SCHEMA=oprf
@@ -33,7 +33,7 @@ services:
     network_mode: "host"
     environment:
       - RUST_LOG=taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace
-      - OPRF_NODE_UNKEY_VERIFY_KEY=unkey_3ZjJj4zjeS8NNUGg2g9W3Tre
+      - OPRF_NODE_UNKEY_VERIFY_KEY=${OPRF_NODE_UNKEY_VERIFY_KEY}
       - OPRF_NODE_BIND_ADDR=0.0.0.0:10002
       - OPRF_NODE_DB_CONNECTION_STRING=postgres://postgres:postgres@localhost:5442/postgres
       - OPRF_NODE_DB_SCHEMA=oprf
