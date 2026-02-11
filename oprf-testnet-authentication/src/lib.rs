@@ -392,7 +392,7 @@ pub fn verify_proof(
     public_inputs: &[u8],
     proof: &[u8],
     vk_path: impl AsRef<Path>,
-) -> eyre::Result<(), TestNetRequestAuthError> {
+) -> Result<(), TestNetRequestAuthError> {
     let mut public_input_file =
         NamedTempFile::new().context("creating public inputs NameTempFile")?;
 
