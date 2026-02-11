@@ -31,7 +31,7 @@ nodes-common = { package = "taceo-nodes-common", version = "0.2" }
 nodes-observability = { package = "taceo-nodes-observability", version = "0.1" }
 poseidon2 = { package = "taceo-poseidon2", version = "0.2", default-features = false }
 rand = { version = "0.9" }
-rand_chacha = { version = "0.3" }
+rand_chacha = { version = "0.9" }
 reqwest = { version = "0.12", default-features = false }
 rustls = "0.23"
 secrecy = "0.10"
