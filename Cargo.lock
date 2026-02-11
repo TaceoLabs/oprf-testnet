@@ -6387,6 +6387,7 @@ dependencies = [
  "taceo-ark-babyjubjub",
  "taceo-oprf",
  "taceo-oprf-testnet-authentication",
+ "tempfile",
  "tokio",
  "tracing",
  "webpki-roots 1.0.6",
