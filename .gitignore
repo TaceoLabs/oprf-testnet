@@ -8,3 +8,6 @@ logs
 *.ptau
 *.env
 Prover.toml
+proof
+public_inputs
+vk_hash
