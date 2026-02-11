@@ -1,0 +1,37 @@
+[package]
+name = "taceo-oprf-testnet-dev-client"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+alloy = { workspace = true, features = ["full", "rpc", "rpc-client-ws"] }
+ark-babyjubjub.workspace = true
+ark-ff.workspace = true
+clap = { workspace = true, features = ["derive", "env"] }
+eyre.workspace = true
+humantime.workspace = true
+nodes-observability.workspace = true
+oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
+oprf-testnet-client = { package = "taceo-oprf-testnet-client", path = "../oprf-testnet-client", version = "0.1" }
+rand.workspace = true
+rand_chacha.workspace = true
+rustls.workspace = true
+secrecy.workspace = true
+taceo-oprf = { workspace = true, features = ["dev-client"] }
+tokio = { workspace = true, features = [
+  "net",
+  "rt-multi-thread",
+  "signal",
+  "sync",
+  "time",
+  "tokio-macros",
+] }
+tracing.workspace = true
+uuid = { workspace = true, features = ["serde", "v4"] }
+webpki-roots.workspace = true

@@ -1,0 +1,38 @@
+[package]
+name = "taceo-oprf-testnet-node"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+axum = { workspace = true }
+clap = { workspace = true, features = ["derive", "env"] }
+eyre.workspace = true
+humantime = { workspace = true }
+nodes-common = { workspace = true }
+nodes-observability = { workspace = true }
+oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
+rustls = { workspace = true }
+secrecy = { workspace = true, features = ["serde"] }
+taceo-oprf = { workspace = true, features = ["service"] }
+tokio = { workspace = true, features = [
+  "net",
+  "rt-multi-thread",
+  "signal",
+  "sync",
+  "time",
+  "tokio-macros",
+] }
+tracing.workspace = true
+
+[dev-dependencies]
+axum-test = { workspace = true }
+eddsa-babyjubjub = { workspace = true }
+# oprf-test = { package = "taceo-oprf-test", path = "../oprf-test", version = "0.1" }
+poseidon2 = { workspace = true }
+testcontainers-modules = { version = "0.14", features = ["localstack"] }

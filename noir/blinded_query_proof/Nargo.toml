@@ -1,0 +1,9 @@
+[package]
+name = "blinded_query_proof"
+type = "bin"
+authors = [""]
+
+[dependencies]
+ecrecover = { tag = "colinnielsen-patch-1", git = "https://github.com/colinnielsen/ecrecover-noir" }  # The main branch is not compatible with the latest Noir version
+babyjubjub = { git = "https://github.com/TaceoLabs/oprf-nr", tag = "main", directory = "babyjubjub" }
+oprf = { git = "https://github.com/TaceoLabs/oprf-nr", tag = "main", directory = "oprf" }
