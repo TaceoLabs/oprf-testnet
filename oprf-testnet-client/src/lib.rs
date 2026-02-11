@@ -7,7 +7,7 @@ use ark_ff::PrimeField as _;
 use eyre::Context;
 use oprf_testnet_authentication::{
     AuthModule, TestNetApiOnlyRequestAuth, TestNetRequestAuth, compute_nullifier_proof,
-    compute_wallet_ownership_proof, verify_nullifier_proof,
+    compute_wallet_ownership_proof, verify_proof,
 };
 use rand::{CryptoRng, Rng};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -113,11 +113,11 @@ pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
     _ = signature.pop();
 
     let (public_inputs, proof) = compute_wallet_ownership_proof(
-        blinding_factor.clone(),
-        x_affine.clone(),
-        y_affine.clone(),
-        signature.clone(),
-        msg_hash.to_vec(),
+        &blinding_factor,
+        &x_affine,
+        &y_affine,
+        &signature,
+        msg_hash.as_ref(),
     )?;
 
     let auth = TestNetRequestAuth {
@@ -145,12 +145,16 @@ pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
         verifiable_oprf_output.clone(),
         signature,
         msg_hash,
-        blinding_factor,
+        &blinding_factor,
         x_affine,
         y_affine,
     )?;
 
-    let _ = verify_nullifier_proof(&public_inputs, &proof)?;
+    verify_proof(
+        &public_inputs,
+        &proof,
+        oprf_testnet_authentication::VerificationType::NullifierVerification,
+    )?;
 
     let elapsed = start.elapsed();
     tracing::info!(

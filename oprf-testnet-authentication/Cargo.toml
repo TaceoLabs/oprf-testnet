@@ -10,13 +10,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-alloy = { workspace = true, features = [
-  "full",
-  "node-bindings",
-  "rpc",
-  "rpc-client-ws",
-  "serde",
-] }
+alloy.workspace = true
 async-trait.workspace = true
 axum = { workspace = true, features = ["ws"] }
 eyre.workspace = true

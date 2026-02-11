@@ -168,11 +168,11 @@ async fn prepare_oprf_stress_test_oprf_request(
     _ = signature.pop();
     let action = ark_babyjubjub::Fq::from_be_bytes_mod_order(signer.address().as_ref());
     let (public_inputs, proof) = compute_wallet_ownership_proof(
-        blinding_factor.clone(),
-        x_affine,
-        y_affine,
-        signature,
-        msg_hash.to_vec(),
+        &blinding_factor,
+        &x_affine,
+        &y_affine,
+        &signature,
+        msg_hash.as_ref(),
     )?;
 
     let auth = TestNetRequestAuth {

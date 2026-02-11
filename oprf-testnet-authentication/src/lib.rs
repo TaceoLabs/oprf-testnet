@@ -210,7 +210,11 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
             async move { verify_api_key(client, root_api_key, api_key, env).await }
         });
 
-        verify_wallet_ownership_proof(&req.auth.public_inputs, &req.auth.proof)?;
+        verify_proof(
+            &req.auth.public_inputs,
+            &req.auth.proof,
+            VerificationType::BlindedQueryVerification,
+        )?;
         api_valid.await.context("awaiting api verification")??;
         tracing::debug!("Authentication successful");
         Ok(req.auth.oprf_key_id)
@@ -280,7 +284,7 @@ pub fn compute_nullifier_proof(
     verifiable_oprf_output: VerifiableOprfOutput,
     signature: Vec<u8>,
     msg_hash: FixedBytes<32>,
-    beta: BlindingFactor,
+    beta: &BlindingFactor,
     pubkey_x: Vec<u8>,
     pubkey_y: Vec<u8>,
 ) -> eyre::Result<(Vec<u8>, Vec<u8>)> {
@@ -346,8 +350,8 @@ pub fn compute_nullifier_proof(
         .arg("-b")
         .arg(&bytecode_path)
         .current_dir(&directory)
-        // .stdout(process::Stdio::null())
-        // .stderr(process::Stdio::null())
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
         .status()
         .context("while spawning bb write_vk")?;
 
@@ -382,49 +386,20 @@ pub fn compute_nullifier_proof(
     Ok((public_inputs, proof))
 }
 
-pub fn verify_wallet_ownership_proof(public_inputs: &Vec<u8>, proof: &Vec<u8>) -> eyre::Result<()> {
-    let vk_path = "noir/blinded_query_proof/out/vk";
-
-    let mut public_input_file =
-        NamedTempFile::new().context("creating public inputs NameTempFile")?;
-
-    let mut proof_file = NamedTempFile::new().context("creating proof NameTempFile")?;
-
-    public_input_file
-        .write_all(public_inputs)
-        .context("writing public inputs to temp file")?;
-
-    proof_file
-        .write_all(proof)
-        .context("writing proof to temp file")?;
-
-    tracing::debug!("Verifying proof with bb");
-    let bb_verify_status = Command::new("bb")
-        .arg("verify")
-        .arg("-t")
-        .arg("noir-recursive")
-        .arg("-p")
-        .arg(proof_file.path())
-        .arg("-i")
-        .arg(public_input_file.path())
-        .arg("-k")
-        .arg(vk_path)
-        .stdout(process::Stdio::null())
-        .stderr(process::Stdio::null())
-        .status()
-        .context("while spawning bb verify")?;
-
-    eyre::ensure!(
-        bb_verify_status.success(),
-        "'bb verify' failed with status code: {:?}",
-        bb_verify_status.code()
-    );
-
-    Ok(())
+#[derive(Debug, Copy, Clone)]
+pub enum VerificationType {
+    BlindedQueryVerification,
+    NullifierVerification,
 }
-
-pub fn verify_nullifier_proof(public_inputs: &Vec<u8>, proof: &Vec<u8>) -> eyre::Result<()> {
-    let vk_path = "noir/verified_oprf_proof/out/vk";
+pub fn verify_proof(
+    public_inputs: &[u8],
+    proof: &[u8],
+    verification_type: VerificationType,
+) -> eyre::Result<(), TestNetRequestAuthError> {
+    let vk_path = match verification_type {
+        VerificationType::BlindedQueryVerification => "noir/blinded_query_proof/out/vk",
+        VerificationType::NullifierVerification => "noir/verified_oprf_proof/out/vk",
+    };
 
     let mut public_input_file =
         NamedTempFile::new().context("creating public inputs NameTempFile")?;
@@ -455,21 +430,23 @@ pub fn verify_nullifier_proof(public_inputs: &Vec<u8>, proof: &Vec<u8>) -> eyre:
         .status()
         .context("while spawning bb verify")?;
 
-    eyre::ensure!(
-        bb_verify_status.success(),
-        "'bb verify' failed with status code: {:?}",
-        bb_verify_status.code()
-    );
+    if !bb_verify_status.success() {
+        tracing::error!(
+            "Proof verification failed with status code: {:?}",
+            bb_verify_status.code()
+        );
+        return Err(TestNetRequestAuthError::ProofInvalid);
+    }
 
     Ok(())
 }
 
 pub fn compute_wallet_ownership_proof(
-    beta: BlindingFactor,
-    pubkey_x: Vec<u8>,
-    pubkey_y: Vec<u8>,
-    signature: Vec<u8>,
-    hashed_msg: Vec<u8>,
+    beta: &BlindingFactor,
+    pubkey_x: &[u8],
+    pubkey_y: &[u8],
+    signature: &[u8],
+    hashed_msg: &[u8],
 ) -> eyre::Result<(Vec<u8>, Vec<u8>)> {
     let name_of_proof = "blinded_query_proof";
     let directory = format!("noir/{}", name_of_proof);
