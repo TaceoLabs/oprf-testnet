@@ -1,49 +1,6 @@
 services:
-  oprf-node0:
-    container_name: oprf-node0
-    image: node
-    network_mode: "host"
-    environment:
-      - RUST_LOG=taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace
-      - OPRF_NODE_UNKEY_VERIFY_KEY=${OPRF_NODE_UNKEY_VERIFY_KEY}
-      - OPRF_NODE_BIND_ADDR=0.0.0.0:10000
-      - OPRF_NODE_DB_CONNECTION_STRING=postgres://postgres:postgres@localhost:5440/postgres
-      - OPRF_NODE_DB_SCHEMA=oprf
-      - OPRF_NODE_ENVIRONMENT=prod
-      - OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT}
-      - OPRF_NODE_ACCEPTED_VERSIONS=>=0.0.0
-      - OPRF_NODE_MAX_MESSAGE_SIZE=51200
-  oprf-node1:
-    container_name: oprf-node1
-    image: node
-    network_mode: "host"
-    environment:
-      - RUST_LOG=taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace
-      - OPRF_NODE_UNKEY_VERIFY_KEY=${OPRF_NODE_UNKEY_VERIFY_KEY}
-      - OPRF_NODE_BIND_ADDR=0.0.0.0:10001
-      - OPRF_NODE_DB_CONNECTION_STRING=postgres://postgres:postgres@localhost:5441/postgres
-      - OPRF_NODE_DB_SCHEMA=oprf
-      - OPRF_NODE_ENVIRONMENT=prod
-      - OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT}
-      - OPRF_NODE_ACCEPTED_VERSIONS=>=0.0.0
-      - OPRF_NODE_MAX_MESSAGE_SIZE=51200
-  oprf-node2:
-    container_name: oprf-node2
-    image: node
-    network_mode: "host"
-    environment:
-      - RUST_LOG=taceo_oprf_testnet_node=trace,taceo_oprf_service=trace,info,taceo_oprf_testnet_authentication=trace
-      - OPRF_NODE_UNKEY_VERIFY_KEY=${OPRF_NODE_UNKEY_VERIFY_KEY}
-      - OPRF_NODE_BIND_ADDR=0.0.0.0:10002
-      - OPRF_NODE_DB_CONNECTION_STRING=postgres://postgres:postgres@localhost:5442/postgres
-      - OPRF_NODE_DB_SCHEMA=oprf
-      - OPRF_NODE_ENVIRONMENT=prod
-      - OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT}
-      - OPRF_NODE_ACCEPTED_VERSIONS=>=0.0.0
-      - OPRF_NODE_MAX_MESSAGE_SIZE=51200
   localstack:
     image: localstack/localstack
-    container_name: localstack
     stop_grace_period: 1s
     ports:
       - "4566:4566"            
@@ -52,7 +9,6 @@ services:
       - DEBUG=1
   anvil:
     image: ghcr.io/foundry-rs/foundry:latest
-    container_name: anvil
     stop_grace_period: 1s
     ports:
       - "8545:8545"            
@@ -74,7 +30,7 @@ services:
     environment:
       OPRF_NODE_ENVIRONMENT: dev
       OPRF_NODE_BIND_ADDR: 0.0.0.0:20000
-      OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT: ${OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT}
+      OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT:
       OPRF_NODE_CHAIN_WS_RPC_URL: ws://127.0.0.1:8545
       OPRF_NODE_WALLET_PRIVATE_KEY_SECRET_ID: oprf/eth/n0
       OPRF_NODE_KEY_GEN_ZKEY: /app/OPRFKeyGen.13.arks.zkey
@@ -89,7 +45,7 @@ services:
     environment:
       OPRF_NODE_ENVIRONMENT: dev
       OPRF_NODE_BIND_ADDR: 0.0.0.0:20001
-      OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT: ${OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT}
+      OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT:
       OPRF_NODE_CHAIN_WS_RPC_URL: ws://127.0.0.1:8545
       OPRF_NODE_WALLET_PRIVATE_KEY_SECRET_ID: oprf/eth/n1
       OPRF_NODE_KEY_GEN_ZKEY: /app/OPRFKeyGen.13.arks.zkey
@@ -104,7 +60,7 @@ services:
     environment:
       OPRF_NODE_ENVIRONMENT: dev
       OPRF_NODE_BIND_ADDR: 0.0.0.0:20002
-      OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT: ${OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT}
+      OPRF_NODE_OPRF_KEY_REGISTRY_CONTRACT:
       OPRF_NODE_CHAIN_WS_RPC_URL: ws://127.0.0.1:8545
       OPRF_NODE_WALLET_PRIVATE_KEY_SECRET_ID: oprf/eth/n2
       OPRF_NODE_KEY_GEN_ZKEY: /app/OPRFKeyGen.13.arks.zkey
