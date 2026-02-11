@@ -21,8 +21,8 @@ use alloy::{
 use ark_ff::{PrimeField, UniformRand as _};
 use clap::Parser;
 use eyre::Context as _;
-use oprf_testnet_authentication::{AuthModule, TestNetRequestAuth};
-use oprf_testnet_client::{DistributedOprfArgs, compute_proof};
+use oprf_testnet_authentication::{AuthModule, TestNetRequestAuth, compute_wallet_ownership_proof};
+use oprf_testnet_client::DistributedOprfArgs;
 use rand::SeedableRng as _;
 use rustls::{ClientConfig, RootCertStore};
 use secrecy::{ExposeSecret as _, SecretString};
@@ -167,12 +167,12 @@ async fn prepare_oprf_stress_test_oprf_request(
     //Remove recovery id
     _ = signature.pop();
     let action = ark_babyjubjub::Fq::from_be_bytes_mod_order(signer.address().as_ref());
-    let (public_inputs, proof) = compute_proof(
-        blinding_factor.clone(),
-        x_affine,
-        y_affine,
-        signature,
-        msg_hash.to_vec(),
+    let (public_inputs, proof) = compute_wallet_ownership_proof(
+        &blinding_factor,
+        &x_affine,
+        &y_affine,
+        &signature,
+        msg_hash.as_ref(),
     )?;
 
     let auth = TestNetRequestAuth {
