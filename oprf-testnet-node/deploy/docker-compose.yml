@@ -15,14 +15,6 @@ services:
     command: anvil
     environment:
         ANVIL_IP_ADDR: 0.0.0.0
-  postgres:
-    image: postgres:latest
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=indexer_tests
   oprf-key-gen0:
     # this tag/sha must match the versions of taceo crates in Cargo.toml
     image: ghcr.io/taceolabs/oprf-service/oprf-key-gen:v1.0.0-rc.2

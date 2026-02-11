@@ -73,7 +73,7 @@ setup() {
 
     anvil &
 
-    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d localstack postgres oprf-node-db0 oprf-node-db1 oprf-node-db2
+    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d localstack oprf-node-db0 oprf-node-db1 oprf-node-db2
 
     echo -e "${GREEN}deploying contracts..${NOCOLOR}"
     deploy_contracts
