@@ -6359,6 +6359,7 @@ dependencies = [
 name = "taceo-oprf-testnet-authentication"
 version = "0.1.0"
 dependencies = [
+ "alloy",
  "async-trait",
  "axum",
  "eyre",

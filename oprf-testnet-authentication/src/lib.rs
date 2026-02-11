@@ -1,17 +1,24 @@
+use alloy::primitives::FixedBytes;
 use async_trait::async_trait;
 use axum::response;
 use axum::response::IntoResponse;
 use eyre::Context as _;
+use eyre::ContextCompat as _;
 use reqwest::Client;
 use reqwest::StatusCode;
 use secrecy::ExposeSecret as _;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::fs;
+use std::fs::File;
 use std::io::Write as _;
+use std::path::Path;
 use std::process;
 use std::process::Command;
 use std::str::FromStr;
+use taceo_oprf::client::VerifiableOprfOutput;
+use taceo_oprf::core::oprf::BlindingFactor;
 use taceo_oprf::service::config::Environment;
 use taceo_oprf::types::OprfKeyId;
 use taceo_oprf::types::api::{OprfRequest, OprfRequestAuthenticator};
@@ -205,41 +212,11 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
             async move { verify_api_key(client, root_api_key, api_key, env).await }
         });
 
-        // verify ZK
-        let vk_path = "noir/blinded_query_proof/out/vk";
-
-        let mut public_inputs =
-            NamedTempFile::new().context("creating public inputs NameTempFile")?;
-
-        let mut proof = NamedTempFile::new().context("creating proof NameTempFile")?;
-
-        public_inputs
-            .write_all(&req.auth.public_inputs)
-            .context("writing public inputs to temp file")?;
-
-        proof
-            .write_all(&req.auth.proof)
-            .context("writing proof to temp file")?;
-
-        tracing::debug!("Verifying proof with bb");
-        let bb_verify_status = Command::new("bb")
-            .arg("verify")
-            .arg("-t")
-            .arg("noir-recursive")
-            .arg("-p")
-            .arg(proof.path())
-            .arg("-i")
-            .arg(public_inputs.path())
-            .arg("-k")
-            .arg(vk_path)
-            .stdout(process::Stdio::null())
-            .stderr(process::Stdio::null())
-            .status()
-            .context("while spawning bb verify")?;
-
-        if !bb_verify_status.success() {
-            return Err(TestNetRequestAuthError::ProofInvalid);
-        }
+        verify_proof(
+            &req.auth.public_inputs,
+            &req.auth.proof,
+            "noir/blinded_query_proof/out/vk",
+        )?;
         api_valid.await.context("awaiting api verification")??;
         tracing::debug!("Authentication successful");
         Ok(req.auth.oprf_key_id)
@@ -303,4 +280,239 @@ async fn verify_api_key(
         return Err(ApiVerificationError::ApiVerificationFailed);
     }
     Ok(())
+}
+
+pub fn compute_nullifier_proof(
+    verifiable_oprf_output: VerifiableOprfOutput,
+    signature: Vec<u8>,
+    msg_hash: FixedBytes<32>,
+    beta: &BlindingFactor,
+    pubkey_x: Vec<u8>,
+    pubkey_y: Vec<u8>,
+) -> eyre::Result<(Vec<u8>, Vec<u8>)> {
+    let name_of_proof = "verified_oprf_proof";
+    let directory = format!("noir/{}", name_of_proof);
+    let input_file_path = format!("{}/Prover.toml", directory);
+    let witness_path = format!("target/{}.gz", name_of_proof);
+    let bytecode_path = format!("target/{}.json", name_of_proof);
+    let mut prover_toml_file = File::create(input_file_path)?;
+
+    write!(
+        prover_toml_file,
+        "signature = {:?}
+        beta = \"{:?}\"
+        dlog_e = \"{:?}\"
+        dlog_s = \"{:?}\"
+        hashed_message = {:?}
+        pub_key_x = {:?}
+        pub_key_y = {:?}
+
+        [oprf_pk]
+        x = \"{:?}\"
+        y = \"{:?}\"
+
+        [oprf_response]
+        x = \"{:?}\"
+        y = \"{:?}\"
+
+        [oprf_response_blinded]
+        x = \"{:?}\"
+        y = \"{:?}\"",
+        signature,
+        beta.beta(),
+        verifiable_oprf_output.dlog_proof.e,
+        verifiable_oprf_output.dlog_proof.s,
+        msg_hash.to_vec(),
+        pubkey_x,
+        pubkey_y,
+        verifiable_oprf_output.oprf_public_key.inner().x,
+        verifiable_oprf_output.oprf_public_key.inner().y,
+        verifiable_oprf_output.unblinded_response.x,
+        verifiable_oprf_output.unblinded_response.y,
+        verifiable_oprf_output.blinded_response.x,
+        verifiable_oprf_output.blinded_response.y
+    )?;
+
+    let nargo_exec_status = Command::new("nargo")
+        .arg("execute")
+        .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .status()
+        .context("while spawning nargo execute")?;
+
+    eyre::ensure!(
+        nargo_exec_status.success(),
+        "'nargo execute' failed with status code: {:?}",
+        nargo_exec_status.code()
+    );
+
+    let bb_write_vk_status = Command::new("bb")
+        .arg("write_vk")
+        .arg("-b")
+        .arg(&bytecode_path)
+        .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .status()
+        .context("while spawning bb write_vk")?;
+
+    eyre::ensure!(
+        bb_write_vk_status.success(),
+        "'bb write_vk' failed with status code: {:?}",
+        bb_write_vk_status.code()
+    );
+
+    let bb_prove_status = Command::new("bb")
+        .arg("prove")
+        .arg("-b")
+        .arg(&bytecode_path)
+        .arg("-k")
+        .arg("out/vk")
+        .arg("-w")
+        .arg(witness_path)
+        .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .status()
+        .context("while spawning bb prove")?;
+
+    eyre::ensure!(
+        bb_prove_status.success(),
+        "'bb prove' failed with status code: {:?}",
+        bb_prove_status.code()
+    );
+
+    let public_inputs = fs::read(format!("{}/out/public_inputs", &directory))?;
+    let proof = fs::read(format!("{}/out/proof", &directory))?;
+    Ok((public_inputs, proof))
+}
+
+pub fn verify_proof(
+    public_inputs: &[u8],
+    proof: &[u8],
+    vk_path: impl AsRef<Path>,
+) -> Result<(), TestNetRequestAuthError> {
+    let mut public_input_file =
+        NamedTempFile::new().context("creating public inputs NameTempFile")?;
+
+    let mut proof_file = NamedTempFile::new().context("creating proof NameTempFile")?;
+
+    public_input_file
+        .write_all(public_inputs)
+        .context("writing public inputs to temp file")?;
+
+    proof_file
+        .write_all(proof)
+        .context("writing proof to temp file")?;
+
+    tracing::debug!("Verifying proof with bb");
+    let bb_verify_status = Command::new("bb")
+        .arg("verify")
+        .arg("-t")
+        .arg("noir-recursive")
+        .arg("-p")
+        .arg(proof_file.path())
+        .arg("-i")
+        .arg(public_input_file.path())
+        .arg("-k")
+        .arg(
+            vk_path
+                .as_ref()
+                .to_str()
+                .context("converting vk_path to str")?,
+        )
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .status()
+        .context("while spawning bb verify")?;
+
+    if !bb_verify_status.success() {
+        tracing::error!(
+            "Proof verification failed with status code: {:?}",
+            bb_verify_status.code()
+        );
+        return Err(TestNetRequestAuthError::ProofInvalid);
+    }
+
+    Ok(())
+}
+
+pub fn compute_wallet_ownership_proof(
+    beta: &BlindingFactor,
+    pubkey_x: &[u8],
+    pubkey_y: &[u8],
+    signature: &[u8],
+    hashed_msg: &[u8],
+) -> eyre::Result<(Vec<u8>, Vec<u8>)> {
+    let name_of_proof = "blinded_query_proof";
+    let directory = format!("noir/{}", name_of_proof);
+    let input_file_path = format!("{}/Prover.toml", directory);
+    let witness_path = format!("target/{}.gz", name_of_proof);
+    let bytecode_path = format!("target/{}.json", name_of_proof);
+    let mut prover_toml_file = File::create(input_file_path)?;
+
+    write!(
+        prover_toml_file,
+        "beta = \"{:?}\"\npub_key_x = {:?}\npub_key_y = {:?}\nsignature = {:?}\nhashed_message = {:?}",
+        beta.beta(),
+        pubkey_x,
+        pubkey_y,
+        signature,
+        hashed_msg
+    )?;
+
+    let nargo_exec_status = Command::new("nargo")
+        .arg("execute")
+        .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .status()
+        .context("while spawning nargo execute")?;
+
+    eyre::ensure!(
+        nargo_exec_status.success(),
+        "'nargo execute' failed with status code: {:?}",
+        nargo_exec_status.code()
+    );
+
+    let bb_write_vk_status = Command::new("bb")
+        .arg("write_vk")
+        .arg("-b")
+        .arg(&bytecode_path)
+        .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .status()
+        .context("while spawning bb write_vk")?;
+
+    eyre::ensure!(
+        bb_write_vk_status.success(),
+        "'bb write_vk' failed with status code: {:?}",
+        bb_write_vk_status.code()
+    );
+
+    let bb_prove_status = Command::new("bb")
+        .arg("prove")
+        .arg("-b")
+        .arg(&bytecode_path)
+        .arg("-k")
+        .arg("out/vk")
+        .arg("-w")
+        .arg(witness_path)
+        .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .status()
+        .context("while spawning bb prove")?;
+
+    eyre::ensure!(
+        bb_prove_status.success(),
+        "'bb prove' failed with status code: {:?}",
+        bb_prove_status.code()
+    );
+
+    let public_inputs = fs::read(format!("{}/out/public_inputs", &directory))?;
+    let proof = fs::read(format!("{}/out/proof", &directory))?;
+    Ok((public_inputs, proof))
 }
