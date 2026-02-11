@@ -150,11 +150,7 @@ pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
         y_affine,
     )?;
 
-    verify_proof(
-        &public_inputs,
-        &proof,
-        oprf_testnet_authentication::VerificationType::NullifierVerification,
-    )?;
+    verify_proof(&public_inputs, &proof, "noir/verified_oprf_proof/out/vk")?;
 
     let elapsed = start.elapsed();
     tracing::info!(

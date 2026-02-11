@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use axum::response;
 use axum::response::IntoResponse;
 use eyre::Context as _;
+use eyre::ContextCompat as _;
 use reqwest::Client;
 use reqwest::StatusCode;
 use secrecy::ExposeSecret as _;
@@ -12,6 +13,7 @@ use std::fmt;
 use std::fs;
 use std::fs::File;
 use std::io::Write as _;
+use std::path::Path;
 use std::process;
 use std::process::Command;
 use std::str::FromStr;
@@ -213,7 +215,7 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
         verify_proof(
             &req.auth.public_inputs,
             &req.auth.proof,
-            VerificationType::BlindedQueryVerification,
+            "noir/blinded_query_proof/out/vk",
         )?;
         api_valid.await.context("awaiting api verification")??;
         tracing::debug!("Authentication successful");
@@ -386,21 +388,11 @@ pub fn compute_nullifier_proof(
     Ok((public_inputs, proof))
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum VerificationType {
-    BlindedQueryVerification,
-    NullifierVerification,
-}
 pub fn verify_proof(
     public_inputs: &[u8],
     proof: &[u8],
-    verification_type: VerificationType,
+    vk_path: impl AsRef<Path>,
 ) -> eyre::Result<(), TestNetRequestAuthError> {
-    let vk_path = match verification_type {
-        VerificationType::BlindedQueryVerification => "noir/blinded_query_proof/out/vk",
-        VerificationType::NullifierVerification => "noir/verified_oprf_proof/out/vk",
-    };
-
     let mut public_input_file =
         NamedTempFile::new().context("creating public inputs NameTempFile")?;
 
@@ -424,7 +416,12 @@ pub fn verify_proof(
         .arg("-i")
         .arg(public_input_file.path())
         .arg("-k")
-        .arg(vk_path)
+        .arg(
+            vk_path
+                .as_ref()
+                .to_str()
+                .context("converting vk_path to str")?,
+        )
         .stdout(process::Stdio::null())
         .stderr(process::Stdio::null())
         .status()
