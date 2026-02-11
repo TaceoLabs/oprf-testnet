@@ -3,8 +3,9 @@
 //! This example project shall help projects incorporate at TACEO:Oprf. Explain in detail what implementations need to do to build their flavor.
 use std::sync::{Arc, atomic::Ordering};
 
-use eyre::Context;
-use oprf_testnet_authentication::TestNetRequestAuthenticator;
+use oprf_testnet_authentication::{
+    AuthModule, TestNetApiOnlyRequestAuthenticator, TestNetRequestAuthenticator,
+};
 use taceo_oprf::service::{
     OprfServiceBuilder, StartedServices, secret_manager::SecretManagerService,
 };
@@ -24,10 +25,14 @@ pub async fn start(
         nodes_common::spawn_shutdown_task(shutdown_signal);
 
     tracing::info!("init oprf request auth service..");
-    let oprf_req_auth_service = Arc::new(
-        TestNetRequestAuthenticator::init(config.unkey_verify_key)
-            .context("while spawning authenticator")?,
-    );
+    let oprf_req_auth_service = Arc::new(TestNetRequestAuthenticator::init(
+        config.unkey_verify_key.clone(),
+        service_config.environment,
+    ));
+    let oprf_req_api_only_auth_service = Arc::new(TestNetApiOnlyRequestAuthenticator::init(
+        config.unkey_verify_key.clone(),
+        service_config.environment,
+    ));
 
     tracing::info!("init oprf service..");
     let (oprf_service_router, key_event_watcher) = OprfServiceBuilder::init(
@@ -37,7 +42,11 @@ pub async fn start(
         cancellation_token.clone(),
     )
     .await?
-    .module("/testnet", oprf_req_auth_service)
+    .module(&AuthModule::TestNet.to_path(), oprf_req_auth_service)
+    .module(
+        &AuthModule::TestNetApiOnly.to_path(),
+        oprf_req_api_only_auth_service,
+    )
     .build();
 
     let listener = tokio::net::TcpListener::bind(config.bind_addr).await?;

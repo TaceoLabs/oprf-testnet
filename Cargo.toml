@@ -5,7 +5,6 @@ members = [
   "oprf-testnet-client",
   "oprf-testnet-dev-client",
   "oprf-testnet-node",
-  "oprf-testnet-public-client",
 ]
 
 [workspace.package]
@@ -38,7 +37,7 @@ rustls = "0.23"
 secrecy = "0.10"
 serde = { version = "1" }
 serde_json = { version = "1" }
-taceo-oprf = { package = "taceo-oprf", version = "0.2", default-features = false }
+taceo-oprf = { version = "0.4", default-features = false }
 tempfile = "3"
 thiserror = { version = "2" }
 tokio = { version = "1" }

@@ -7,3 +7,4 @@ perf.data.old
 logs
 *.ptau
 *.env
+noir/blinded_query_proof/Prover.toml

@@ -1,11 +1,12 @@
 use alloy::primitives::U160;
 use ark_ff::UniformRand as _;
 use clap::Parser;
-use oprf_testnet_client::DistributedOprfArgs;
+use oprf_testnet_authentication::AuthModule;
 use rand::SeedableRng as _;
 use rustls::{ClientConfig, RootCertStore};
 use std::sync::Arc;
 use taceo_oprf::{client::Connector, types::OprfKeyId};
+use taceo_oprf_testnet_client::{DistributedOprfArgs, distributed_oprf};
 
 /// The configuration for the OPRF client.
 ///
@@ -27,12 +28,17 @@ pub struct OprfDevClientConfig {
     /// The API Key
     #[clap(long, env = "OPRF_CLIENT_API_KEY")]
     pub api_key: String,
+
+    /// If we use the API only use-case
+    #[clap(long, env = "OPRF_DEV_CLIENT_API_ONLY", default_value = "false")]
+    pub api_only: bool,
 }
 
 async fn run_oprf(
     nodes: &[String],
     threshold: usize,
     api_key: String,
+    module: AuthModule,
     oprf_key_id: OprfKeyId,
     connector: Connector,
 ) -> eyre::Result<()> {
@@ -41,11 +47,12 @@ async fn run_oprf(
     let action = ark_babyjubjub::Fq::rand(&mut rng);
 
     // the client example internally checks the DLog equality
-    let _verifiable_oprf = oprf_testnet_client::distributed_oprf(
+    let verifiable_oprf = distributed_oprf(
         DistributedOprfArgs {
             services: nodes,
             threshold,
             api_key,
+            module,
             oprf_key_id,
             action,
             connector,
@@ -53,6 +60,7 @@ async fn run_oprf(
         &mut rng,
     )
     .await?;
+    tracing::info!("Received verified oprf output: {}", verifiable_oprf.output);
     Ok(())
 }
 
@@ -71,15 +79,21 @@ async fn main() -> eyre::Result<()> {
         .with_root_certificates(root_store)
         .with_no_client_auth();
     let connector = Connector::Rustls(Arc::new(rustls_config));
+    let module = match config.api_only {
+        true => AuthModule::TestNetApiOnly,
+        false => AuthModule::TestNet,
+    };
 
     run_oprf(
         &config.nodes,
         config.threshold,
         config.api_key,
+        module,
         config.oprf_key_id.into(),
         connector,
     )
     .await?;
-    tracing::info!("oprf-test successful");
+    tracing::info!("oprf successful");
+
     Ok(())
 }

@@ -5,11 +5,11 @@ use alloy::signers::k256::elliptic_curve::sec1::ToEncodedPoint;
 use alloy::signers::local::PrivateKeySigner;
 use ark_ff::PrimeField as _;
 use eyre::Context;
-use oprf_testnet_authentication::TestNetRequestAuth;
+use oprf_testnet_authentication::{AuthModule, TestNetApiOnlyRequestAuth, TestNetRequestAuth};
 use rand::{CryptoRng, Rng};
-use std::fs;
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{fs, process};
 use std::{fs::File, process::Command};
 use taceo_oprf::client::VerifiableOprfOutput;
 use taceo_oprf::{client::Connector, core::oprf::BlindingFactor, types::OprfKeyId};
@@ -19,16 +19,62 @@ pub struct DistributedOprfArgs<'a> {
     pub services: &'a [String],
     pub threshold: usize,
     pub api_key: String,
+    pub module: AuthModule,
     pub oprf_key_id: OprfKeyId,
     pub action: ark_babyjubjub::Fq,
     pub connector: Connector,
 }
 
-#[instrument(level = "debug", skip_all)]
 pub async fn distributed_oprf<R: Rng + CryptoRng>(
     distributed_oprf_args: DistributedOprfArgs<'_>,
     rng: &mut R,
 ) -> eyre::Result<VerifiableOprfOutput> {
+    tracing::debug!(
+        "Starting distributed OPRF with args: {}",
+        distributed_oprf_args.module
+    );
+    match distributed_oprf_args.module {
+        AuthModule::TestNet => distributed_oprf_api_and_proof(distributed_oprf_args, rng).await,
+        AuthModule::TestNetApiOnly => distributed_oprf_api_only(distributed_oprf_args, rng).await,
+    }
+}
+
+#[instrument(level = "debug", skip_all)]
+pub async fn distributed_oprf_api_only<R: Rng + CryptoRng>(
+    distributed_oprf_args: DistributedOprfArgs<'_>,
+    rng: &mut R,
+) -> eyre::Result<VerifiableOprfOutput> {
+    tracing::info!("Running distributed OPRF with API only authentication");
+    let blinding_factor = BlindingFactor::rand(rng);
+    let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
+
+    let auth = TestNetApiOnlyRequestAuth {
+        api_key: distributed_oprf_args.api_key,
+        oprf_key_id: distributed_oprf_args.oprf_key_id,
+    };
+
+    let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
+        distributed_oprf_args.services,
+        &distributed_oprf_args.module.to_string(),
+        distributed_oprf_args.threshold,
+        distributed_oprf_args.action,
+        blinding_factor,
+        domain_separator,
+        auth,
+        distributed_oprf_args.connector,
+    )
+    .await
+    .context("cannot get verifiable oprf output")?;
+
+    Ok(verifiable_oprf_output)
+}
+
+#[instrument(level = "debug", skip_all)]
+pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
+    distributed_oprf_args: DistributedOprfArgs<'_>,
+    rng: &mut R,
+) -> eyre::Result<VerifiableOprfOutput> {
+    tracing::info!("Running distributed OPRF with API and Proof authentication");
     let blinding_factor = BlindingFactor::rand(rng);
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
 
@@ -48,7 +94,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
 
     // Instantiate a signer
     let signer = PrivateKeySigner::from_signing_key(private_key);
-    let query = ark_babyjubjub::fq::Fq::from_be_bytes_mod_order(signer.address().as_ref());
+    let query = ark_babyjubjub::Fq::from_be_bytes_mod_order(signer.address().as_ref());
 
     let ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -68,20 +114,19 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
         y_affine,
         signature,
         msg_hash.to_vec(),
-    )
-    .await?;
+    )?;
 
     let auth = TestNetRequestAuth {
         public_inputs,
         proof,
+        oprf_key_id: distributed_oprf_args.oprf_key_id,
         api_key: distributed_oprf_args.api_key,
     };
 
     let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
         distributed_oprf_args.services,
-        "testnet",
+        &distributed_oprf_args.module.to_string(),
         distributed_oprf_args.threshold,
-        distributed_oprf_args.oprf_key_id,
         query,
         blinding_factor,
         domain_separator,
@@ -94,7 +139,7 @@ pub async fn distributed_oprf<R: Rng + CryptoRng>(
     Ok(verifiable_oprf_output)
 }
 
-pub async fn compute_proof(
+pub fn compute_proof(
     beta: BlindingFactor,
     pubkey_x: Vec<u8>,
     pubkey_y: Vec<u8>,
@@ -121,30 +166,32 @@ pub async fn compute_proof(
     let nargo_exec_status = Command::new("nargo")
         .arg("execute")
         .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
         .status()
         .context("while spawning nargo execute")?;
 
-    if !nargo_exec_status.success() {
-        eyre::bail!(
-            "'nargo execute' failed with status code: {:?}",
-            nargo_exec_status.code()
-        );
-    }
+    eyre::ensure!(
+        nargo_exec_status.success(),
+        "'nargo execute' failed with status code: {:?}",
+        nargo_exec_status.code()
+    );
 
     let bb_write_vk_status = Command::new("bb")
         .arg("write_vk")
         .arg("-b")
         .arg(&bytecode_path)
         .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
         .status()
         .context("while spawning bb write_vk")?;
 
-    if !bb_write_vk_status.success() {
-        eyre::bail!(
-            "'bb write_vk' failed with status code: {:?}",
-            bb_write_vk_status.code()
-        );
-    }
+    eyre::ensure!(
+        bb_write_vk_status.success(),
+        "'bb write_vk' failed with status code: {:?}",
+        bb_write_vk_status.code()
+    );
 
     let bb_prove_status = Command::new("bb")
         .arg("prove")
@@ -155,15 +202,16 @@ pub async fn compute_proof(
         .arg("-w")
         .arg(witness_path)
         .current_dir(&directory)
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
         .status()
         .context("while spawning bb prove")?;
 
-    if !bb_prove_status.success() {
-        eyre::bail!(
-            "'bb prove' failed with status code: {:?}",
-            bb_prove_status.code()
-        );
-    }
+    eyre::ensure!(
+        bb_prove_status.success(),
+        "'bb prove' failed with status code: {:?}",
+        bb_prove_status.code()
+    );
 
     let public_inputs = fs::read(format!("{}/out/public_inputs", &directory))?;
     let proof = fs::read(format!("{}/out/proof", &directory))?;
