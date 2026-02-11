@@ -22,7 +22,6 @@ use ark_ff::{PrimeField, UniformRand as _};
 use clap::Parser;
 use eyre::Context as _;
 use oprf_testnet_authentication::{AuthModule, TestNetRequestAuth, compute_wallet_ownership_proof};
-use oprf_testnet_client::DistributedOprfArgs;
 use rand::SeedableRng as _;
 use rustls::{ClientConfig, RootCertStore};
 use secrecy::{ExposeSecret as _, SecretString};
@@ -37,6 +36,21 @@ use taceo_oprf::{
 };
 use tokio::{sync::mpsc, task::JoinSet};
 use uuid::Uuid;
+
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+pub enum AuthModuleArg {
+    Basic,
+    WalletOwnership,
+}
+
+impl From<AuthModuleArg> for AuthModule {
+    fn from(value: AuthModuleArg) -> Self {
+        match value {
+            AuthModuleArg::Basic => AuthModule::Basic,
+            AuthModuleArg::WalletOwnership => AuthModule::WalletOwnership,
+        }
+    }
+}
 
 /// The configuration for the OPRF client.
 ///
@@ -94,9 +108,12 @@ pub struct OprfDevClientConfig {
     #[clap(long, env = "OPRF_DEV_CLIENT_API_KEY")]
     pub api_key: String,
 
-    /// If we use the API only use-case
-    #[clap(long, env = "OPRF_DEV_CLIENT_API_ONLY", default_value = "false")]
-    pub api_only: bool,
+    #[clap(
+        long,
+        env = "OPRF_DEV_CLIENT_MODULE",
+        default_value = "wallet-ownership"
+    )]
+    pub module: AuthModuleArg,
 
     /// Command
     #[command(subcommand)]
@@ -113,24 +130,41 @@ async fn run_oprf(
 ) -> eyre::Result<ShareEpoch> {
     let mut rng = rand_chacha::ChaCha12Rng::from_entropy();
 
-    let action = ark_babyjubjub::Fq::rand(&mut rng);
-
-    // the client example internally checks the DLog equality
-    let verifiable_oprf = oprf_testnet_client::distributed_oprf(
-        DistributedOprfArgs {
-            services: nodes,
-            threshold,
-            api_key,
-            module,
-            oprf_key_id,
-            action,
-            connector,
-        },
-        &mut rng,
-    )
-    .await?;
-    tracing::debug!("OPRF output: {:?}", verifiable_oprf);
-    Ok(verifiable_oprf.epoch)
+    match module {
+        AuthModule::Basic => {
+            tracing::info!("Running basic verifiable OPRF...");
+            let action = ark_babyjubjub::Fq::rand(&mut rng);
+            let verifiable_oprf_output = oprf_testnet_client::basic_verifiable_oprf(
+                nodes,
+                threshold,
+                oprf_key_id,
+                api_key,
+                action,
+                connector,
+                &mut rng,
+            )
+            .await?;
+            tracing::info!("OPRF output: {}", verifiable_oprf_output.output);
+            Ok(verifiable_oprf_output.epoch)
+        }
+        AuthModule::WalletOwnership => {
+            tracing::info!("Running wallet ownership verifiable OPRF...");
+            let private_key = SigningKey::random(&mut rng);
+            let (verifiable_oprf_output, _, _) =
+                oprf_testnet_client::wallet_ownership_verifiable_oprf(
+                    nodes,
+                    threshold,
+                    oprf_key_id,
+                    api_key,
+                    private_key,
+                    connector,
+                    &mut rng,
+                )
+                .await?;
+            tracing::info!("OPRF output: {}", verifiable_oprf_output.output);
+            Ok(verifiable_oprf_output.epoch)
+        }
+    }
 }
 
 async fn prepare_oprf_stress_test_oprf_request(
@@ -485,10 +519,6 @@ async fn main() -> eyre::Result<()> {
         .with_root_certificates(root_store)
         .with_no_client_auth();
     let connector = Connector::Rustls(Arc::new(rustls_config));
-    let module = match config.api_only {
-        true => AuthModule::TestNetApiOnly,
-        false => AuthModule::TestNet,
-    };
 
     match config.command.clone() {
         Command::Test => {
@@ -497,7 +527,7 @@ async fn main() -> eyre::Result<()> {
                 &config.nodes,
                 config.threshold,
                 config.api_key,
-                module,
+                config.module.into(),
                 oprf_key_id,
                 connector,
             )
@@ -511,7 +541,7 @@ async fn main() -> eyre::Result<()> {
                 &config.nodes,
                 config.threshold,
                 config.api_key,
-                module,
+                config.module.into(),
                 oprf_key_id,
                 oprf_public_key,
                 connector,
@@ -537,7 +567,7 @@ async fn main() -> eyre::Result<()> {
                 &config.nodes,
                 config.threshold,
                 config.api_key,
-                module,
+                config.module.into(),
                 config.oprf_key_registry_contract,
                 oprf_key_id,
                 connector,

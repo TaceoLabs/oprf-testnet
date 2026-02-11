@@ -25,6 +25,7 @@ ark-babyjubjub = { workspace = true }
 ark-ff = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 eyre.workspace = true
+nodes-observability.workspace = true
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
 rand.workspace = true
 rand_chacha.workspace = true

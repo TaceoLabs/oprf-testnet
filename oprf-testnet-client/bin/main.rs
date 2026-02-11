@@ -1,18 +1,29 @@
-use alloy::primitives::U160;
+use alloy::signers::k256::ecdsa::SigningKey;
 use ark_ff::UniformRand as _;
 use clap::Parser;
 use oprf_testnet_authentication::AuthModule;
-use rand::SeedableRng as _;
 use rustls::{ClientConfig, RootCertStore};
-use std::sync::Arc;
-use taceo_oprf::{client::Connector, types::OprfKeyId};
-use taceo_oprf_testnet_client::{DistributedOprfArgs, distributed_oprf};
+use std::{path::PathBuf, sync::Arc};
+use taceo_oprf::client::Connector;
+
+#[derive(Parser, Debug, Clone)]
+pub struct WalletOwnershipConfig {
+    /// The directory to write the nullifier prove and public inputs to.
+    #[clap(long, default_value = ".")]
+    pub out: PathBuf,
+}
+
+#[derive(Parser, Debug, Clone)]
+pub enum AuthModuleArg {
+    Basic,
+    WalletOwnership(WalletOwnershipConfig),
+}
 
 /// The configuration for the OPRF client.
 ///
 /// It can be configured via environment variables or command line arguments using `clap`.
 #[derive(Parser, Debug)]
-pub struct OprfDevClientConfig {
+pub struct OprfClientConfig {
     /// The URLs to all OPRF nodes
     #[clap(long, env = "OPRF_CLIENT_NODES", value_delimiter = ',')]
     pub nodes: Vec<String>,
@@ -21,56 +32,23 @@ pub struct OprfDevClientConfig {
     #[clap(long, env = "OPRF_CLIENT_THRESHOLD", default_value = "2")]
     pub threshold: usize,
 
-    /// rp id of already registered rp
-    #[clap(long, env = "OPRF_CLIENT_OPRF_KEY_ID")]
-    pub oprf_key_id: U160,
-
     /// The API Key
     #[clap(long, env = "OPRF_CLIENT_API_KEY")]
     pub api_key: String,
 
-    /// If we use the API only use-case
-    #[clap(long, env = "OPRF_DEV_CLIENT_API_ONLY", default_value = "false")]
-    pub api_only: bool,
-}
-
-async fn run_oprf(
-    nodes: &[String],
-    threshold: usize,
-    api_key: String,
-    module: AuthModule,
-    oprf_key_id: OprfKeyId,
-    connector: Connector,
-) -> eyre::Result<()> {
-    let mut rng = rand_chacha::ChaCha12Rng::from_entropy();
-
-    let action = ark_babyjubjub::Fq::rand(&mut rng);
-
-    // the client example internally checks the DLog equality
-    let verifiable_oprf = distributed_oprf(
-        DistributedOprfArgs {
-            services: nodes,
-            threshold,
-            api_key,
-            module,
-            oprf_key_id,
-            action,
-            connector,
-        },
-        &mut rng,
-    )
-    .await?;
-    tracing::info!("Received verified oprf output: {}", verifiable_oprf.output);
-    Ok(())
+    #[clap(subcommand)]
+    pub module: AuthModuleArg,
 }
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    nodes_observability::install_tracing("info");
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()
         .expect("can install");
-    let config = OprfDevClientConfig::parse();
-    tracing::info!("starting oprf-dev-client with config: {config:#?}");
+    let mut rng = rand::thread_rng();
+    let config = OprfClientConfig::parse();
+    tracing::info!("starting oprf-testnet-client with config: {config:#?}");
 
     // setup TLS config - even if we are http
     let mut root_store = RootCertStore::empty();
@@ -79,21 +57,43 @@ async fn main() -> eyre::Result<()> {
         .with_root_certificates(root_store)
         .with_no_client_auth();
     let connector = Connector::Rustls(Arc::new(rustls_config));
-    let module = match config.api_only {
-        true => AuthModule::TestNetApiOnly,
-        false => AuthModule::TestNet,
-    };
 
-    run_oprf(
-        &config.nodes,
-        config.threshold,
-        config.api_key,
-        module,
-        config.oprf_key_id.into(),
-        connector,
-    )
-    .await?;
-    tracing::info!("oprf successful");
+    match config.module {
+        AuthModuleArg::Basic => {
+            tracing::info!("Running basic verifiable OPRF...");
+            let action = ark_babyjubjub::Fq::rand(&mut rng);
+            let verifiable_oprf_output = taceo_oprf_testnet_client::basic_verifiable_oprf(
+                &config.nodes,
+                config.threshold,
+                AuthModule::Basic.oprf_key_id(),
+                config.api_key,
+                action,
+                connector,
+                &mut rng,
+            )
+            .await?;
+            tracing::info!("OPRF output: {}", verifiable_oprf_output.output);
+        }
+        AuthModuleArg::WalletOwnership(WalletOwnershipConfig { out }) => {
+            tracing::info!("Running wallet ownership verifiable OPRF...");
+            let private_key = SigningKey::random(&mut rng);
+            let (verifiable_oprf_output, pulic_inputs, proof) =
+                taceo_oprf_testnet_client::wallet_ownership_verifiable_oprf(
+                    &config.nodes,
+                    config.threshold,
+                    AuthModule::WalletOwnership.oprf_key_id(),
+                    config.api_key,
+                    private_key,
+                    connector,
+                    &mut rng,
+                )
+                .await?;
+            tracing::info!("Writing nullifier proof and public inputs to {out:?}");
+            std::fs::write(out.join("proof"), &proof)?;
+            std::fs::write(out.join("public_inputs"), &pulic_inputs)?;
+            tracing::info!("Nullifier: {}", verifiable_oprf_output.output);
+        }
+    }
 
     Ok(())
 }
