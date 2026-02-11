@@ -336,8 +336,8 @@ pub fn compute_nullifier_proof(
     let nargo_exec_status = Command::new("nargo")
         .arg("execute")
         .current_dir(&directory)
-        // .stdout(process::Stdio::null())
-        // .stderr(process::Stdio::null())
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
         .status()
         .context("while spawning nargo execute")?;
 
