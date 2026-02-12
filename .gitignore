@@ -10,4 +10,4 @@ logs
 Prover.toml
 proof
 public_inputs
-vk_hash
+out

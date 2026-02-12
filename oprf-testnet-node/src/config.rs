@@ -1,6 +1,6 @@
 //! Configuration types and CLI/environment parsing for the OPRF service.
 
-use std::{net::SocketAddr, time::Duration};
+use std::{net::SocketAddr, path::PathBuf, time::Duration};
 
 use clap::Parser;
 use secrecy::SecretString;
@@ -28,6 +28,10 @@ pub struct TestNetNodeConfig {
     /// The Unkey root key
     #[clap(long, env = "OPRF_NODE_UNKEY_VERIFY_KEY")]
     pub unkey_verify_key: SecretString,
+
+    /// The path to the wallet ownership verification key
+    #[clap(long, env = "OPRF_NODE_VK_PATH")]
+    pub vk_path: PathBuf,
 
     /// The OPRF service config
     #[clap(flatten)]

@@ -35,6 +35,7 @@ pub async fn start(
         Arc::new(WalletOwnershipTestNetRequestAuthenticator::init(
             config.unkey_verify_key.clone(),
             service_config.environment,
+            config.vk_path,
         ));
 
     tracing::info!("init oprf service..");
