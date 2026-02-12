@@ -1,4 +1,5 @@
 use alloy::primitives::FixedBytes;
+use alloy::primitives::U160;
 use async_trait::async_trait;
 use axum::response;
 use axum::response::IntoResponse;
@@ -16,7 +17,6 @@ use std::io::Write as _;
 use std::path::Path;
 use std::process;
 use std::process::Command;
-use std::str::FromStr;
 use taceo_oprf::client::VerifiableOprfOutput;
 use taceo_oprf::core::oprf::BlindingFactor;
 use taceo_oprf::service::config::Environment;
@@ -26,35 +26,30 @@ use tempfile::NamedTempFile;
 
 #[derive(Debug, Clone)]
 pub enum AuthModule {
-    TestNet,
-    TestNetApiOnly,
+    Basic,
+    WalletOwnership,
 }
 
 impl AuthModule {
     pub fn to_path(&self) -> String {
         format!("/{self}")
     }
+
+    pub fn oprf_key_id(&self) -> OprfKeyId {
+        match self {
+            Self::Basic => OprfKeyId::new(U160::from(1)),
+            Self::WalletOwnership => OprfKeyId::new(U160::from(2)),
+        }
+    }
 }
 
 impl fmt::Display for AuthModule {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            Self::TestNet => "testnet",
-            Self::TestNetApiOnly => "testnet-api-only",
+            Self::Basic => "basic",
+            Self::WalletOwnership => "wallet-ownership",
         };
         write!(f, "{s}")
-    }
-}
-
-impl FromStr for AuthModule {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "testnet" => Ok(AuthModule::TestNet),
-            "testnet-api-only" => Ok(AuthModule::TestNetApiOnly),
-            _ => Err(format!("Unknown AuthModule: {s}")),
-        }
     }
 }
 
@@ -159,19 +154,19 @@ impl IntoResponse for TestNetApiOnlyRequestAuthError {
     }
 }
 
-pub struct TestNetRequestAuthenticator {
+pub struct WalletOwnershipTestNetRequestAuthenticator {
     client: reqwest::Client,
     root_api_key: SecretString,
     env: Environment,
 }
 
-pub struct TestNetApiOnlyRequestAuthenticator {
+pub struct BasicTestNetRequestAuthenticator {
     client: reqwest::Client,
     root_api_key: SecretString,
     env: Environment,
 }
 
-impl TestNetRequestAuthenticator {
+impl WalletOwnershipTestNetRequestAuthenticator {
     pub fn init(root_api_key: SecretString, env: Environment) -> Self {
         let client = reqwest::Client::new();
         Self {
@@ -182,7 +177,7 @@ impl TestNetRequestAuthenticator {
     }
 }
 
-impl TestNetApiOnlyRequestAuthenticator {
+impl BasicTestNetRequestAuthenticator {
     pub fn init(root_api_key: SecretString, env: Environment) -> Self {
         let client = reqwest::Client::new();
         Self {
@@ -194,7 +189,7 @@ impl TestNetApiOnlyRequestAuthenticator {
 }
 
 #[async_trait]
-impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
+impl OprfRequestAuthenticator for WalletOwnershipTestNetRequestAuthenticator {
     type RequestAuth = TestNetRequestAuth;
     type RequestAuthError = TestNetRequestAuthError;
 
@@ -224,7 +219,7 @@ impl OprfRequestAuthenticator for TestNetRequestAuthenticator {
 }
 
 #[async_trait]
-impl OprfRequestAuthenticator for TestNetApiOnlyRequestAuthenticator {
+impl OprfRequestAuthenticator for BasicTestNetRequestAuthenticator {
     type RequestAuth = TestNetApiOnlyRequestAuth;
     type RequestAuthError = TestNetApiOnlyRequestAuthError;
 

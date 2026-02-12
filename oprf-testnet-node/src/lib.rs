@@ -4,7 +4,7 @@
 use std::sync::{Arc, atomic::Ordering};
 
 use oprf_testnet_authentication::{
-    AuthModule, TestNetApiOnlyRequestAuthenticator, TestNetRequestAuthenticator,
+    AuthModule, BasicTestNetRequestAuthenticator, WalletOwnershipTestNetRequestAuthenticator,
 };
 use taceo_oprf::service::{
     OprfServiceBuilder, StartedServices, secret_manager::SecretManagerService,
@@ -24,15 +24,18 @@ pub async fn start(
     let (cancellation_token, is_graceful_shutdown) =
         nodes_common::spawn_shutdown_task(shutdown_signal);
 
-    tracing::info!("init oprf request auth service..");
-    let oprf_req_auth_service = Arc::new(TestNetRequestAuthenticator::init(
+    tracing::info!("init basic oprf request auth service..");
+    let basic_oprf_req_auth_service = Arc::new(BasicTestNetRequestAuthenticator::init(
         config.unkey_verify_key.clone(),
         service_config.environment,
     ));
-    let oprf_req_api_only_auth_service = Arc::new(TestNetApiOnlyRequestAuthenticator::init(
-        config.unkey_verify_key.clone(),
-        service_config.environment,
-    ));
+
+    tracing::info!("init wallet ownership oprf request auth service..");
+    let wallet_ownership_oprf_req_auth_service =
+        Arc::new(WalletOwnershipTestNetRequestAuthenticator::init(
+            config.unkey_verify_key.clone(),
+            service_config.environment,
+        ));
 
     tracing::info!("init oprf service..");
     let (oprf_service_router, key_event_watcher) = OprfServiceBuilder::init(
@@ -42,10 +45,10 @@ pub async fn start(
         cancellation_token.clone(),
     )
     .await?
-    .module(&AuthModule::TestNet.to_path(), oprf_req_auth_service)
+    .module(&AuthModule::Basic.to_path(), basic_oprf_req_auth_service)
     .module(
-        &AuthModule::TestNetApiOnly.to_path(),
-        oprf_req_api_only_auth_service,
+        &AuthModule::WalletOwnership.to_path(),
+        wallet_ownership_oprf_req_auth_service,
     )
     .build();
 

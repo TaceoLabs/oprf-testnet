@@ -6386,6 +6386,7 @@ dependencies = [
  "rand_chacha 0.3.1",
  "rustls 0.23.36",
  "taceo-ark-babyjubjub",
+ "taceo-nodes-observability",
  "taceo-oprf",
  "taceo-oprf-testnet-authentication",
  "tokio",
