@@ -15,33 +15,14 @@ use taceo_oprf::client::VerifiableOprfOutput;
 use taceo_oprf::{client::Connector, core::oprf::BlindingFactor, types::OprfKeyId};
 use tracing::instrument;
 
-pub struct DistributedOprfArgs<'a> {
-    pub services: &'a [String],
-    pub threshold: usize,
-    pub api_key: String,
-    pub module: AuthModule,
-    pub oprf_key_id: OprfKeyId,
-    pub action: ark_babyjubjub::Fq,
-    pub connector: Connector,
-}
-
-pub async fn distributed_oprf<R: Rng + CryptoRng>(
-    distributed_oprf_args: DistributedOprfArgs<'_>,
-    rng: &mut R,
-) -> eyre::Result<VerifiableOprfOutput> {
-    tracing::debug!(
-        "Starting distributed OPRF with args: {}",
-        distributed_oprf_args.module
-    );
-    match distributed_oprf_args.module {
-        AuthModule::TestNet => distributed_oprf_api_and_proof(distributed_oprf_args, rng).await,
-        AuthModule::TestNetApiOnly => distributed_oprf_api_only(distributed_oprf_args, rng).await,
-    }
-}
-
 #[instrument(level = "debug", skip_all)]
-pub async fn distributed_oprf_api_only<R: Rng + CryptoRng>(
-    distributed_oprf_args: DistributedOprfArgs<'_>,
+pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
+    nodes: &[String],
+    threshold: usize,
+    oprf_key_id: OprfKeyId,
+    api_key: String,
+    action: ark_babyjubjub::Fq,
+    connector: Connector,
     rng: &mut R,
 ) -> eyre::Result<VerifiableOprfOutput> {
     tracing::info!("Running distributed OPRF with API only authentication");
@@ -50,22 +31,23 @@ pub async fn distributed_oprf_api_only<R: Rng + CryptoRng>(
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
 
     let auth = TestNetApiOnlyRequestAuth {
-        api_key: distributed_oprf_args.api_key,
-        oprf_key_id: distributed_oprf_args.oprf_key_id,
+        api_key,
+        oprf_key_id,
     };
 
     let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
-        distributed_oprf_args.services,
-        &distributed_oprf_args.module.to_string(),
-        distributed_oprf_args.threshold,
-        distributed_oprf_args.action,
+        nodes,
+        &AuthModule::Basic.to_string(),
+        threshold,
+        action,
         blinding_factor,
         domain_separator,
         auth,
-        distributed_oprf_args.connector,
+        connector,
     )
     .await
     .context("cannot get verifiable oprf output")?;
+
     let elapsed = start.elapsed();
     tracing::info!("Total time taken for distributed OPRF with only API: {elapsed:?}",);
 
@@ -73,16 +55,20 @@ pub async fn distributed_oprf_api_only<R: Rng + CryptoRng>(
 }
 
 #[instrument(level = "debug", skip_all)]
-pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
-    distributed_oprf_args: DistributedOprfArgs<'_>,
+pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
+    nodes: &[String],
+    threshold: usize,
+    oprf_key_id: OprfKeyId,
+    api_key: String,
+    private_key: SigningKey,
+    connector: Connector,
     rng: &mut R,
-) -> eyre::Result<VerifiableOprfOutput> {
-    let start = Instant::now();
+) -> eyre::Result<(VerifiableOprfOutput, Vec<u8>, Vec<u8>)> {
     tracing::info!("Running distributed OPRF with API and Proof authentication");
+    let start = Instant::now();
     let blinding_factor = BlindingFactor::rand(rng);
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
 
-    let private_key = SigningKey::random(&mut rand::thread_rng());
     let encoded_pubkey = private_key
         .verifying_key()
         .as_affine()
@@ -123,19 +109,19 @@ pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
     let auth = TestNetRequestAuth {
         public_inputs,
         proof,
-        oprf_key_id: distributed_oprf_args.oprf_key_id,
-        api_key: distributed_oprf_args.api_key,
+        oprf_key_id,
+        api_key,
     };
 
     let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
-        distributed_oprf_args.services,
-        &distributed_oprf_args.module.to_string(),
-        distributed_oprf_args.threshold,
+        nodes,
+        &AuthModule::WalletOwnership.to_string(),
+        threshold,
         query,
         blinding_factor.clone(),
         domain_separator,
         auth,
-        distributed_oprf_args.connector,
+        connector,
     )
     .await
     .context("cannot get verifiable oprf output")?;
@@ -156,5 +142,6 @@ pub async fn distributed_oprf_api_and_proof<R: Rng + CryptoRng>(
     tracing::info!(
         "Total time taken for distributed OPRF with API and Proof authentication: {elapsed:?}",
     );
-    Ok(verifiable_oprf_output)
+
+    Ok((verifiable_oprf_output, public_inputs, proof))
 }

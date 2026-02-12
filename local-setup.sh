@@ -44,7 +44,7 @@ start_node() {
     local port=$((10000 + i))
     local db_port=$((5440 + i))
     local db_conn="postgres://postgres:postgres@localhost:$db_port/postgres"
-    RUST_LOG="taceo_oprf_service=trace,taceo_oprf_testnet_node=trace,warn" \
+    RUST_LOG="taceo_oprf_service=trace,taceo_oprf_testnet_node=trace,taceo_oprf_testnet_authentication=trace,warn" \
     ./target/release/oprf-testnet-node \
         --bind-addr 127.0.0.1:$port \
         --environment dev \
@@ -95,6 +95,10 @@ setup() {
     wait_for_health 10000 "taceo-oprf-testnet-node0" 300
     wait_for_health 10001 "taceo-oprf-testnet-node1" 300
     wait_for_health 10002 "taceo-oprf-testnet-node2" 300
+
+    echo -e "${GREEN}init OPRF keys for basic and wallet ownership modules..${NOCOLOR}"
+    (cd contracts && OPRF_KEY_REGISTRY_PROXY=$oprf_key_registry OPRF_KEY_ID=1 forge script script/InitKeyGen.s.sol --broadcast --fork-url http://127.0.0.1:8545 --private-key $PK)
+    (cd contracts && OPRF_KEY_REGISTRY_PROXY=$oprf_key_registry OPRF_KEY_ID=2 forge script script/InitKeyGen.s.sol --broadcast --fork-url http://127.0.0.1:8545 --private-key $PK)
 }
 
 client() {
