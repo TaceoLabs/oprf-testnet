@@ -107,11 +107,11 @@ fn check_noir_and_bb_installed() -> eyre::Result<()> {
         .stdout(process::Stdio::null())
         .stderr(process::Stdio::null())
         .output()
-        .context("The 'nargo' binary is not installed or not found in PATH. Please install Noir from https://noir-lang.org/docs/getting_started/quick_start")?;
+        .context("The 'nargo' binary is not installed or not found in PATH. Please install Noir to get 'nargo' from https://noir-lang.org/docs/getting_started/quick_start")?;
 
     eyre::ensure!(
         nargo_output.status.success(),
-        "The 'nargo' binary is not installed or not found in PATH. Please install Noir from https://noir-lang.org/docs/getting_started/quick_start"
+        "The 'nargo' binary is not installed or not found in PATH. Please install Noir to get 'nargo' from https://noir-lang.org/docs/getting_started/quick_start"
     );
 
     let bb_output = std::process::Command::new("bb")
@@ -119,10 +119,10 @@ fn check_noir_and_bb_installed() -> eyre::Result<()> {
         .stdout(process::Stdio::null())
         .stderr(process::Stdio::null())
         .output()
-        .context("BB is not installed or not found in PATH. Please install BB from https://barretenberg.aztec.network/docs/getting_started/")?;
+        .context("The 'bb' binary is not installed or not found in PATH. Please install Barretenberg to get 'bb' from from https://barretenberg.aztec.network/docs/getting_started/")?;
     eyre::ensure!(
         bb_output.status.success(),
-        "The 'nargo' binary is not installed or not found in PATH. Please install Noir from https://noir-lang.org/docs/getting_started/quick_start"
+        "The 'bb' binary is not installed or not found in PATH. Please install Barretenberg to get 'bb' from from https://barretenberg.aztec.network/docs/getting_started/"
     );
     Ok(())
 }
