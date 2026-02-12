@@ -2,9 +2,10 @@ use std::str::FromStr;
 
 use alloy::signers::k256::ecdsa::SigningKey;
 use clap::Parser;
+use eyre::Context;
 use oprf_testnet_authentication::AuthModule;
 use rustls::{ClientConfig, RootCertStore};
-use std::{path::PathBuf, sync::Arc};
+use std::{path::PathBuf, process, sync::Arc};
 use taceo_oprf::client::Connector;
 
 #[derive(Parser, Debug, Clone)]
@@ -89,6 +90,7 @@ async fn main() -> eyre::Result<()> {
             tracing::info!("OPRF output: {}", verifiable_oprf_output.output);
         }
         AuthModuleArg::WalletOwnership(WalletOwnershipConfig { out }) => {
+            check_noir_and_bb_installed()?;
             tracing::info!("Running wallet ownership verifiable OPRF...");
             let private_key = SigningKey::random(&mut rng);
             let (verifiable_oprf_output, pulic_inputs, proof) =
@@ -109,5 +111,32 @@ async fn main() -> eyre::Result<()> {
         }
     }
 
+    Ok(())
+}
+
+fn check_noir_and_bb_installed() -> eyre::Result<()> {
+    tracing::debug!("Checking if Noir and BB are installed...");
+    let nargo_output = std::process::Command::new("nargo")
+        .arg("--version")
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .output()
+        .context("The 'nargo' binary is not installed or not found in PATH. Please install Noir to get 'nargo' from https://noir-lang.org/docs/getting_started/quick_start")?;
+
+    eyre::ensure!(
+        nargo_output.status.success(),
+        "The 'nargo' binary was found but --version returned an error. Please ensure 'nargo' is correctly installed and can be executed from the command line. You can install Noir to get 'nargo' from https://noir-lang.org/docs/getting_started/quick_start"
+    );
+
+    let bb_output = std::process::Command::new("bb")
+        .arg("--version")
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .output()
+        .context("The 'bb' binary is not installed or not found in PATH. Please install Barretenberg to get 'bb' from from https://barretenberg.aztec.network/docs/getting_started/")?;
+    eyre::ensure!(
+        bb_output.status.success(),
+        "The 'bb' binary was found but --version returned an error. Please ensure 'bb' is correctly installed and can be executed from the command line. You can install Barretenberg to get 'bb' from from https://barretenberg.aztec.network/docs/getting_started/"
+    );
     Ok(())
 }
