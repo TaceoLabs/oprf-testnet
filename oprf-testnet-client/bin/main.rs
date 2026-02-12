@@ -1,10 +1,18 @@
+use std::str::FromStr;
+
 use alloy::signers::k256::ecdsa::SigningKey;
-use ark_ff::UniformRand as _;
 use clap::Parser;
 use oprf_testnet_authentication::AuthModule;
 use rustls::{ClientConfig, RootCertStore};
 use std::{path::PathBuf, sync::Arc};
 use taceo_oprf::client::Connector;
+
+#[derive(Parser, Debug, Clone)]
+pub struct BasicConfig {
+    /// The action (field element) to perform the OPRF on, represented as a string.
+    #[clap(long)]
+    pub action: String,
+}
 
 #[derive(Parser, Debug, Clone)]
 pub struct WalletOwnershipConfig {
@@ -15,7 +23,7 @@ pub struct WalletOwnershipConfig {
 
 #[derive(Parser, Debug, Clone)]
 pub enum AuthModuleArg {
-    Basic,
+    Basic(BasicConfig),
     WalletOwnership(WalletOwnershipConfig),
 }
 
@@ -59,9 +67,15 @@ async fn main() -> eyre::Result<()> {
     let connector = Connector::Rustls(Arc::new(rustls_config));
 
     match config.module {
-        AuthModuleArg::Basic => {
+        AuthModuleArg::Basic(BasicConfig { action }) => {
             tracing::info!("Running basic verifiable OPRF...");
-            let action = ark_babyjubjub::Fq::rand(&mut rng);
+            let action_str = action.clone();
+            let action = ark_babyjubjub::Fq::from_str(&action)
+                .map_err(|_| eyre::eyre!("Invalid action, must be a field element"))?;
+            eyre::ensure!(
+                action_str == action.to_string(),
+                "Parsed action does not match original string, this can happen if there are leading zeros, leading signs, or if the number is larger than the field modulus",
+            );
             let verifiable_oprf_output = taceo_oprf_testnet_client::basic_verifiable_oprf(
                 &config.nodes,
                 config.threshold,
