@@ -26,16 +26,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-      - uses: noir-lang/noirup@v0.1.4
-        with:
-          toolchain: stable
       - uses: Swatinem/rust-cache@v2
       - uses: foundry-rs/foundry-toolchain@v1
       - run: cd contracts && forge install && forge build
       - run: |
           curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/next/barretenberg/bbup/install | bash
           echo "${HOME}/.bb" >> $GITHUB_PATH
-          ${HOME}/.bb/bbup
+          ${HOME}/.bb/bbup -nv 1.0.0-beta.18
       # - uses: Swatinem/rust-cache@v2
       - name: E2E-Test
         run: bash local-setup.sh test

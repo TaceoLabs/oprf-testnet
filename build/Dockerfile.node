@@ -1,16 +1,9 @@
 FROM ubuntu:24.04 AS ubuntu
-# install bb
-# RUN curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/next/barretenberg/bbup/install | bash
-# ENV PATH="/root/.bb:${PATH}"
-# RUN bbup
 RUN apt-get update && apt-get install -y curl git ca-certificates jq
-# install noir
-RUN curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-ENV PATH="$PATH:/root/.nargo/bin"
-RUN noirup
+# install bb
 RUN curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/next/barretenberg/bbup/install | bash 
 ENV PATH="$PATH:/root/.bb"
-RUN bbup
+RUN bbup -nv 1.0.0-beta.18
 
 FROM lukemathwalker/cargo-chef:0.1.73-rust-1.93.0-bookworm AS chef
 WORKDIR /app
@@ -47,10 +40,9 @@ WORKDIR /app
 COPY --from=healthcheck-builder /usr/local/cargo/bin/simple-web-healthcheck /healthcheck
 
 # copy needed files and binary for oprf-service
-COPY ./noir/blinded_query_proof/out /app/noir/blinded_query_proof/out
+COPY ./oprf-testnet-authentication/blinded_query_proof.vk /app/blinded_query_proof.vk
 COPY --from=builder /app/target/release/oprf-testnet-node /app/oprf-testnet-node
 COPY --from=ubuntu /root/.bb/bb /usr/bin/
-COPY --from=ubuntu /root/.nargo/bin/nargo /usr/bin/
 
 ENTRYPOINT [ "/app/oprf-testnet-node" ]
 

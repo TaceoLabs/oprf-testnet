@@ -6,13 +6,14 @@ use alloy::signers::local::PrivateKeySigner;
 use ark_ff::PrimeField as _;
 use eyre::Context;
 use oprf_testnet_authentication::{
-    AuthModule, TestNetApiOnlyRequestAuth, TestNetRequestAuth, compute_nullifier_proof,
-    compute_wallet_ownership_proof, verify_proof,
+    AuthModule, TestNetApiOnlyRequestAuth, TestNetRequestAuth, VERIFIED_OPRF_PROOF_VK,
+    compute_nullifier_proof, compute_wallet_ownership_proof, verify_proof,
 };
 use rand::{CryptoRng, Rng};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use taceo_oprf::client::VerifiableOprfOutput;
 use taceo_oprf::{client::Connector, core::oprf::BlindingFactor, types::OprfKeyId};
+use tempfile::NamedTempFile;
 use tracing::instrument;
 
 #[instrument(level = "debug", skip_all)]
@@ -136,7 +137,9 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
         y_affine,
     )?;
 
-    verify_proof(&public_inputs, &proof, "noir/verified_oprf_proof/out/vk")?;
+    let vk = NamedTempFile::new().context("creating NamedTempFile for vk")?;
+    std::fs::write(vk.path(), VERIFIED_OPRF_PROOF_VK).context("writing VK to temp file")?;
+    verify_proof(&public_inputs, &proof, vk.path())?;
 
     let elapsed = start.elapsed();
     tracing::info!(

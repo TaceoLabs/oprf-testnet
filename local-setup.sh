@@ -54,6 +54,7 @@ start_node() {
         --db-schema oprf \
         --unkey-verify-key "test" \
         --ws-max-message-size 51200 \
+        --vk-path ./oprf-testnet-authentication/blinded_query_proof.vk \
         > logs/node$i.log 2>&1 &
     pid=$!
     echo "started taceo-oprf-testnet-node $i with PID $pid"
@@ -104,7 +105,7 @@ setup() {
 client() {
     oprf_key_registry=$(jq -r '.transactions[] | select(.contractName == "ERC1967Proxy") | .contractAddress' ./contracts/broadcast/OprfKeyRegistryWithDeps.s.sol/31337/run-latest.json)
     # use addresses from deploy logs or use existing env vars
-    OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT:-$oprf_key_registry} cargo run --release --bin taceo-oprf-testnet-dev-client -- "$@"
+    RUST_LOG=taceo_oprf_client=trace,info OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT:-$oprf_key_registry} cargo run --release --bin taceo-oprf-testnet-dev-client -- "$@"
 }
 
 main() {
