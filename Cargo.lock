@@ -957,7 +957,7 @@ version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40c48f72fd53cd289104fc64099abca73db4166ad86ea0b4341abe65af83dadc"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -968,7 +968,7 @@ checksum = "291e6a250ff86cd4a820112fb8898808a366d8f9f58ce16d1f538353ad55747d"
 dependencies = [
  "anstyle",
  "once_cell_polyfill",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2790,7 +2790,7 @@ checksum = "6715836b4946e8585016e80b79c7561476aff3b22f7b756778e7b109d86086c6"
 dependencies = [
  "hybrid-array",
  "num-traits",
- "rand_core 0.10.0-rc-2",
+ "rand_core 0.10.0",
  "subtle",
  "zeroize",
 ]
@@ -3169,7 +3169,7 @@ dependencies = [
  "once_cell",
  "pem-rfc7468 1.0.0",
  "pkcs8 0.11.0-rc.11",
- "rand_core 0.10.0-rc-2",
+ "rand_core 0.10.0",
  "rustcrypto-ff",
  "rustcrypto-group",
  "sec1 0.8.0-rc.13",
@@ -3242,7 +3242,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4347,7 +4347,7 @@ checksum = "3640c1c38b8e4e43584d8df18be5fc6b0aa314ce6ebf51b53313d4306cca8e46"
 dependencies = [
  "hermit-abi",
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -5126,7 +5126,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -5699,7 +5699,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c3ad342f52c70a953d95acb09a55450fdc07c2214283b81536c3f83f714568e"
 dependencies = [
  "crypto-bigint 0.7.0-rc.10",
- "rand_core 0.10.0-rc-2",
+ "rand_core 0.10.0",
  "rustcrypto-ff",
  "subtle",
  "zeroize",
@@ -5987,9 +5987,9 @@ dependencies = [
 
 [[package]]
 name = "rand_core"
-version = "0.10.0-rc-2"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "104a23e4e8b77312a823b6b5613edbac78397e2f34320bc7ac4277013ec4478e"
+checksum = "0c8d0fd677905edcbeedbf2edb6494d676f0e98d54d5cf9bda0b061cb8fb8aba"
 
 [[package]]
 name = "rand_xorshift"
@@ -6415,7 +6415,7 @@ version = "0.14.0-pre.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa9cd37111549306f79b09aa2618e15b1e8241b7178c286821e3dd71579db4db"
 dependencies = [
- "rand_core 0.10.0-rc-2",
+ "rand_core 0.10.0",
  "subtle",
 ]
 
@@ -6425,7 +6425,7 @@ version = "0.14.0-pre.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e394cd734b5f97dfc3484fa42aad7acd912961c2bcd96c99aa05b3d6cab7cafd"
 dependencies = [
- "rand_core 0.10.0-rc-2",
+ "rand_core 0.10.0",
  "rustcrypto-ff",
  "subtle",
 ]
@@ -6440,7 +6440,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -7035,7 +7035,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a0251c9d6468f4ba853b6352b190fb7c1e405087779917c238445eb03993826"
 dependencies = [
  "digest 0.11.0-rc.12",
- "rand_core 0.10.0-rc-2",
+ "rand_core 0.10.0",
 ]
 
 [[package]]
@@ -7776,7 +7776,7 @@ dependencies = [
  "noir_artifact_cli",
  "noirc_artifacts",
  "p256",
- "rand_core 0.10.0-rc-2",
+ "rand_core 0.10.0",
  "reqwest",
  "secrecy",
  "serde",
@@ -7935,7 +7935,7 @@ dependencies = [
  "getrandom 0.4.1",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -9035,7 +9035,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
