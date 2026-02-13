@@ -6,7 +6,7 @@ use alloy::signers::local::PrivateKeySigner;
 use ark_ff::PrimeField as _;
 use eyre::Context;
 use oprf_testnet_authentication::{
-    AuthModule, basic::TestNetApiOnlyRequestAuth, wallet_ownership::TestNetRequestAuth,
+    AuthModule, basic::BasicTestNetRequestAuth, wallet_ownership::TestNetRequestAuth,
     wallet_ownership::zk,
 };
 use rand::{CryptoRng, Rng};
@@ -30,7 +30,7 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
     let blinding_factor = BlindingFactor::rand(rng);
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
 
-    let auth = TestNetApiOnlyRequestAuth { api_key };
+    let auth = BasicTestNetRequestAuth { api_key };
 
     let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
         nodes,
