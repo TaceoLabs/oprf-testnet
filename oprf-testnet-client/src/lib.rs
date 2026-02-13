@@ -12,7 +12,7 @@ use oprf_testnet_authentication::{
 use rand::{CryptoRng, Rng};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use taceo_oprf::client::VerifiableOprfOutput;
-use taceo_oprf::{client::Connector, core::oprf::BlindingFactor, types::OprfKeyId};
+use taceo_oprf::{client::Connector, core::oprf::BlindingFactor};
 use tempfile::NamedTempFile;
 use tracing::instrument;
 
@@ -20,7 +20,6 @@ use tracing::instrument;
 pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
     nodes: &[String],
     threshold: usize,
-    oprf_key_id: OprfKeyId,
     api_key: String,
     action: ark_babyjubjub::Fq,
     connector: Connector,
@@ -31,10 +30,7 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
     let blinding_factor = BlindingFactor::rand(rng);
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
 
-    let auth = TestNetApiOnlyRequestAuth {
-        api_key,
-        oprf_key_id,
-    };
+    let auth = TestNetApiOnlyRequestAuth { api_key };
 
     let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
         nodes,
@@ -59,7 +55,6 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
 pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     nodes: &[String],
     threshold: usize,
-    oprf_key_id: OprfKeyId,
     api_key: String,
     private_key: SigningKey,
     connector: Connector,
@@ -110,7 +105,6 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     let auth = TestNetRequestAuth {
         public_inputs,
         proof,
-        oprf_key_id,
         api_key,
     };
 
