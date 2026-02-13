@@ -69,7 +69,7 @@ async fn main() -> eyre::Result<()> {
         .expect("can install");
     let mut rng = rand::thread_rng();
     let config = OprfClientConfig::parse();
-    tracing::info!("starting oprf-testnet-client with config: {config:#?}");
+    tracing::debug!("starting oprf-testnet-client with config: {config:#?}");
 
     // setup TLS config - even if we are http
     let mut root_store = RootCertStore::empty();
