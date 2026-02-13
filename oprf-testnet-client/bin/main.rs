@@ -12,9 +12,9 @@ const BB_VERSION: &str = "3.0.0-nightly.20260102";
 
 #[derive(Parser, Debug, Clone)]
 pub struct BasicConfig {
-    /// The action (field element) to perform the OPRF on, represented as a string.
+    /// The input (field element) for the OPRF evaluation, represented as a string.
     #[clap(long)]
-    pub action: String,
+    pub input: String,
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -70,21 +70,21 @@ async fn main() -> eyre::Result<()> {
     let connector = Connector::Rustls(Arc::new(rustls_config));
 
     match config.module {
-        AuthModuleArg::Basic(BasicConfig { action }) => {
+        AuthModuleArg::Basic(BasicConfig { input }) => {
             tracing::info!("Running basic verifiable OPRF...");
-            let action_str = action.clone();
-            let action = ark_babyjubjub::Fq::from_str(&action)
-                .map_err(|_| eyre::eyre!("Invalid action, must be a field element"))?;
+            let input_str = input.clone();
+            let input = ark_babyjubjub::Fq::from_str(&input)
+                .map_err(|_| eyre::eyre!("Invalid input, must be a field element"))?;
             eyre::ensure!(
-                action_str == action.to_string(),
-                "Parsed action does not match original string, this can happen if there are leading zeros, leading signs, or if the number is larger than the field modulus",
+                input_str == input.to_string(),
+                "Parsed input does not match original string, this can happen if there are leading zeros, leading signs, or if the number is larger than the field modulus",
             );
             let verifiable_oprf_output = taceo_oprf_testnet_client::basic_verifiable_oprf(
                 &config.nodes,
                 config.threshold,
                 AuthModule::Basic.oprf_key_id(),
                 config.api_key,
-                action,
+                input,
                 connector,
                 &mut rng,
             )
