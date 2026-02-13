@@ -72,6 +72,8 @@ setup() {
     teardown
     trap teardown EXIT SIGINT SIGTERM
 
+    cargo build --workspace --release
+
     anvil &
 
     docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d localstack oprf-node-db0 oprf-node-db1 oprf-node-db2
@@ -89,7 +91,6 @@ setup() {
     wait_for_health 20002 "oprf-key-gen2" 300
 
     echo -e "${GREEN}starting OPRF nodes..${NOCOLOR}"
-    cargo build -p taceo-oprf-testnet-node --release
     start_node 0
     start_node 1
     start_node 2
@@ -103,9 +104,10 @@ setup() {
 }
 
 client() {
+    cargo build --workspace --release
     oprf_key_registry=$(jq -r '.transactions[] | select(.contractName == "ERC1967Proxy") | .contractAddress' ./contracts/broadcast/OprfKeyRegistryWithDeps.s.sol/31337/run-latest.json)
     # use addresses from deploy logs or use existing env vars
-    RUST_LOG=taceo_oprf_client=trace,info OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT:-$oprf_key_registry} cargo run --release --bin taceo-oprf-testnet-dev-client -- "$@"
+    OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT:-$oprf_key_registry} ./target/release/taceo-oprf-testnet-dev-client "$@"
 }
 
 main() {
