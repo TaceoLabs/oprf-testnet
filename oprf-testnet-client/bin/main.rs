@@ -145,7 +145,7 @@ fn check_bb_version() -> eyre::Result<()> {
     let version = version.trim();
     eyre::ensure!(
         version == BB_VERSION,
-        "The 'bb' binary version is {version}, but version {BB_VERSION} is required. Please install the correct version using 'bbup -nv 1.0.0-beta.18 "
+        "The 'bb' binary version is {version}, but version {BB_VERSION} is required. Please install the correct version using 'bbup -nv 1.0.0-beta.18'"
     );
     Ok(())
 }
