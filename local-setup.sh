@@ -45,7 +45,7 @@ start_node() {
     local db_port=$((5440 + i))
     local db_conn="postgres://postgres:postgres@localhost:$db_port/postgres"
     RUST_LOG="taceo_oprf_service=trace,taceo_oprf_testnet_node=trace,taceo_oprf_testnet_authentication=trace,warn" \
-    ./target/release/oprf-testnet-node \
+    ./target/release/taceo-oprf-testnet-node \
         --bind-addr 127.0.0.1:$port \
         --environment dev \
         --version-req ">=0.0.0" \

@@ -21,7 +21,7 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 # Build application
 COPY . .
-RUN cargo build --release --bin oprf-testnet-node
+RUN cargo build --release --bin taceo-oprf-testnet-node
 
 
 # Build healthcheck
@@ -41,8 +41,8 @@ COPY --from=healthcheck-builder /usr/local/cargo/bin/simple-web-healthcheck /hea
 
 # copy needed files and binary for oprf-service
 COPY ./oprf-testnet-authentication/blinded_query_proof.vk /app/blinded_query_proof.vk
-COPY --from=builder /app/target/release/oprf-testnet-node /app/oprf-testnet-node
+COPY --from=builder /app/target/release/taceo-oprf-testnet-node /app/taceo-oprf-testnet-node
 COPY --from=ubuntu /root/.bb/bb /usr/bin/
 
-ENTRYPOINT [ "/app/oprf-testnet-node" ]
+ENTRYPOINT [ "/app/taceo-oprf-testnet-node" ]
 
