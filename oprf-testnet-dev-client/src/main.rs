@@ -94,10 +94,6 @@ pub struct OprfDevClientConfig {
     )]
     pub taceo_private_key: SecretString,
 
-    /// rp id of already registered rp
-    #[clap(long, env = "OPRF_DEV_CLIENT_OPRF_KEY_ID")]
-    pub oprf_key_id: Option<U160>,
-
     /// The share epoch. Will be ignored if `oprf_key_id` is `None`.
     #[clap(long, env = "OPRF_DEV_CLIENT_SHARE_EPOCH", default_value = "0")]
     pub share_epoch: u32,
@@ -346,7 +342,6 @@ async fn reshare_test(
     api_key: String,
     module: AuthModule,
     oprf_key_registry: Address,
-    oprf_key_id: OprfKeyId,
     connector: Connector,
     provider: DynProvider,
     acceptance_num: usize,
@@ -399,7 +394,8 @@ async fn reshare_test(
     });
 
     tracing::info!("Doing reshare!");
-    oprf_test_utils::init_reshare(provider.clone(), oprf_key_registry, oprf_key_id).await?;
+    oprf_test_utils::init_reshare(provider.clone(), oprf_key_registry, module.oprf_key_id())
+        .await?;
     tokio::time::timeout(
         max_wait_time,
         wait_for_epoch(&mut rx, acceptance_num, current_epoch.next()),
@@ -407,7 +403,8 @@ async fn reshare_test(
     .await??;
 
     tracing::info!("Doing reshare!");
-    oprf_test_utils::init_reshare(provider.clone(), oprf_key_registry, oprf_key_id).await?;
+    oprf_test_utils::init_reshare(provider.clone(), oprf_key_registry, module.oprf_key_id())
+        .await?;
     tokio::time::timeout(
         max_wait_time,
         wait_for_epoch(&mut rx, acceptance_num, current_epoch.next().next()),
@@ -478,26 +475,16 @@ async fn main() -> eyre::Result<()> {
         .context("while connecting to RPC")?
         .erased();
 
-    let (oprf_key_id, oprf_public_key) = if let Some(oprf_key_id) = config.oprf_key_id {
-        let oprf_key_id = OprfKeyId::new(oprf_key_id);
+    let oprf_public_key = {
+        let oprf_key_id = AuthModule::from(config.module).oprf_key_id();
         let share_epoch = ShareEpoch::from(config.share_epoch);
-        let oprf_public_key = health_checks::oprf_public_key_from_services(
+        health_checks::oprf_public_key_from_services(
             oprf_key_id,
             share_epoch,
             &config.nodes,
             config.max_wait_time,
         )
-        .await?;
-        (oprf_key_id, oprf_public_key)
-    } else {
-        let (oprf_key_id, oprf_public_key) = taceo_oprf::dev_client::init_key_gen(
-            &config.nodes,
-            config.oprf_key_registry_contract,
-            provider.clone(),
-            config.max_wait_time,
-        )
-        .await?;
-        (oprf_key_id, oprf_public_key)
+        .await?
     };
 
     // setup TLS config - even if we are http
@@ -555,7 +542,6 @@ async fn main() -> eyre::Result<()> {
                 config.api_key,
                 config.module.into(),
                 config.oprf_key_registry_contract,
-                oprf_key_id,
                 connector,
                 provider,
                 cmd.acceptance_num,
