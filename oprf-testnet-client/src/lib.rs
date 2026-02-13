@@ -6,8 +6,8 @@ use alloy::signers::local::PrivateKeySigner;
 use ark_ff::PrimeField as _;
 use eyre::Context;
 use oprf_testnet_authentication::{
-    AuthModule, TestNetApiOnlyRequestAuth, TestNetRequestAuth, VERIFIED_OPRF_PROOF_VK,
-    compute_nullifier_proof, compute_wallet_ownership_proof, verify_proof,
+    AuthModule, basic::TestNetApiOnlyRequestAuth, wallet_ownership::TestNetRequestAuth,
+    wallet_ownership::zk,
 };
 use rand::{CryptoRng, Rng};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -99,7 +99,7 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     //Remove recovery id
     _ = signature.pop();
 
-    let (public_inputs, proof) = compute_wallet_ownership_proof(
+    let (public_inputs, proof) = zk::compute_wallet_ownership_proof(
         &blinding_factor,
         &x_affine,
         &y_affine,
@@ -128,7 +128,7 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     .context("cannot get verifiable oprf output")?;
 
     tracing::debug!("Computing proof for the verifiable OPRF output..");
-    let (public_inputs, proof) = compute_nullifier_proof(
+    let (public_inputs, proof) = zk::compute_nullifier_proof(
         verifiable_oprf_output.clone(),
         signature,
         msg_hash,
@@ -138,8 +138,8 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     )?;
 
     let vk = NamedTempFile::new().context("creating NamedTempFile for vk")?;
-    std::fs::write(vk.path(), VERIFIED_OPRF_PROOF_VK).context("writing VK to temp file")?;
-    verify_proof(&public_inputs, &proof, vk.path())?;
+    std::fs::write(vk.path(), zk::VERIFIED_OPRF_PROOF_VK).context("writing VK to temp file")?;
+    zk::verify_proof(&public_inputs, &proof, vk.path())?;
 
     let elapsed = start.elapsed();
     tracing::info!(
