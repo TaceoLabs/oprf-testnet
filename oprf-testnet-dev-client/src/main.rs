@@ -21,7 +21,9 @@ use alloy::{
 use ark_ff::{PrimeField, UniformRand as _};
 use clap::Parser;
 use eyre::Context as _;
-use oprf_testnet_authentication::{AuthModule, TestNetRequestAuth, compute_wallet_ownership_proof};
+use oprf_testnet_authentication::{
+    AuthModule, wallet_ownership::TestNetRequestAuth, wallet_ownership::zk,
+};
 use rand::SeedableRng as _;
 use rustls::{ClientConfig, RootCertStore};
 use secrecy::{ExposeSecret as _, SecretString};
@@ -92,10 +94,6 @@ pub struct OprfDevClientConfig {
     )]
     pub taceo_private_key: SecretString,
 
-    /// rp id of already registered rp
-    #[clap(long, env = "OPRF_DEV_CLIENT_OPRF_KEY_ID")]
-    pub oprf_key_id: Option<U160>,
-
     /// The share epoch. Will be ignored if `oprf_key_id` is `None`.
     #[clap(long, env = "OPRF_DEV_CLIENT_SHARE_EPOCH", default_value = "0")]
     pub share_epoch: u32,
@@ -125,7 +123,6 @@ async fn run_oprf(
     threshold: usize,
     api_key: String,
     module: AuthModule,
-    oprf_key_id: OprfKeyId,
     connector: Connector,
 ) -> eyre::Result<ShareEpoch> {
     let mut rng = rand_chacha::ChaCha12Rng::from_entropy();
@@ -135,13 +132,7 @@ async fn run_oprf(
             tracing::info!("Running basic verifiable OPRF...");
             let action = ark_babyjubjub::Fq::rand(&mut rng);
             let verifiable_oprf_output = oprf_testnet_client::basic_verifiable_oprf(
-                nodes,
-                threshold,
-                oprf_key_id,
-                api_key,
-                action,
-                connector,
-                &mut rng,
+                nodes, threshold, api_key, action, connector, &mut rng,
             )
             .await?;
             tracing::info!("OPRF output: {}", verifiable_oprf_output.output);
@@ -154,7 +145,6 @@ async fn run_oprf(
                 oprf_testnet_client::wallet_ownership_verifiable_oprf(
                     nodes,
                     threshold,
-                    oprf_key_id,
                     api_key,
                     private_key,
                     connector,
@@ -168,7 +158,6 @@ async fn run_oprf(
 }
 
 async fn prepare_oprf_stress_test_oprf_request(
-    oprf_key_id: OprfKeyId,
     api_key: String,
 ) -> eyre::Result<(Uuid, BlindedOprfRequest, OprfRequest<TestNetRequestAuth>)> {
     let mut rng = rand_chacha::ChaCha12Rng::from_entropy();
@@ -201,7 +190,7 @@ async fn prepare_oprf_stress_test_oprf_request(
     //Remove recovery id
     _ = signature.pop();
     let action = ark_babyjubjub::Fq::from_be_bytes_mod_order(signer.address().as_ref());
-    let (public_inputs, proof) = compute_wallet_ownership_proof(
+    let (public_inputs, proof) = zk::compute_wallet_ownership_proof(
         &blinding_factor,
         &x_affine,
         &y_affine,
@@ -213,7 +202,6 @@ async fn prepare_oprf_stress_test_oprf_request(
         public_inputs,
         proof,
         api_key,
-        oprf_key_id,
     };
     let query = action;
     let blinded_request = taceo_oprf::core::oprf::client::blind_query(query, blinding_factor);
@@ -226,14 +214,12 @@ async fn prepare_oprf_stress_test_oprf_request(
     Ok((request_id, blinded_request, oprf_req))
 }
 
-#[expect(clippy::too_many_arguments)]
 async fn stress_test_oprf(
     cmd: StressTestOprfCommand,
     nodes: &[String],
     threshold: usize,
     api_key: String,
     module: AuthModule,
-    oprf_key_id: OprfKeyId,
     oprf_public_key: OprfPublicKey,
     connector: Connector,
 ) -> eyre::Result<()> {
@@ -243,7 +229,7 @@ async fn stress_test_oprf(
     tracing::info!("preparing requests..");
     for _ in 0..cmd.runs {
         let (request_id, blinded_req, req) =
-            prepare_oprf_stress_test_oprf_request(oprf_key_id, api_key.clone()).await?;
+            prepare_oprf_stress_test_oprf_request(api_key.clone()).await?;
         blinded_requests.insert(request_id, blinded_req);
         init_requests.insert(request_id, req);
     }
@@ -356,7 +342,6 @@ async fn reshare_test(
     api_key: String,
     module: AuthModule,
     oprf_key_registry: Address,
-    oprf_key_id: OprfKeyId,
     connector: Connector,
     provider: DynProvider,
     acceptance_num: usize,
@@ -368,7 +353,6 @@ async fn reshare_test(
         threshold,
         api_key.clone(),
         module.clone(),
-        oprf_key_id,
         connector.clone(),
     )
     .await?;
@@ -395,7 +379,6 @@ async fn reshare_test(
                     threshold,
                     api_key.clone(),
                     module.clone(),
-                    oprf_key_id,
                     connector.clone(),
                 )
                 .await;
@@ -411,7 +394,8 @@ async fn reshare_test(
     });
 
     tracing::info!("Doing reshare!");
-    oprf_test_utils::init_reshare(provider.clone(), oprf_key_registry, oprf_key_id).await?;
+    oprf_test_utils::init_reshare(provider.clone(), oprf_key_registry, module.oprf_key_id())
+        .await?;
     tokio::time::timeout(
         max_wait_time,
         wait_for_epoch(&mut rx, acceptance_num, current_epoch.next()),
@@ -419,7 +403,8 @@ async fn reshare_test(
     .await??;
 
     tracing::info!("Doing reshare!");
-    oprf_test_utils::init_reshare(provider.clone(), oprf_key_registry, oprf_key_id).await?;
+    oprf_test_utils::init_reshare(provider.clone(), oprf_key_registry, module.oprf_key_id())
+        .await?;
     tokio::time::timeout(
         max_wait_time,
         wait_for_epoch(&mut rx, acceptance_num, current_epoch.next().next()),
@@ -490,26 +475,16 @@ async fn main() -> eyre::Result<()> {
         .context("while connecting to RPC")?
         .erased();
 
-    let (oprf_key_id, oprf_public_key) = if let Some(oprf_key_id) = config.oprf_key_id {
-        let oprf_key_id = OprfKeyId::new(oprf_key_id);
+    let oprf_public_key = {
+        let oprf_key_id = AuthModule::from(config.module).oprf_key_id();
         let share_epoch = ShareEpoch::from(config.share_epoch);
-        let oprf_public_key = health_checks::oprf_public_key_from_services(
+        health_checks::oprf_public_key_from_services(
             oprf_key_id,
             share_epoch,
             &config.nodes,
             config.max_wait_time,
         )
-        .await?;
-        (oprf_key_id, oprf_public_key)
-    } else {
-        let (oprf_key_id, oprf_public_key) = taceo_oprf::dev_client::init_key_gen(
-            &config.nodes,
-            config.oprf_key_registry_contract,
-            provider.clone(),
-            config.max_wait_time,
-        )
-        .await?;
-        (oprf_key_id, oprf_public_key)
+        .await?
     };
 
     // setup TLS config - even if we are http
@@ -528,7 +503,6 @@ async fn main() -> eyre::Result<()> {
                 config.threshold,
                 config.api_key,
                 config.module.into(),
-                oprf_key_id,
                 connector,
             )
             .await?;
@@ -542,7 +516,6 @@ async fn main() -> eyre::Result<()> {
                 config.threshold,
                 config.api_key,
                 config.module.into(),
-                oprf_key_id,
                 oprf_public_key,
                 connector,
             )
@@ -569,7 +542,6 @@ async fn main() -> eyre::Result<()> {
                 config.api_key,
                 config.module.into(),
                 config.oprf_key_registry_contract,
-                oprf_key_id,
                 connector,
                 provider,
                 cmd.acceptance_num,

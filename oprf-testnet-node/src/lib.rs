@@ -1,10 +1,12 @@
-// #![deny(missing_docs)]
-//! # TODO
-//! This example project shall help projects incorporate at TACEO:Oprf. Explain in detail what implementations need to do to build their flavor.
+//! This example project shows the structure of a TACEO:OPRF node.
+//!
+//! It initializes the OPRF service with two authentication modules (basic and wallet ownership) and starts an axum server to handle incoming requests.
+#![deny(missing_docs)]
 use std::sync::{Arc, atomic::Ordering};
 
 use oprf_testnet_authentication::{
-    AuthModule, BasicTestNetRequestAuthenticator, WalletOwnershipTestNetRequestAuthenticator,
+    AuthModule, basic::BasicTestNetRequestAuthenticator,
+    wallet_ownership::WalletOwnershipTestNetRequestAuthenticator,
 };
 use taceo_oprf::service::{
     OprfServiceBuilder, StartedServices, secret_manager::SecretManagerService,
@@ -14,6 +16,7 @@ use crate::config::TestNetNodeConfig;
 
 pub mod config;
 
+/// Starts the OPRF testnet node with the given configuration and secret manager. The node will run until the provided shutdown signal is triggered, at which point it will attempt to gracefully shut down all services within the specified maximum wait time.
 pub async fn start(
     config: TestNetNodeConfig,
     secret_manager: SecretManagerService,

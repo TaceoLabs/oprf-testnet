@@ -6,13 +6,13 @@ use alloy::signers::local::PrivateKeySigner;
 use ark_ff::PrimeField as _;
 use eyre::Context;
 use oprf_testnet_authentication::{
-    AuthModule, TestNetApiOnlyRequestAuth, TestNetRequestAuth, VERIFIED_OPRF_PROOF_VK,
-    compute_nullifier_proof, compute_wallet_ownership_proof, verify_proof,
+    AuthModule, basic::BasicTestNetRequestAuth, wallet_ownership::TestNetRequestAuth,
+    wallet_ownership::zk,
 };
 use rand::{CryptoRng, Rng};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use taceo_oprf::client::VerifiableOprfOutput;
-use taceo_oprf::{client::Connector, core::oprf::BlindingFactor, types::OprfKeyId};
+use taceo_oprf::{client::Connector, core::oprf::BlindingFactor};
 use tempfile::NamedTempFile;
 use tracing::instrument;
 
@@ -20,7 +20,6 @@ use tracing::instrument;
 pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
     nodes: &[String],
     threshold: usize,
-    oprf_key_id: OprfKeyId,
     api_key: String,
     action: ark_babyjubjub::Fq,
     connector: Connector,
@@ -31,10 +30,7 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
     let blinding_factor = BlindingFactor::rand(rng);
     let domain_separator = ark_babyjubjub::Fq::from_be_bytes_mod_order(b"OPRF TestNet");
 
-    let auth = TestNetApiOnlyRequestAuth {
-        api_key,
-        oprf_key_id,
-    };
+    let auth = BasicTestNetRequestAuth { api_key };
 
     let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
         nodes,
@@ -59,7 +55,6 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
 pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     nodes: &[String],
     threshold: usize,
-    oprf_key_id: OprfKeyId,
     api_key: String,
     private_key: SigningKey,
     connector: Connector,
@@ -99,7 +94,7 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     //Remove recovery id
     _ = signature.pop();
 
-    let (public_inputs, proof) = compute_wallet_ownership_proof(
+    let (public_inputs, proof) = zk::compute_wallet_ownership_proof(
         &blinding_factor,
         &x_affine,
         &y_affine,
@@ -110,7 +105,6 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     let auth = TestNetRequestAuth {
         public_inputs,
         proof,
-        oprf_key_id,
         api_key,
     };
 
@@ -128,7 +122,7 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     .context("cannot get verifiable oprf output")?;
 
     tracing::debug!("Computing proof for the verifiable OPRF output..");
-    let (public_inputs, proof) = compute_nullifier_proof(
+    let (public_inputs, proof) = zk::compute_nullifier_proof(
         verifiable_oprf_output.clone(),
         signature,
         msg_hash,
@@ -138,8 +132,8 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     )?;
 
     let vk = NamedTempFile::new().context("creating NamedTempFile for vk")?;
-    std::fs::write(vk.path(), VERIFIED_OPRF_PROOF_VK).context("writing VK to temp file")?;
-    verify_proof(&public_inputs, &proof, vk.path())?;
+    std::fs::write(vk.path(), zk::VERIFIED_OPRF_PROOF_VK).context("writing VK to temp file")?;
+    zk::verify_proof(&public_inputs, &proof, vk.path())?;
 
     let elapsed = start.elapsed();
     tracing::info!(
