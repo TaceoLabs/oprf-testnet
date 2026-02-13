@@ -25,7 +25,7 @@ pub struct WalletOwnershipConfig {
 
     /// The directory to write the nullifier prove and public inputs to.
     #[clap(long, default_value = ".")]
-    pub out: PathBuf,
+    pub output_path: PathBuf,
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -95,7 +95,10 @@ async fn main() -> eyre::Result<()> {
             .await?;
             tracing::info!("OPRF output: {}", verifiable_oprf_output.output);
         }
-        AuthModuleArg::WalletOwnership(WalletOwnershipConfig { out, private_key }) => {
+        AuthModuleArg::WalletOwnership(WalletOwnershipConfig {
+            output_path,
+            private_key,
+        }) => {
             check_bb_version()?;
             tracing::info!("Running wallet ownership verifiable OPRF...");
             let private_key = if let Some(private_key) = private_key {
@@ -123,9 +126,8 @@ async fn main() -> eyre::Result<()> {
                     &mut rng,
                 )
                 .await?;
-            tracing::info!("Writing nullifier proof and public inputs to {out:?}");
-            std::fs::write(out.join("proof"), &proof)?;
-            std::fs::write(out.join("public_inputs"), &pulic_inputs)?;
+            std::fs::write(output_path.join("proof"), &proof)?;
+            std::fs::write(output_path.join("public_inputs"), &pulic_inputs)?;
             tracing::info!("Nullifier: {}", verifiable_oprf_output.output);
         }
     }
