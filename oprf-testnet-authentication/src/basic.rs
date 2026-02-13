@@ -21,14 +21,14 @@ use crate::{
 
 /// The authentication information that is sent alongside the OPRF request in the basic module.
 #[derive(Clone, Serialize, Deserialize)]
-pub struct TestNetApiOnlyRequestAuth {
+pub struct BasicTestNetRequestAuth {
     /// The API key to verify against the unkey API.
     pub api_key: String,
 }
 
 /// The possible errors that can occur during authentication in the basic module.
 #[derive(Debug, thiserror::Error)]
-pub enum TestNetApiOnlyRequestAuthError {
+pub enum BasicTestNetRequestAuthError {
     #[error(transparent)]
     /// An error that occurs when verifying the API key with the unkey API.
     ApiVerificationError(#[from] ApiVerificationError),
@@ -37,7 +37,7 @@ pub enum TestNetApiOnlyRequestAuthError {
     InternalServerError(#[from] eyre::Report),
 }
 
-impl IntoResponse for TestNetApiOnlyRequestAuthError {
+impl IntoResponse for BasicTestNetRequestAuthError {
     fn into_response(self) -> response::Response {
         tracing::debug!("{self:?}");
         match self {
@@ -74,8 +74,8 @@ impl BasicTestNetRequestAuthenticator {
 
 #[async_trait]
 impl OprfRequestAuthenticator for BasicTestNetRequestAuthenticator {
-    type RequestAuth = TestNetApiOnlyRequestAuth;
-    type RequestAuthError = TestNetApiOnlyRequestAuthError;
+    type RequestAuth = BasicTestNetRequestAuth;
+    type RequestAuthError = BasicTestNetRequestAuthError;
 
     async fn authenticate(
         &self,
