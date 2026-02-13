@@ -5,6 +5,7 @@ use clap::Parser;
 use eyre::Context;
 use oprf_testnet_authentication::AuthModule;
 use rustls::{ClientConfig, RootCertStore};
+use secrecy::{ExposeSecret, SecretString};
 use std::{path::PathBuf, sync::Arc};
 use taceo_oprf::client::Connector;
 
@@ -21,7 +22,7 @@ pub struct BasicConfig {
 pub struct WalletOwnershipConfig {
     /// The wallet private key, represented as a hex string
     #[clap(long)]
-    pub private_key: Option<String>,
+    pub private_key: Option<SecretString>,
 
     /// The directory to write the nullifier prove and public inputs to.
     #[clap(long, default_value = ".")]
@@ -102,8 +103,7 @@ async fn main() -> eyre::Result<()> {
             check_bb_version()?;
             tracing::info!("Running wallet ownership verifiable OPRF...");
             let private_key = if let Some(private_key) = private_key {
-                let private_key = private_key.strip_prefix("0x").unwrap_or(&private_key);
-                let private_key_bytes = hex::decode(private_key)
+                let private_key_bytes = hex::decode(private_key.expose_secret())
                     .context("Invalid private key hex string, must be a 32-byte hex string optionally prefixed with 0x")?;
                 SigningKey::from_slice(&private_key_bytes)
                     .context("Invalid private key, must be a valid secp256k1 private key")?
