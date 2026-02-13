@@ -9,10 +9,6 @@ repository.workspace = true
 license.workspace = true
 publish.workspace = true
 
-# [[bin]]
-# name = "taceo-oprf-testnet-client"
-# path = "bin/main.rs"
-
 [dependencies]
 alloy = { workspace = true, features = [
   "full",
