@@ -30,6 +30,7 @@ oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", p
 rand.workspace = true
 rand_chacha.workspace = true
 rustls.workspace = true
+secrecy.workspace = true
 taceo-oprf = { workspace = true, features = ["client"] }
 tempfile.workspace = true
 tokio = { workspace = true, features = [

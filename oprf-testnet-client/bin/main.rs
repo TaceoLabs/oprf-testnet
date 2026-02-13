@@ -1,10 +1,11 @@
 use std::str::FromStr;
 
-use alloy::signers::k256::ecdsa::SigningKey;
+use alloy::{hex, signers::k256::ecdsa::SigningKey};
 use clap::Parser;
 use eyre::Context;
 use oprf_testnet_authentication::AuthModule;
 use rustls::{ClientConfig, RootCertStore};
+use secrecy::{ExposeSecret, SecretString};
 use std::{path::PathBuf, sync::Arc};
 use taceo_oprf::client::Connector;
 
@@ -12,16 +13,20 @@ const BB_VERSION: &str = "3.0.0-nightly.20260102";
 
 #[derive(Parser, Debug, Clone)]
 pub struct BasicConfig {
-    /// The action (field element) to perform the OPRF on, represented as a string.
+    /// The input (field element) for the OPRF evaluation, represented as a string.
     #[clap(long)]
-    pub action: String,
+    pub input: String,
 }
 
 #[derive(Parser, Debug, Clone)]
 pub struct WalletOwnershipConfig {
+    /// The wallet private key, represented as a hex string
+    #[clap(long)]
+    pub private_key: Option<SecretString>,
+
     /// The directory to write the nullifier prove and public inputs to.
     #[clap(long, default_value = ".")]
-    pub out: PathBuf,
+    pub output_path: PathBuf,
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -75,31 +80,46 @@ async fn main() -> eyre::Result<()> {
     let connector = Connector::Rustls(Arc::new(rustls_config));
 
     match config.module {
-        AuthModuleArg::Basic(BasicConfig { action }) => {
+        AuthModuleArg::Basic(BasicConfig { input }) => {
             tracing::info!("Running basic verifiable OPRF...");
-            let action_str = action.clone();
-            let action = ark_babyjubjub::Fq::from_str(&action)
-                .map_err(|_| eyre::eyre!("Invalid action, must be a field element"))?;
+            let input_str = input.clone();
+            let input = ark_babyjubjub::Fq::from_str(&input)
+                .map_err(|_| eyre::eyre!("Invalid input, must be a field element"))?;
             eyre::ensure!(
-                action_str == action.to_string(),
-                "Parsed action does not match original string, this can happen if there are leading zeros, leading signs, or if the number is larger than the field modulus",
+                input_str == input.to_string(),
+                "Parsed input does not match original string, this can happen if there are leading zeros, leading signs, or if the number is larger than the field modulus",
             );
             let verifiable_oprf_output = taceo_oprf_testnet_client::basic_verifiable_oprf(
                 &config.nodes,
                 config.threshold,
                 AuthModule::Basic.oprf_key_id(),
                 config.api_key,
-                action,
+                input,
                 connector,
                 &mut rng,
             )
             .await?;
             tracing::info!("OPRF output: {}", verifiable_oprf_output.output);
         }
-        AuthModuleArg::WalletOwnership(WalletOwnershipConfig { out }) => {
+        AuthModuleArg::WalletOwnership(WalletOwnershipConfig {
+            output_path,
+            private_key,
+        }) => {
             check_bb_version()?;
             tracing::info!("Running wallet ownership verifiable OPRF...");
-            let private_key = SigningKey::random(&mut rng);
+            let private_key = if let Some(private_key) = private_key {
+                let private_key_bytes = hex::decode(private_key.expose_secret())
+                    .context("Invalid private key hex string, must be a 32-byte hex string optionally prefixed with 0x")?;
+                SigningKey::from_slice(&private_key_bytes)
+                    .context("Invalid private key, must be a valid secp256k1 private key")?
+            } else {
+                let private_key = SigningKey::random(&mut rng);
+                tracing::info!(
+                    "Generated random wallet with private key 0x{}",
+                    hex::encode(private_key.to_bytes())
+                );
+                private_key
+            };
             let (verifiable_oprf_output, pulic_inputs, proof) =
                 taceo_oprf_testnet_client::wallet_ownership_verifiable_oprf(
                     &config.nodes,
@@ -111,9 +131,8 @@ async fn main() -> eyre::Result<()> {
                     &mut rng,
                 )
                 .await?;
-            tracing::info!("Writing nullifier proof and public inputs to {out:?}");
-            std::fs::write(out.join("proof"), &proof)?;
-            std::fs::write(out.join("public_inputs"), &pulic_inputs)?;
+            std::fs::write(output_path.join("proof"), &proof)?;
+            std::fs::write(output_path.join("public_inputs"), &pulic_inputs)?;
             tracing::info!("Nullifier: {}", verifiable_oprf_output.output);
         }
     }
@@ -131,7 +150,7 @@ fn check_bb_version() -> eyre::Result<()> {
     let version = version.trim();
     eyre::ensure!(
         version == BB_VERSION,
-        "The 'bb' binary version is {version}, but version {BB_VERSION} is required. Please install the correct version using 'bbup -nv 1.0.0-beta.18 "
+        "The 'bb' binary version is {version}, but version {BB_VERSION} is required. Please install the correct version using 'bbup -nv 1.0.0-beta.18'"
     );
     Ok(())
 }
