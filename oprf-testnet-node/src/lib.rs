@@ -4,7 +4,8 @@
 use std::sync::{Arc, atomic::Ordering};
 
 use oprf_testnet_authentication::{
-    AuthModule, BasicTestNetRequestAuthenticator, WalletOwnershipTestNetRequestAuthenticator,
+    AuthModule, basic::BasicTestNetRequestAuthenticator,
+    wallet_ownership::WalletOwnershipTestNetRequestAuthenticator,
 };
 use taceo_oprf::service::{
     OprfServiceBuilder, StartedServices, secret_manager::SecretManagerService,
