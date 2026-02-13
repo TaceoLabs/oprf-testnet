@@ -34,7 +34,12 @@ pub enum AuthModuleArg {
 #[derive(Parser, Debug)]
 pub struct OprfClientConfig {
     /// The URLs to all OPRF nodes
-    #[clap(long, env = "OPRF_CLIENT_NODES", value_delimiter = ',')]
+    #[clap(
+        long,
+        env = "OPRF_CLIENT_NODES",
+        value_delimiter = ',',
+        default_value = "https://node0.eu.test.oprf.taceo.network, https://node1.eu.test.oprf.taceo.network, https://node2.eu.test.oprf.taceo.network"
+    )]
     pub nodes: Vec<String>,
 
     /// The threshold of services that need to respond
