@@ -127,7 +127,6 @@ async fn run_oprf(
     threshold: usize,
     api_key: String,
     module: AuthModule,
-    oprf_key_id: OprfKeyId,
     connector: Connector,
 ) -> eyre::Result<ShareEpoch> {
     let mut rng = rand_chacha::ChaCha12Rng::from_entropy();
@@ -137,13 +136,7 @@ async fn run_oprf(
             tracing::info!("Running basic verifiable OPRF...");
             let action = ark_babyjubjub::Fq::rand(&mut rng);
             let verifiable_oprf_output = oprf_testnet_client::basic_verifiable_oprf(
-                nodes,
-                threshold,
-                oprf_key_id,
-                api_key,
-                action,
-                connector,
-                &mut rng,
+                nodes, threshold, api_key, action, connector, &mut rng,
             )
             .await?;
             tracing::info!("OPRF output: {}", verifiable_oprf_output.output);
@@ -156,7 +149,6 @@ async fn run_oprf(
                 oprf_testnet_client::wallet_ownership_verifiable_oprf(
                     nodes,
                     threshold,
-                    oprf_key_id,
                     api_key,
                     private_key,
                     connector,
@@ -170,7 +162,6 @@ async fn run_oprf(
 }
 
 async fn prepare_oprf_stress_test_oprf_request(
-    oprf_key_id: OprfKeyId,
     api_key: String,
 ) -> eyre::Result<(Uuid, BlindedOprfRequest, OprfRequest<TestNetRequestAuth>)> {
     let mut rng = rand_chacha::ChaCha12Rng::from_entropy();
@@ -215,7 +206,6 @@ async fn prepare_oprf_stress_test_oprf_request(
         public_inputs,
         proof,
         api_key,
-        oprf_key_id,
     };
     let query = action;
     let blinded_request = taceo_oprf::core::oprf::client::blind_query(query, blinding_factor);
@@ -228,14 +218,12 @@ async fn prepare_oprf_stress_test_oprf_request(
     Ok((request_id, blinded_request, oprf_req))
 }
 
-#[expect(clippy::too_many_arguments)]
 async fn stress_test_oprf(
     cmd: StressTestOprfCommand,
     nodes: &[String],
     threshold: usize,
     api_key: String,
     module: AuthModule,
-    oprf_key_id: OprfKeyId,
     oprf_public_key: OprfPublicKey,
     connector: Connector,
 ) -> eyre::Result<()> {
@@ -245,7 +233,7 @@ async fn stress_test_oprf(
     tracing::info!("preparing requests..");
     for _ in 0..cmd.runs {
         let (request_id, blinded_req, req) =
-            prepare_oprf_stress_test_oprf_request(oprf_key_id, api_key.clone()).await?;
+            prepare_oprf_stress_test_oprf_request(api_key.clone()).await?;
         blinded_requests.insert(request_id, blinded_req);
         init_requests.insert(request_id, req);
     }
@@ -370,7 +358,6 @@ async fn reshare_test(
         threshold,
         api_key.clone(),
         module.clone(),
-        oprf_key_id,
         connector.clone(),
     )
     .await?;
@@ -397,7 +384,6 @@ async fn reshare_test(
                     threshold,
                     api_key.clone(),
                     module.clone(),
-                    oprf_key_id,
                     connector.clone(),
                 )
                 .await;
@@ -530,7 +516,6 @@ async fn main() -> eyre::Result<()> {
                 config.threshold,
                 config.api_key,
                 config.module.into(),
-                oprf_key_id,
                 connector,
             )
             .await?;
@@ -544,7 +529,6 @@ async fn main() -> eyre::Result<()> {
                 config.threshold,
                 config.api_key,
                 config.module.into(),
-                oprf_key_id,
                 oprf_public_key,
                 connector,
             )

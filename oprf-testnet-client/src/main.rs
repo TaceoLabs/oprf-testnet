@@ -3,7 +3,6 @@ use std::str::FromStr;
 use alloy::{hex, signers::k256::ecdsa::SigningKey};
 use clap::Parser;
 use eyre::Context;
-use oprf_testnet_authentication::AuthModule;
 use rustls::{ClientConfig, RootCertStore};
 use secrecy::{ExposeSecret, SecretString};
 use std::{path::PathBuf, sync::Arc};
@@ -92,7 +91,6 @@ async fn main() -> eyre::Result<()> {
             let verifiable_oprf_output = taceo_oprf_testnet_client::basic_verifiable_oprf(
                 &config.nodes,
                 config.threshold,
-                AuthModule::Basic.oprf_key_id(),
                 config.api_key,
                 input,
                 connector,
@@ -124,7 +122,6 @@ async fn main() -> eyre::Result<()> {
                 taceo_oprf_testnet_client::wallet_ownership_verifiable_oprf(
                     &config.nodes,
                     config.threshold,
-                    AuthModule::WalletOwnership.oprf_key_id(),
                     config.api_key,
                     private_key,
                     connector,

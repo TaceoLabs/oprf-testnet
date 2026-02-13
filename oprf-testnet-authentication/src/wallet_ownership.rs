@@ -1,3 +1,6 @@
+//! This module implements a more complex request authenticator for the testnet environment that additionally verifies a zero-knowledge proof.
+//!
+//! It is intended to show how a more complex authentication flow can look like.
 use std::path::PathBuf;
 
 use async_trait::async_trait;
@@ -14,22 +17,32 @@ use taceo_oprf::{
     },
 };
 
-use crate::unkey_api::{self, ApiVerificationError};
+use crate::{
+    AuthModule,
+    unkey_api::{self, ApiVerificationError},
+};
 
+/// The authentication information that is sent alongside the OPRF request in the `wallet_ownership` module.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TestNetRequestAuth {
+    /// The public inputs to the proof
     pub public_inputs: Vec<u8>,
+    /// The proof that the client owns the wallet corresponding to the public key that was used to generate the OPRF request
     pub proof: Vec<u8>,
-    pub oprf_key_id: OprfKeyId,
+    /// The API key to verify against the unkey API.
     pub api_key: String,
 }
 
+/// The possible errors that can occur during authentication of an OPRF request in the `wallet_ownership` module.
 #[derive(Debug, thiserror::Error)]
 pub enum TestNetRequestAuthError {
+    /// The proof provided by the client is invalid.
     #[error("Proof invalid")]
     ProofInvalid,
+    /// An error occurred while verifying the API key with the unkey API.
     #[error(transparent)]
     ApiVerificationError(#[from] ApiVerificationError),
+    /// Generic internal server error.
     #[error(transparent)]
     InternalServerError(#[from] eyre::Report),
 }
@@ -48,6 +61,7 @@ impl IntoResponse for TestNetRequestAuthError {
     }
 }
 
+/// The server side implementation of the `wallet_ownership` authentication module.
 pub struct WalletOwnershipTestNetRequestAuthenticator {
     client: reqwest::Client,
     root_api_key: SecretString,
@@ -56,6 +70,11 @@ pub struct WalletOwnershipTestNetRequestAuthenticator {
 }
 
 impl WalletOwnershipTestNetRequestAuthenticator {
+    /// Initializes the basic request authenticator with the given root API key and environment.
+    ///
+    /// The root API key is used to grant this service permission to verify incoming API keys with the unkey API.
+    /// The `env` is used to determin if we go to the API at all, if it is set to `Environment::Dev` we skip the API call and just verify that the API key is not empty.
+    /// The `vk_path` is the path to the verification key used to verify the zero-knowledge proofs sent by the client.
     pub fn init(root_api_key: SecretString, env: Environment, vk_path: PathBuf) -> Self {
         let client = reqwest::Client::new();
         Self {
@@ -89,10 +108,11 @@ impl OprfRequestAuthenticator for WalletOwnershipTestNetRequestAuthenticator {
         zk::verify_proof(&req.auth.public_inputs, &req.auth.proof, &self.vk_path)?;
         api_valid.await.context("awaiting api verification")??;
         tracing::debug!("Authentication successful");
-        Ok(req.auth.oprf_key_id)
+        Ok(AuthModule::WalletOwnership.oprf_key_id())
     }
 }
 
+///  Module for handling zero-knowledge proof generation and verification using the `bb` CLI tool.
 pub mod zk {
     use std::{
         io::Write,
@@ -116,8 +136,10 @@ pub mod zk {
     const BLINDED_QUERY_PROOF_VK: &[u8] = include_bytes!("../blinded_query_proof.vk");
     const VERIFIED_OPRF_PROOF_PROGRAM_ARTIFACT: &[u8] =
         include_bytes!("../verified_oprf_proof.json");
+    /// The verification key for the proof that verifies the OPRF output and wallet ownership.
     pub const VERIFIED_OPRF_PROOF_VK: &[u8] = include_bytes!("../verified_oprf_proof.vk");
 
+    /// Computes a zero-knowledge proof that the client owns the wallet corresponding to the public key used in the OPRF request and that the OPRF output was correctly computed.
     pub fn compute_nullifier_proof(
         verifiable_oprf_output: VerifiableOprfOutput,
         signature: Vec<u8>,
@@ -181,6 +203,9 @@ pub mod zk {
         generate_proof(path, &program_artifact, &witness, &vk)
     }
 
+    /// Computes a zero-knowledge proof that the client owns the wallet corresponding to the public key used in the OPRF request.
+    ///
+    /// This is used as the query authorization proof in the `wallet_ownership` module.
     pub fn compute_wallet_ownership_proof(
         beta: &BlindingFactor,
         pubkey_x: &[u8],
@@ -217,6 +242,7 @@ pub mod zk {
         generate_proof(path, &program_artifact, &witness, &vk)
     }
 
+    /// Generates a witness file for the given program artifact and Prover.toml file using the bundled Noir and writes it to the given witness path.
     pub fn generate_witness(
         artifact_path: &Path,
         prover_file: &Path,
@@ -285,6 +311,7 @@ pub mod zk {
         Ok((public_inputs, proof))
     }
 
+    /// Verifies a proof using the `bb` CLI tool. The given public inputs and proof file are written to tempfiles and verified against the passed verification key.
     pub fn verify_proof(
         public_inputs: &[u8],
         proof: &[u8],
