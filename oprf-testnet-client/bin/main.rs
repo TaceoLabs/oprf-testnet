@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use alloy::signers::k256::ecdsa::SigningKey;
+use alloy::{hex, signers::k256::ecdsa::SigningKey};
 use clap::Parser;
 use eyre::Context;
 use oprf_testnet_authentication::AuthModule;
@@ -19,6 +19,10 @@ pub struct BasicConfig {
 
 #[derive(Parser, Debug, Clone)]
 pub struct WalletOwnershipConfig {
+    /// The wallet private key, represented as a hex string
+    #[clap(long)]
+    pub private_key: Option<String>,
+
     /// The directory to write the nullifier prove and public inputs to.
     #[clap(long, default_value = ".")]
     pub out: PathBuf,
@@ -91,10 +95,23 @@ async fn main() -> eyre::Result<()> {
             .await?;
             tracing::info!("OPRF output: {}", verifiable_oprf_output.output);
         }
-        AuthModuleArg::WalletOwnership(WalletOwnershipConfig { out }) => {
+        AuthModuleArg::WalletOwnership(WalletOwnershipConfig { out, private_key }) => {
             check_bb_version()?;
             tracing::info!("Running wallet ownership verifiable OPRF...");
-            let private_key = SigningKey::random(&mut rng);
+            let private_key = if let Some(private_key) = private_key {
+                let private_key = private_key.strip_prefix("0x").unwrap_or(&private_key);
+                let private_key_bytes = hex::decode(private_key)
+                    .context("Invalid private key hex string, must be a 32-byte hex string optionally prefixed with 0x")?;
+                SigningKey::from_slice(&private_key_bytes)
+                    .context("Invalid private key, must be a valid secp256k1 private key")?
+            } else {
+                let private_key = SigningKey::random(&mut rng);
+                tracing::info!(
+                    "Generated random wallet with private key 0x{}",
+                    hex::encode(private_key.to_bytes())
+                );
+                private_key
+            };
             let (verifiable_oprf_output, pulic_inputs, proof) =
                 taceo_oprf_testnet_client::wallet_ownership_verifiable_oprf(
                     &config.nodes,
