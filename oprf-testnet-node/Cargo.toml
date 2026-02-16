@@ -19,7 +19,7 @@ nodes-observability = { workspace = true }
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
 rustls = { workspace = true }
 secrecy = { workspace = true, features = ["serde"] }
-taceo-oprf = { workspace = true, features = ["service"] }
+taceo-oprf = { workspace = true, features = ["service", "types", "core"] }
 tokio = { workspace = true, features = [
   "net",
   "rt-multi-thread",
