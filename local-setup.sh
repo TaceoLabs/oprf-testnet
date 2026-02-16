@@ -105,9 +105,7 @@ setup() {
 
 client() {
     cargo build --workspace --release
-    oprf_key_registry=$(jq -r '.transactions[] | select(.contractName == "ERC1967Proxy") | .contractAddress' ./contracts/broadcast/OprfKeyRegistryWithDeps.s.sol/31337/run-latest.json)
-    # use addresses from deploy logs or use existing env vars
-    OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT:-$oprf_key_registry} ./target/release/taceo-oprf-testnet-client "$@"
+    ./target/release/taceo-oprf-testnet-client "$@"
 }
 
 main() {
