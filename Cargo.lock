@@ -7617,7 +7617,6 @@ checksum = "9ad0c141a86360ceee41ac686fe23759f1e683afb8b9f490ba05d10ead0d0faa"
 dependencies = [
  "taceo-oprf-client",
  "taceo-oprf-core",
- "taceo-oprf-dev-client",
  "taceo-oprf-service",
  "taceo-oprf-types",
 ]
@@ -7666,30 +7665,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "taceo-oprf-dev-client"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "049777ff118b69f07f70bea3cb88fe5920dec0a5ae998bed186fee760e03a61c"
-dependencies = [
- "alloy",
- "ark-ff 0.5.0",
- "clap",
- "eyre",
- "rand 0.8.5",
- "rustls 0.23.36",
- "serde",
- "taceo-ark-babyjubjub",
- "taceo-oprf-client",
- "taceo-oprf-core",
- "taceo-oprf-test-utils",
- "taceo-oprf-types",
- "tokio",
- "tracing",
- "uuid",
- "webpki-roots 1.0.6",
-]
-
-[[package]]
 name = "taceo-oprf-service"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7729,36 +7704,6 @@ dependencies = [
  "tungstenite 0.28.0",
  "uuid",
  "zeroize",
-]
-
-[[package]]
-name = "taceo-oprf-test-utils"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0803e730bac7a6c1ddaa9f6ee7d1fec7a8405eaaa5b68a2e784e73bef2ab407"
-dependencies = [
- "alloy",
- "ark-ec",
- "ark-ff 0.5.0",
- "async-trait",
- "aws-config",
- "aws-sdk-secretsmanager",
- "eyre",
- "futures",
- "itertools 0.14.0",
- "parking_lot",
- "rand 0.8.5",
- "rand_chacha 0.3.1",
- "reqwest",
- "serde_json",
- "sqlx",
- "taceo-ark-babyjubjub",
- "taceo-oprf-core",
- "taceo-oprf-types",
- "testcontainers-modules",
- "tokio",
- "tokio-util",
- "tracing",
 ]
 
 [[package]]
@@ -7807,30 +7752,6 @@ dependencies = [
  "tempfile",
  "tokio",
  "tracing",
- "webpki-roots 1.0.6",
-]
-
-[[package]]
-name = "taceo-oprf-testnet-dev-client"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "ark-ff 0.5.0",
- "clap",
- "eyre",
- "humantime",
- "rand 0.8.5",
- "rand_chacha 0.3.1",
- "rustls 0.23.36",
- "secrecy",
- "taceo-ark-babyjubjub",
- "taceo-nodes-observability",
- "taceo-oprf",
- "taceo-oprf-testnet-authentication",
- "taceo-oprf-testnet-client",
- "tokio",
- "tracing",
- "uuid",
  "webpki-roots 1.0.6",
 ]
 

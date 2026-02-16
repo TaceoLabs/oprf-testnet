@@ -27,8 +27,8 @@ run-setup:
 setup-test:
     @bash ./local-setup.sh test
 
-[group('dev-client')]
-run-dev-client *args:
+[group('client')]
+run-client *args:
     @bash ./local-setup.sh client {{ args }}
 
 [group('test')]
