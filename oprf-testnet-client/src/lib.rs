@@ -11,7 +11,7 @@ use oprf_testnet_authentication::{
 };
 use rand::{CryptoRng, Rng};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
-use taceo_oprf::client::VerifiableOprfOutput;
+use taceo_oprf::client::{self, VerifiableOprfOutput};
 use taceo_oprf::{client::Connector, core::oprf::BlindingFactor};
 use tempfile::NamedTempFile;
 use tracing::instrument;
@@ -32,7 +32,7 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
 
     let auth = BasicTestNetRequestAuth { api_key };
 
-    let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
+    let verifiable_oprf_output = client::distributed_oprf(
         nodes,
         &AuthModule::Basic.to_string(),
         threshold,
@@ -42,8 +42,9 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
         auth,
         connector,
     )
-    .await
-    .context("cannot get verifiable oprf output")?;
+    .await;
+    let verifiable_oprf_output = make_server_errors_human_friendly(verifiable_oprf_output)
+        .context("during execution of the OPRF protocol")?;
 
     let elapsed = start.elapsed();
     tracing::info!("Total time taken for distributed OPRF with only API: {elapsed:?}",);
@@ -108,7 +109,7 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
         api_key,
     };
 
-    let verifiable_oprf_output = taceo_oprf::client::distributed_oprf(
+    let verifiable_oprf_output = client::distributed_oprf(
         nodes,
         &AuthModule::WalletOwnership.to_string(),
         threshold,
@@ -118,8 +119,9 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
         auth,
         connector,
     )
-    .await
-    .context("cannot get verifiable oprf output")?;
+    .await;
+    let verifiable_oprf_output = make_server_errors_human_friendly(verifiable_oprf_output)
+        .context("during execution of the OPRF protocol")?;
 
     tracing::debug!("Computing proof for the verifiable OPRF output..");
     let (public_inputs, proof) = zk::compute_nullifier_proof(
@@ -141,4 +143,33 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     );
 
     Ok((verifiable_oprf_output, public_inputs, proof))
+}
+
+fn make_server_errors_human_friendly(
+    response: Result<VerifiableOprfOutput, client::Error>,
+) -> eyre::Result<VerifiableOprfOutput> {
+    response.map_err(|e|  {
+        if let client::Error::NotEnoughOprfResponses(_, errors) = &e {
+            if errors.is_empty() {
+                return eyre::eyre!(
+                    "Not enough OPRF servers responded to the OPRF query, cannot continue..."
+                );
+            } else {
+                for error in errors.values() {
+                    if let client::Error::ServerError(message) = error {
+                        if message.contains("API Key not valid") {
+                            return eyre::eyre!(
+                                "One of the OPRF servers responded with an authentication error: {message}. Please check your API key and try again."
+                            );
+                        } else if message.contains("API Key rate limit exceeded") {
+                            return eyre::eyre!(
+                                "The used API key has been rate limited, please try again later or request a different API key."
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        eyre::eyre!(e)
+ })
 }
