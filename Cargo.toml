@@ -33,7 +33,7 @@ nodes-observability = { package = "taceo-nodes-observability", version = "0.1" }
 noir_artifact_cli = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
 noirc_artifacts = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
 poseidon2 = { package = "taceo-poseidon2", version = "0.2", default-features = false }
-rand = { version = "0.8" }
+rand = { version = "0.9" }
 rand_chacha = { version = "0.3" }
 reqwest = { version = "0.12", default-features = false }
 rustls = "0.23"
