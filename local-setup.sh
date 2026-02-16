@@ -74,7 +74,7 @@ setup() {
 
     cargo build --workspace --release
 
-    anvil &
+    anvil  &> logs/anvil.log &
 
     docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d localstack oprf-node-db0 oprf-node-db1 oprf-node-db2
 
@@ -107,7 +107,7 @@ client() {
     cargo build --workspace --release
     oprf_key_registry=$(jq -r '.transactions[] | select(.contractName == "ERC1967Proxy") | .contractAddress' ./contracts/broadcast/OprfKeyRegistryWithDeps.s.sol/31337/run-latest.json)
     # use addresses from deploy logs or use existing env vars
-    OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT:-$oprf_key_registry} ./target/release/taceo-oprf-testnet-dev-client "$@"
+    OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT=${OPRF_DEV_CLIENT_OPRF_KEY_REGISTRY_CONTRACT:-$oprf_key_registry} ./target/release/taceo-oprf-testnet-client "$@"
 }
 
 main() {
@@ -127,7 +127,7 @@ main() {
     elif [[ $1 = "test" ]]; then
         echo -e "${GREEN}running test..${NOCOLOR}"
         setup
-        client --api-key foo test
+        client --api-key foo --nodes http://127.0.0.1:10000,http://127.0.0.1:10001,http://127.0.0.1:10002 wallet-ownership
     else
         echo "unknown command: '$1'"
         exit 1

@@ -3,7 +3,6 @@ resolver = "3"
 members = [
   "oprf-testnet-authentication",
   "oprf-testnet-client",
-  "oprf-testnet-dev-client",
   "oprf-testnet-node",
 ]
 
