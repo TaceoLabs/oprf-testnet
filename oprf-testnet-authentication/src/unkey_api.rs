@@ -16,6 +16,7 @@ struct UnkeyRespRoot {
 #[serde(rename_all = "camelCase")]
 struct UnkeyData {
     pub valid: bool,
+    pub code: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -28,6 +29,8 @@ struct UnkeyMeta {
 pub enum ApiVerificationError {
     #[error("API Key not valid")]
     ApiVerificationFailed,
+    #[error("API Key rate limit exceeded")]
+    ApiRateLimitExceeded,
     #[error(transparent)]
     InternalServerError(#[from] eyre::Report),
 }
@@ -38,6 +41,9 @@ impl IntoResponse for ApiVerificationError {
         match self {
             Self::ApiVerificationFailed => {
                 (StatusCode::UNAUTHORIZED, "API Key not valid").into_response()
+            }
+            Self::ApiRateLimitExceeded => {
+                (StatusCode::TOO_MANY_REQUESTS, "API Key rate limit exceeded").into_response()
             }
             Self::InternalServerError(err) => {
                 tracing::error!("Internal server error: {err:?}");
@@ -77,6 +83,9 @@ pub async fn verify_api_key(
         .context("Unkey response parse error")?;
 
     if !unkey_response.data.valid {
+        if unkey_response.data.code == "RATE_LIMITED" {
+            return Err(ApiVerificationError::ApiRateLimitExceeded);
+        }
         return Err(ApiVerificationError::ApiVerificationFailed);
     }
     Ok(())
