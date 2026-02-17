@@ -35,12 +35,12 @@ wait_for_oprf_pub() {
     local timeout=${3:-60}
     local start_time=$(date +%s)
     local oprf_key_id=$2
-    echo "waiting for orpf key id $oprf_key_id on port $port to be found..."
+    echo "waiting for orpf key id $oprf_key_id on port $port to be ready..."
 
     while true; do
         http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$port/oprf_pub/$oprf_key_id" || echo "000")
         if [[ "$http_code" == "200" ]]; then
-            echo "$oprf_key_id is found!"
+            echo "Found oprf key id $oprf_key_id"
             break
         fi
         now=$(date +%s)
