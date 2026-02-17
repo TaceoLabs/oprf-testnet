@@ -32,10 +32,10 @@ wait_for_health() {
 
 wait_for_oprf_pub() {
     local port=$1
-    local timeout=${2:-60}
+    local timeout=${3:-60}
     local start_time=$(date +%s)
-    local oprf_key_id=$3
-    echo "waiting for $oprf_key_id on port $port to be found..."
+    local oprf_key_id=$2
+    echo "waiting for orpf key id $oprf_key_id on port $port to be found..."
 
     while true; do
         http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$port/oprf_pub/$oprf_key_id" || echo "000")
@@ -45,7 +45,7 @@ wait_for_oprf_pub() {
         fi
         now=$(date +%s)
         if (( now - start_time >= timeout )); then
-            echo -e "${RED}error: $oprf_key_id was not found after $timeout seconds${NOCOLOR}" >&2
+            echo -e "${RED}error: oprf key id $oprf_key_id was not found after $timeout seconds${NOCOLOR}" >&2
             exit 1
         fi
         sleep 1
@@ -124,9 +124,9 @@ setup() {
     (cd contracts && OPRF_KEY_REGISTRY_PROXY=$oprf_key_registry OPRF_KEY_ID=1 forge script script/InitKeyGen.s.sol --broadcast --fork-url http://127.0.0.1:8545 --private-key $PK)
     (cd contracts && OPRF_KEY_REGISTRY_PROXY=$oprf_key_registry OPRF_KEY_ID=2 forge script script/InitKeyGen.s.sol --broadcast --fork-url http://127.0.0.1:8545 --private-key $PK)
     for i in 1 2; do
-        wait_for_oprf_pub 10000 300 $i
-        wait_for_oprf_pub 10001 300 $i
-        wait_for_oprf_pub 10002 300 $i
+        wait_for_oprf_pub 10000 $i
+        wait_for_oprf_pub 10001 $i
+        wait_for_oprf_pub 10002 $i
     done
 }
 
