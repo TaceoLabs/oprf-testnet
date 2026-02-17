@@ -46,8 +46,7 @@ This example uses basic API key validation - perfect for getting started.
 ```bash
 ./taceo-oprf-testnet-client \
     --api-key taceo_3ZfE55WkcNWRweh5rcfpUNpi \
-    basic \
-    --input 42
+    basic --input 42
 ```
 
 **What happens:**
@@ -59,9 +58,7 @@ This example uses basic API key validation - perfect for getting started.
 **Expected output:**
 You'll see the deterministic OPRF output in your terminal. Running the same command again produces the same result - this is the deterministic property of OPRFs.
 
-:::info Why deterministic?
-The OPRF secret key is used to derive the output. Without querying the OPRF nodes with the same input, no one can guess or reproduce this output. This is guaranteed by the cryptographic properties of OPRFs.
-:::
+> The OPRF secret key is used to derive the output. Without querying the OPRF nodes with the same input, no one can guess or reproduce this output. This is guaranteed by the cryptographic properties of OPRFs.
 
 ### Example 2: Wallet Ownership Proof
 
