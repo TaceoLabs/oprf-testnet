@@ -7611,14 +7611,14 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f20d0cfde0733de29896420bb452d6105290695dac5c99f34889ecacdc5f24b3"
+checksum = "535638271502744c1f8355141b6aa43ca8793fe852a3e7c4d77aaa2260936680"
 dependencies = [
  "taceo-oprf-client",
  "taceo-oprf-core",
  "taceo-oprf-service",
- "taceo-oprf-types",
+ "taceo-oprf-types 0.9.0",
 ]
 
 [[package]]
@@ -7633,7 +7633,7 @@ dependencies = [
  "serde",
  "taceo-ark-babyjubjub",
  "taceo-oprf-core",
- "taceo-oprf-types",
+ "taceo-oprf-types 0.8.0",
  "taceo-poseidon2",
  "thiserror 2.0.18",
  "tokio",
@@ -7666,9 +7666,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf-service"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77428930b54cdcb6de1b2303e607f415dd70c270f48cc2f89bf6117229fc0079"
+checksum = "a49b55a012ba1d974caafae3cf34c743881f097f6a8902334a27fc6820e89085"
 dependencies = [
  "alloy",
  "ark-serialize 0.5.0",
@@ -7695,7 +7695,7 @@ dependencies = [
  "taceo-ark-babyjubjub",
  "taceo-nodes-common",
  "taceo-oprf-core",
- "taceo-oprf-types",
+ "taceo-oprf-types 0.9.0",
  "thiserror 2.0.18",
  "tokio",
  "tokio-util",
@@ -7782,6 +7782,27 @@ name = "taceo-oprf-types"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df4a13d21292f6f89e3cd9051acff0ea53e353f4d2bb4b8b2808a7925833cdc9"
+dependencies = [
+ "alloy",
+ "ark-ff 0.5.0",
+ "ark-serialize 0.5.0",
+ "async-trait",
+ "eyre",
+ "http 1.4.0",
+ "serde",
+ "taceo-ark-babyjubjub",
+ "taceo-ark-serde-compat",
+ "taceo-circom-types",
+ "taceo-groth16-sol",
+ "taceo-oprf-core",
+ "uuid",
+]
+
+[[package]]
+name = "taceo-oprf-types"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "278668dc50fdfb2ec5e9391031b8b98690d1b230da483e4ce15bdb52ede4acca"
 dependencies = [
  "alloy",
  "ark-ff 0.5.0",
