@@ -11,3 +11,4 @@ Prover.toml
 proof
 public_inputs
 out
+.ignore
