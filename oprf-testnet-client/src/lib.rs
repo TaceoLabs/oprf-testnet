@@ -32,9 +32,11 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
 
     let auth = BasicTestNetRequestAuth { api_key };
 
+    let nodes = taceo_oprf::client::to_oprf_uri_many(nodes, AuthModule::Basic)
+        .context("while parsing URIs")?;
+
     let verifiable_oprf_output = client::distributed_oprf(
-        nodes,
-        &AuthModule::Basic.to_string(),
+        &nodes,
         threshold,
         action,
         blinding_factor,
@@ -109,9 +111,10 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
         api_key,
     };
 
+    let nodes = taceo_oprf::client::to_oprf_uri_many(nodes, AuthModule::WalletOwnership)
+        .context("while parsing URIs")?;
     let verifiable_oprf_output = client::distributed_oprf(
-        nodes,
-        &AuthModule::WalletOwnership.to_string(),
+        &nodes,
         threshold,
         query,
         blinding_factor.clone(),
@@ -148,28 +151,28 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
 fn make_server_errors_human_friendly(
     response: Result<VerifiableOprfOutput, client::Error>,
 ) -> eyre::Result<VerifiableOprfOutput> {
-    response.map_err(|e|  {
-        if let client::Error::NotEnoughOprfResponses(_, errors) = &e {
-            if errors.is_empty() {
-                return eyre::eyre!(
-                    "Not enough OPRF servers responded to the OPRF query, cannot continue..."
-                );
-            } else {
-                for error in errors.values() {
-                    if let client::Error::ServerError(message) = error {
-                        if message.contains("API Key not valid") {
-                            return eyre::eyre!(
-                                "One of the OPRF servers responded with an authentication error: {message}. Please check your API key and try again."
-                            );
-                        } else if message.contains("API Key rate limit exceeded") {
-                            return eyre::eyre!(
+    response.map_err(|e| match e {
+        client::Error::ThresholdServiceError(service_error) => {
+                // authentication error
+                let message = service_error.msg.clone().unwrap_or("unknown message".to_owned());
+                if message.contains("API Key not valid") {
+                             eyre::eyre!(
+                                "The OPRF servers responded with an authentication error: {message}. Please check your API key and try again.")
+                } else if message.contains("API Key rate limit exceeded") {
+                             eyre::eyre!(
                                 "The used API key has been rate limited, please try again later or request a different API key."
-                            );
-                        }
-                    }
+                            )
+                } else {
+                     eyre::eyre!(service_error)
                 }
-            }
         }
-        eyre::eyre!(e)
- })
+        client::Error::Networking(errors) =>{
+            tracing::warn!("{errors:?}");
+            eyre::eyre!("Networking errors - check your internet connection and try again")
+        },
+        err => {
+            tracing::warn!("{err:?}");
+            eyre::eyre!(err)
+        }
+    })
 }
