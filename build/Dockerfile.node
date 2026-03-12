@@ -5,7 +5,7 @@ RUN curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/
 ENV PATH="$PATH:/root/.bb"
 RUN bbup -nv 1.0.0-beta.18
 
-FROM lukemathwalker/cargo-chef:0.1.73-rust-1.93.0-bookworm AS chef
+FROM lukemathwalker/cargo-chef:0.1.77-rust-1.94.0-trixie AS chef
 WORKDIR /app
 
 FROM chef AS planner
@@ -29,7 +29,12 @@ FROM rust:1.93-bookworm AS healthcheck-builder
 RUN cargo install simple-web-healthcheck
 
 
-FROM gcr.io/distroless/cc-debian12:nonroot AS runtime
+# FROM alpine:latest AS socat-install
+# RUN apk update && apk add socat
+# RUN which socat
+
+# FROM gcr.io/distroless/cc-debian12:nonroot AS runtime
+FROM debian:trixie AS runtime
 ARG GIT_HASH
 LABEL org.opencontainers.image.revision=$GIT_HASH
 LABEL org.opencontainers.image.vendor=TACEO
@@ -39,10 +44,19 @@ WORKDIR /app
 # copy healthcheck 
 COPY --from=healthcheck-builder /usr/local/cargo/bin/simple-web-healthcheck /healthcheck
 
+# install socat
+RUN apt-get update && apt-get install -y socat iproute2
+
 # copy needed files and binary for oprf-service
 COPY ./oprf-testnet-authentication/blinded_query_proof.vk /app/blinded_query_proof.vk
 COPY --from=builder /app/target/release/taceo-oprf-testnet-node /app/taceo-oprf-testnet-node
 COPY --from=ubuntu /root/.bb/bb /usr/bin/
+# COPY --from=socat-install /usr/bin/socat /usr/bin/socat
+COPY build/socat.sh /app/socat.sh
+COPY build/.env /app/.env
+COPY build/.env .
 
-ENTRYPOINT [ "/app/taceo-oprf-testnet-node" ]
+# ENTRYPOINT [ "/app/taceo-oprf-testnet-node" ]
+CMD [ "/app/socat.sh" ]
+# CMD [ "sleep 100" ]
 

@@ -4,6 +4,7 @@
 #![deny(missing_docs)]
 use std::sync::{Arc, atomic::Ordering};
 
+use axum::Router;
 use oprf_testnet_authentication::{
     AuthModule, basic::BasicTestNetRequestAuthenticator,
     wallet_ownership::WalletOwnershipTestNetRequestAuthenticator,
@@ -56,6 +57,10 @@ pub async fn start(
     )
     .build();
 
+    let mut new_router = Router::new();
+    new_router = new_router.merge(oprf_service_router.clone());
+    new_router = new_router.merge(oprf_attestation::get_attestation_router());
+
     let listener = tokio::net::TcpListener::bind(config.bind_addr).await?;
     let axum_cancel_token = cancellation_token.clone();
     let server = tokio::spawn(async move {
@@ -67,7 +72,7 @@ pub async fn start(
                 .unwrap_or(String::from("invalid addr"))
         );
         let axum_shutdown_signal = axum_cancel_token.clone();
-        let axum_result = axum::serve(listener, oprf_service_router)
+        let axum_result = axum::serve(listener, new_router)
             .with_graceful_shutdown(async move { axum_shutdown_signal.cancelled().await })
             .await;
         tracing::info!("axum server shutdown");

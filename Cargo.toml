@@ -1,9 +1,10 @@
 [workspace]
 resolver = "3"
 members = [
+  "oprf-attestation",
   "oprf-testnet-authentication",
   "oprf-testnet-client",
-  "oprf-testnet-node",
+  "oprf-testnet-node"
 ]
 
 [workspace.package]
@@ -20,12 +21,20 @@ alloy = { version = "1.4", default-features = false }
 ark-babyjubjub = { package = "taceo-ark-babyjubjub", version = "^0.5.3" }
 ark-ff = "0.5"
 async-trait = "0.1"
+attestation-doc-validation = "0.10.0"
+# aws-nitro-enclaves-nsm-api = { git = "https://github.com/aws/aws-nitro-enclaves-nsm-api.git", rev = "c940acc" }
+aws-nitro-enclaves-nsm-api = "0.4.0"
 axum = "0.8"
+axum-extra = "0.12.5"
 axum-test = "18"
+base64 = "0.22.1"
 bn254_blackbox_solver = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
 clap = "4"
 eddsa-babyjubjub = { package = "taceo-eddsa-babyjubjub", version = "^0.5.4" }
 eyre = { version = "0.6" }
+futures-util = { version = "0.3", default-features = false }
+headers = "0.4"
+hex = "0.4"
 humantime = "2"
 nargo = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
 nodes-common = { package = "taceo-nodes-common", version = "0.2" }
@@ -39,12 +48,17 @@ reqwest = { version = "0.12", default-features = false }
 rustls = "0.23"
 secrecy = "0.10"
 serde = { version = "1" }
+serde_bytes = "0.11"
+serde_cbor = "0.11.2"
 serde_json = { version = "1" }
 taceo-oprf = { version = "0.7", default-features = false }
 tempfile = "3"
 thiserror = { version = "2" }
 tokio = { version = "1" }
+tokio-tungstenite = "0.28.0"
+tower-http = { version = "0.6" }
 tracing = { version = "0.1" }
+tracing-subscriber = "0.3"
 uuid = { version = "1" }
 webpki-roots = { version = "1.0" }
 

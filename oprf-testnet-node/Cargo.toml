@@ -16,10 +16,11 @@ eyre.workspace = true
 humantime = { workspace = true }
 nodes-common = { workspace = true }
 nodes-observability = { workspace = true }
+oprf-attestation = { package = "taceo-oprf-attestation", path = "../oprf-attestation", version = "0.1" }
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
 rustls = { workspace = true }
 secrecy = { workspace = true, features = ["serde"] }
-taceo-oprf = { workspace = true, features = ["service", "types", "core"] }
+taceo-oprf = { workspace = true, features = ["core", "service", "types"] }
 tokio = { workspace = true, features = [
   "net",
   "rt-multi-thread",
