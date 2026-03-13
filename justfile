@@ -35,3 +35,17 @@ run-client *args:
 noir-tests:
     cd noir/blinded_query_proof && nargo test
     cd noir/verified_oprf_proof && nargo test
+
+[group('tee')]
+build-docker:
+    docker build -t node -f build/Dockerfile.node
+    nitro-cli build-enclave --docker-uri node --output-file node.eif
+
+[group('tee')]
+run-enclave: build-docker killall
+    nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 --debug-mode
+
+[group('tee')]
+killall:
+    echo "Terminating all running enclaves..."
+    nitro-cli terminate-enclave --all
