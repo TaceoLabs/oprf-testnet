@@ -16,7 +16,7 @@ ip addr show lo
 
 socat VSOCK-LISTEN:8000,fork,keepalive TCP:127.0.0.1:8000,keepalive &
 
-set -a && source .env && set +a
+set -a && source /app/.env && set +a
 echo "before sleep"
 sleep 100
 ls
