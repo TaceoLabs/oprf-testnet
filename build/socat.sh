@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+echo "1"
+sleep 10
 # Create minimal /etc/hosts so getaddrinfo can resolve 0.0.0.0 / 127.0.0.1
 echo "127.0.0.1 localhost" > /etc/hosts
 
@@ -15,7 +17,9 @@ ip addr show lo
 socat VSOCK-LISTEN:8000,fork,keepalive TCP:127.0.0.1:8000,keepalive &
 
 set -a && source .env && set +a
-# sleep 100
+echo "before sleep"
+sleep 100
 ls
 ls -l /app/
+echo "before starting oprf"
 /app/taceo-oprf-testnet-node
