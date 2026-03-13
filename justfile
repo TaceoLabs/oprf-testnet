@@ -38,7 +38,7 @@ noir-tests:
 
 [group('tee')]
 build-docker:
-    docker build -t node -f build/Dockerfile.node
+    docker build -t node -f build/Dockerfile.node .
     nitro-cli build-enclave --docker-uri node --output-file node.eif
 
 [group('tee')]
