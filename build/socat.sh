@@ -21,11 +21,11 @@ socat VSOCK-LISTEN:8000,fork,keepalive TCP:127.0.0.1:8000,keepalive &
 
 echo "Forward 5432 port"
 # forward db request from the enclave to outside
-socat TCP-LISTEN:5432,bind=0.0.0.0,fork,reuseaddr,keepalive VSOCK-CONNECT:21:5432,keepalive
+socat TCP-LISTEN:5432,bind=0.0.0.0,fork,reuseaddr,keepalive VSOCK-CONNECT:21:5432,keepalive &
 
 echo "Forward 443 port"
 # forward rpc requests from the enclave to outside
-socat TCP-LISTEN:443,bind=0.0.0.0,fork,reuseaddr,keepalive VSOCK-CONNECT:21:443,keepalive
+socat TCP-LISTEN:443,bind=0.0.0.0,fork,reuseaddr,keepalive VSOCK-CONNECT:21:443,keepalive &
 
 set -a && . /app/.env && set +a
 echo "before sleep"
