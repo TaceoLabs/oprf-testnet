@@ -29,7 +29,7 @@ FROM rust:1.93-bookworm AS healthcheck-builder
 RUN cargo install simple-web-healthcheck
 
 # Build vcsproxy
-FROM golang:1.26.1 as vcsproxy-builder
+FROM golang:1.26.1 AS vcsproxy-builder
 WORKDIR /app
 RUN git clone https://github.com/distributed-lab/enclave-extras.git
 WORKDIR /app/enclave-extras/vscproxy
@@ -68,6 +68,7 @@ COPY --from=healthcheck-builder /usr/local/cargo/bin/simple-web-healthcheck /hea
 
 # install socat
 # RUN apt-get update && apt-get install -y socat iproute2
+RUN apt-get update && apt-get install -y iproute2
 
 # copy needed files and binary for oprf-service
 COPY ./oprf-testnet-authentication/blinded_query_proof.vk /app/blinded_query_proof.vk
