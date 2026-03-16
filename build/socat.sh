@@ -1,8 +1,9 @@
 #!/bin/sh
 set -e
 
-echo "1"
-sleep 10
+echo "sleep 20..."
+sleep 20
+echo "start script"
 # Create minimal /etc/hosts so getaddrinfo can resolve 0.0.0.0 / 127.0.0.1
 echo "127.0.0.1 localhost" > /etc/hosts
 
