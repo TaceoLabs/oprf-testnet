@@ -14,9 +14,11 @@ ip link set lo up
 # Verify it's up
 ip addr show lo
 
+echo "Waiting for 8000 port"
 # listen to http connections from outside
 socat VSOCK-LISTEN:8000,fork,keepalive TCP:127.0.0.1:8000,keepalive &
 
+echo "Waiting for 5432 port"
 # forward db request from the enclave to outside
 socat TCP-LISTEN:5432,bind=0.0.0.0,fork,reuseaddr,keepalive VSOCK-CONNECT:21:5432,keepalive
 
