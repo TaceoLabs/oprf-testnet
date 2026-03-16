@@ -31,7 +31,7 @@ RUN cargo install simple-web-healthcheck
 # Build vcsproxy
 FROM golang:1.26.1 as vcsproxy-builder
 WORKDIR /app
-RUN git clone https://github.com/distributed-lab/enclave-extras?tab=readme-ov-file#golang-and-nitro-secure-module
+RUN git clone https://github.com/distributed-lab/enclave-extras.git
 WORKDIR /app/enclave-extras/vscproxy
 RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build
