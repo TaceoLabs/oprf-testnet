@@ -28,10 +28,32 @@ RUN cargo build --release --bin taceo-oprf-testnet-node
 FROM rust:1.93-bookworm AS healthcheck-builder
 RUN cargo install simple-web-healthcheck
 
+# Build vcsproxy
+FROM golang:1.26.1 as vcsproxy-builder
+WORKDIR /app
+RUN git clone https://github.com/distributed-lab/enclave-extras?tab=readme-ov-file#golang-and-nitro-secure-module
+WORKDIR /app/enclave-extras/vscproxy
+RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux go build
+
 
 # FROM alpine:latest AS socat-install
 # RUN apk update && apk add socat
 # RUN which socat
+
+# Build socat
+FROM debian:bookworm-slim AS socat-builder
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get install -y \
+    wget make gcc
+RUN wget http://www.dest-unreach.org/socat/download/socat-1.8.1.1.tar.gz && \
+    tar -xzf socat-1.8.1.1.tar.gz && \
+    cd socat-1.8.1.1 && \
+    ./configure && \
+    make && \
+    make install
+
 
 # FROM gcr.io/distroless/cc-debian12:nonroot AS runtime
 FROM debian:trixie AS runtime
@@ -45,13 +67,14 @@ WORKDIR /app
 COPY --from=healthcheck-builder /usr/local/cargo/bin/simple-web-healthcheck /healthcheck
 
 # install socat
-RUN apt-get update && apt-get install -y socat iproute2
+# RUN apt-get update && apt-get install -y socat iproute2
 
 # copy needed files and binary for oprf-service
 COPY ./oprf-testnet-authentication/blinded_query_proof.vk /app/blinded_query_proof.vk
 COPY --from=builder /app/target/release/taceo-oprf-testnet-node /app/taceo-oprf-testnet-node
 COPY --from=ubuntu /root/.bb/bb /usr/bin/
-# COPY --from=socat-install /usr/bin/socat /usr/bin/socat
+COPY --from=socat-builder /usr/local/bin/socat /usr/local/bin/socat
+COPY --from=vcsproxy-build /app/enclave-extras/vscproxy/vscproxy /usr/bin/vscproxy
 COPY build/socat.sh /app/socat.sh
 COPY build/.env /app/.env
 COPY build/.env .
