@@ -58,7 +58,7 @@ socat VSOCK-LISTEN:4563,fork,keepalive TCP:127.0.0.1:4563,keepalive &
 
 set -a && . /app/.env && set +a
 echo "before sleep"
-sleep 15
+# sleep 15
 ls
 ls -l /app/
 echo "before starting oprf"
