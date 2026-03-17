@@ -62,6 +62,6 @@ echo "before sleep"
 ls
 ls -l /app/
 echo "before starting oprf"
-/app/taceo-oprf-testnet-node || true
+RUST_LOG=debug /app/taceo-oprf-testnet-node || true
 echo "exiting in 100 seconds..."
 sleep 100
