@@ -5,9 +5,9 @@ echo "sleep 5..."
 sleep 10
 echo "start script"
 # Create minimal /etc/hosts so getaddrinfo can resolve 0.0.0.0 / 127.0.0.1
-echo "127.0.0.1 localhost" > /etc/hosts
-echo "127.0.0.2 oprf-tee-testnet-2-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com" > /etc/hosts
-echo "127.0.0.3 opt-mainnet.g.alchemy.com" > /etc/hosts
+echo "127.0.0.1 localhost" >> /etc/hosts
+echo "127.0.0.2 oprf-tee-testnet-2-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com" >> /etc/hosts
+echo "127.0.0.3 opt-mainnet.g.alchemy.com" >> /etc/hosts
 # Create minimal nsswitch.conf so glibc knows to check /etc/hosts
 echo "hosts: files" > /etc/nsswitch.conf
 cat /etc/hosts
@@ -35,14 +35,14 @@ sleep 5
 # echo "Start vsock proxies"
 # # Connections from Enclave
 # vscproxy -parentCID=3 -vsockPort=5432 -localAddr=127.0.0.2:5432 &
-sleep 5
+# sleep 5
 
 
 # echo "Forward 5432 port"
 # # forward db request from the enclave to outside
 socat TCP-LISTEN:5432,bind=127.0.0.2,fork,reuseaddr,keepalive VSOCK-CONNECT:3:5432,keepalive &
 
-# # forward rpc requests to the outsie
+# # forward rpc requests to the outside
 socat TCP-LISTEN:443,bind=127.0.0.3,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4444,keepalive &
 #
 # echo "Forward 443 port"
