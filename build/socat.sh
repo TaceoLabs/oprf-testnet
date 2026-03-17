@@ -2,7 +2,7 @@
 set -e
 
 echo "sleep 5..."
-sleep 10
+# sleep 10
 echo "start script"
 # Create minimal /etc/hosts so getaddrinfo can resolve 0.0.0.0 / 127.0.0.1
 echo "127.0.0.1 localhost" >> /etc/hosts
@@ -29,7 +29,7 @@ if ! ip addr show dev lo | grep -q "127.0.0.200"; then
   ip addr add 127.0.0.200/32 dev lo:0
   ip link set dev lo:0 up
 fi
-sleep 5
+# sleep 5
 
 
 # echo "Start vsock proxies"
@@ -57,8 +57,10 @@ socat VSOCK-LISTEN:4563,fork,keepalive TCP:127.0.0.1:4563,keepalive &
 
 set -a && . /app/.env && set +a
 echo "before sleep"
-sleep 5
+# sleep 5
 ls
 ls -l /app/
 echo "before starting oprf"
 /app/taceo-oprf-testnet-node
+echo "exiting in 100 seconds..."
+sleep 100
