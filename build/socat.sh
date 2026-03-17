@@ -2,7 +2,7 @@
 set -e
 
 echo "sleep 20..."
-sleep 20
+sleep 10
 echo "start script"
 # Create minimal /etc/hosts so getaddrinfo can resolve 0.0.0.0 / 127.0.0.1
 echo "127.0.0.1 localhost" > /etc/hosts
@@ -17,7 +17,7 @@ ip addr show lo
 
 echo "Waiting for 8000 port"
 # listen to http connections from outside
-socat VSOCK-LISTEN:8000,fork,keepalive TCP:127.0.0.1:8000,keepalive &
+socat VSOCK-LISTEN:8000,fork,keepalive TCP:127.0.0.1:4563,keepalive &
 
 echo "Forward 5432 port"
 # forward db request from the enclave to outside
