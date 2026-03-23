@@ -23,6 +23,16 @@ lint:
 run-setup:
     @bash ./local-setup.sh setup
 
+[group('tee')]
+sync-allowed-vsock:
+    @sudo bash -eu -c '\
+        target_file="/etc/nitro_enclaves/vsock-proxy.yaml"; \
+        [ -f "$target_file" ] || { echo "Missing $target_file" >&2; exit 1; }; \
+        while IFS= read -r line || [ -n "$line" ]; do \
+            [[ -z "${line//[[:space:]]/}" || "$line" =~ ^[[:space:]]*# ]] && continue; \
+            grep -Fqx -- "$line" "$target_file" || printf "%s\n" "$line" >> "$target_file"; \
+        done < allowed_vsock'
+
 [group('test')]
 setup-test:
     @bash ./local-setup.sh test
@@ -43,7 +53,14 @@ build-docker:
 
 [group('tee')]
 run-enclave: killall build-docker
-    nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 --debug-mode
+    nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 --debug-mode > run_enclave.log
+
+[group('tee')]
+start-socats:
+    pkill socat
+    socat VSOCK-LISTEN:4444,fork,keepalive TCP:alchemy.com:443,keepalive &
+    socat VSOCK-LISTEN:5432,fork,keepalive TCP:oprf-tee-testnet-2-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com:5432,keepalive &
+    # socat TCP-LISTEN:8000,bind=0.0.0.0,fork,reuseaddr,keepalive VSOCK-CONNECT:42:4563,keepalive
 
 [group('tee')]
 killall:
