@@ -67,8 +67,6 @@ socat TCP-LISTEN:443,bind=127.0.0.5,fork,reuseaddr,keepalive VSOCK-CONNECT:3:444
 
 
 
-echo "running tcpdump"
-nohup tcpdump -i any port 53 -nn -l -tttt > dns_requests.log 2>&1 &
 
 echo "Accepting outside connection on port 4563"
 # listen to http connections from outside
@@ -79,16 +77,7 @@ echo "before sleep"
 # sleep 15
 ls
 ls -l /app/
-echo "starting tail..."
-sleep 10
-tail -f dns_requests.log &
-echo "digging google.com"
-sleep 5
-ping google.com -t 5 || true
-cat dns_requests.log
-echo "after cat"
-sleep 5
 echo "before starting oprf"
-RUST_LOG=debug /app/taceo-oprf-testnet-node || true
+strace -f -e trace=openat,connect,sendto -s 256 RUST_LOG=debug /app/taceo-oprf-testnet-node 2>&1 | grep -E "hosts|resolv" | tee dns_requests.log || true
 echo "exiting in 100 seconds..."
 sleep 100
