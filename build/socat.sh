@@ -78,6 +78,6 @@ echo "before sleep"
 ls
 ls -l /app/
 echo "before starting oprf"
-strace -f -e trace=openat,connect,sendto -s 256 RUST_LOG=debug /app/taceo-oprf-testnet-node 2>&1 | grep -E "hosts|resolv" | tee dns_requests.log
+strace -f -e trace=connect,sendto,sendmsg -s 512 ./app/taceo-oprf-testnet-node 2>&1 | grep -E "hosts|resolv|port 53|:53|sin_port=htons\(53\)" | tee dns_requests.log
 echo "exiting in 100 seconds..."
 sleep 100
