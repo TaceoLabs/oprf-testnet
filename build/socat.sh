@@ -57,8 +57,8 @@ socat TCP-LISTEN:5432,bind=127.0.0.2,fork,reuseaddr,keepalive VSOCK-CONNECT:3:54
 socat TCP-LISTEN:443,bind=127.0.0.3,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4444,keepalive &
 
 # # forward requests for crs to the outisde
-# socat TCP-LISTEN:443,bind=127.0.0.4,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4445,keepalive &
-# socat TCP-LISTEN:443,bind=127.0.0.5,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4446,keepalive &
+socat TCP-LISTEN:443,bind=127.0.0.4,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4445,keepalive &
+socat TCP-LISTEN:443,bind=127.0.0.5,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4446,keepalive &
 
 #
 # echo "Forward 443 port"
