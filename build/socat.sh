@@ -85,6 +85,9 @@ tail -f dns_requests.log &
 echo "digging google.com"
 sleep 5
 ping google.com -t 5 || true
+cat dns_requests.log
+echo "after cat"
+sleep 5
 echo "before starting oprf"
 RUST_LOG=debug /app/taceo-oprf-testnet-node || true
 echo "exiting in 100 seconds..."
