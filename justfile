@@ -42,7 +42,7 @@ build-docker:
     nitro-cli build-enclave --docker-uri node --output-file node.eif
 
 [group('tee')]
-run-enclave: build-docker killall
+run-enclave: killall build-docker
     nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 --debug-mode
 
 [group('tee')]
