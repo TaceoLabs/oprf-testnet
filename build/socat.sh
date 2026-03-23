@@ -8,7 +8,7 @@ echo "start script"
 echo "127.0.0.1 localhost" >> /etc/hosts
 echo "127.0.0.2 oprf-tee-testnet-2-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com" >> /etc/hosts
 # echo "127.0.0.3 alchemy.com" >> /etc/hosts
-echo "127.0.0.3 opt-mainnet.g.alchemy.com" >> /etc/hosts
+echo "127.0.0.2 opt-mainnet.g.alchemy.com" >> /etc/hosts
 # Create minimal nsswitch.conf so glibc knows to check /etc/hosts
 echo "hosts: files" > /etc/nsswitch.conf
 cat /etc/hosts
@@ -24,6 +24,10 @@ if ! ip addr show dev lo | grep -q "127.0.0.2"; then
 fi
 if ! ip addr show dev lo | grep -q "127.0.0.3"; then
   ip addr add 127.0.0.3/32 dev lo:0
+  ip link set dev lo:0 up
+fi
+if ! ip addr show dev lo | grep -q "127.0.0.4"; then
+  ip addr add 127.0.0.4/32 dev lo:0
   ip link set dev lo:0 up
 fi
 if ! ip addr show dev lo | grep -q "127.0.0.200"; then
@@ -44,11 +48,11 @@ fi
 socat TCP-LISTEN:5432,bind=127.0.0.2,fork,reuseaddr,keepalive VSOCK-CONNECT:3:5432,keepalive &
 
 # # forward rpc requests to the outside
-socat TCP-LISTEN:443,bind=127.0.0.3,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4444,keepalive &
+socat TCP-LISTEN:443,bind=127.0.0.2,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4444,keepalive &
 
-
-# # # forward requests for proof keys to the outside
-# socat TCP-LISTEN:443,bind=127.0.0.3,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4445,keepalive &
+#
+# # # forward requests for crs to the outisde
+# socat TCP-LISTEN:443,bind=127.0.0.4,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4445,keepalive &
 
 #
 # echo "Forward 443 port"
