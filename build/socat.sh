@@ -73,10 +73,6 @@ echo "Accepting outside connection on port 4563"
 socat VSOCK-LISTEN:4563,fork,keepalive TCP:127.0.0.1:4563,keepalive &
 
 set -a && . /app/.env && set +a
-echo "before sleep"
-# sleep 15
-ls
-ls -l /app/
 echo "before starting oprf"
 RUST_LOG=debug /app/taceo-oprf-testnet-node || true
 echo "exiting in 100 seconds..."
