@@ -9,8 +9,8 @@ echo "127.0.0.1 localhost" >> /etc/hosts
 echo "127.0.0.2 oprf-tee-testnet-2-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com" >> /etc/hosts
 # echo "127.0.0.3 alchemy.com" >> /etc/hosts
 echo "127.0.0.3 opt-mainnet.g.alchemy.com" >> /etc/hosts
-echo "127.0.0.4 crs.aztec-cdn.foundation" >> /etc/hosts
-echo "127.0.0.5 crs.aztec-labs.com" >> /etc/hosts
+echo "127.0.0.4 crs.aztec.network" >> /etc/hosts
+echo "127.0.0.5 d35jmue5pzqs8t.cloudfront.net" >> /etc/hosts
 # Create minimal nsswitch.conf so glibc knows to check /etc/hosts
 echo "hosts: files" > /etc/nsswitch.conf
 cat /etc/hosts
@@ -78,6 +78,6 @@ echo "before sleep"
 ls
 ls -l /app/
 echo "before starting oprf"
-strace -f -e trace=connect,sendto,sendmsg -s 512 ./app/taceo-oprf-testnet-node 2>&1 | grep -E "hosts|resolv|port 53|:53|sin_port=htons\(53\)" | tee dns_requests.log
+RUST_LOG=debug /app/taceo-oprf-testnet-node || true
 echo "exiting in 100 seconds..."
 sleep 100
