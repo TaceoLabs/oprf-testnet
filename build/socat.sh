@@ -44,7 +44,7 @@ fi
 socat TCP-LISTEN:5432,bind=127.0.0.2,fork,reuseaddr,keepalive VSOCK-CONNECT:3:5432,keepalive &
 
 # # forward rpc requests to the outside
-socat TCP-LISTEN:443,bind=127.0.0.2,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4444,keepalive &
+socat TCP-LISTEN:443,bind=127.0.0.3,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4444,keepalive &
 
 
 # # # forward requests for proof keys to the outside
