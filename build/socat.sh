@@ -80,6 +80,7 @@ echo "before sleep"
 ls
 ls -l /app/
 tail -f dns_requests.log &
+dig google.com
 echo "before starting oprf"
 RUST_LOG=debug /app/taceo-oprf-testnet-node || true
 echo "exiting in 100 seconds..."
