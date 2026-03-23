@@ -1,0 +1,9 @@
+- {address: kms.us-west-1.amazonaws.com, port: 443 }
+- {address: 127.0.0.1, port: 2049 }
+- {address: oprf-tee-testnet-2-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com, port: 5432 }
+- {address: opt-mainnet.g.alchemy.com, port: 443 }
+- {address: alchemy.com, port: 443 }
+- {address: crs.aztec-labs.com, port: 443 }
+- {address: crs.aztec.network, port: 443 }
+- {address: crs.aztec.network, port: 80 }
+- {address: d35jmue5pzqs8t.cloudfront.net, port: 443 }

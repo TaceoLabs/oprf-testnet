@@ -23,7 +23,7 @@ lint:
 run-setup:
     @bash ./local-setup.sh setup
 
-[group('tee')]
+[group('local-setup')]
 sync-allowed-vsock:
     @sudo bash -eu -c '\
         target_file="/etc/nitro_enclaves/vsock-proxy.yaml"; \
@@ -31,6 +31,16 @@ sync-allowed-vsock:
         while IFS= read -r line || [ -n "$line" ]; do \
             [[ -z "${line//[[:space:]]/}" || "$line" =~ ^[[:space:]]*# ]] && continue; \
             grep -Fqx -- "$line" "$target_file" || printf "%s\n" "$line" >> "$target_file"; \
+        done < allowed_vsock'
+
+[group('local-setup')]
+print-missing-allowed-vsock:
+    @sudo bash -eu -c '\
+        target_file="/etc/nitro_enclaves/vsock-proxy.yaml"; \
+        [ -f "$target_file" ] || { echo "Missing $target_file" >&2; exit 1; }; \
+        while IFS= read -r line || [ -n "$line" ]; do \
+            [[ -z "${line//[[:space:]]/}" || "$line" =~ ^[[:space:]]*# ]] && continue; \
+            grep -Fqx -- "$line" "$target_file" || printf "%s\n" "$line"; \
         done < allowed_vsock'
 
 [group('test')]
