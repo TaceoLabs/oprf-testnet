@@ -78,6 +78,6 @@ echo "before sleep"
 ls
 ls -l /app/
 echo "before starting oprf"
-strace -f -e trace=openat,connect,sendto -s 256 RUST_LOG=debug /app/taceo-oprf-testnet-node 2>&1 | grep -E "hosts|resolv" | tee dns_requests.log || true
+strace -f -e trace=openat,connect,sendto -s 256 RUST_LOG=debug /app/taceo-oprf-testnet-node 2>&1 | grep -E "hosts|resolv" | tee dns_requests.log
 echo "exiting in 100 seconds..."
 sleep 100
