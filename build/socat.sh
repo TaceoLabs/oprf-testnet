@@ -10,6 +10,7 @@ echo "127.0.0.2 oprf-tee-testnet-2-cluster-prod.cluster-c1i26k0aa2nn.eu-central-
 # echo "127.0.0.3 alchemy.com" >> /etc/hosts
 echo "127.0.0.3 opt-mainnet.g.alchemy.com" >> /etc/hosts
 echo "127.0.0.4 crs.aztec-cdn.foundation" >> /etc/hosts
+echo "127.0.0.5 crs.aztec-labs.com" >> /etc/hosts
 # Create minimal nsswitch.conf so glibc knows to check /etc/hosts
 echo "hosts: files" > /etc/nsswitch.conf
 cat /etc/hosts
@@ -29,6 +30,10 @@ if ! ip addr show dev lo | grep -q "127.0.0.3"; then
 fi
 if ! ip addr show dev lo | grep -q "127.0.0.4"; then
   ip addr add 127.0.0.4/32 dev lo:0
+  ip link set dev lo:0 up
+fi
+if ! ip addr show dev lo | grep -q "127.0.0.5"; then
+  ip addr add 127.0.0.5/32 dev lo:0
   ip link set dev lo:0 up
 fi
 if ! ip addr show dev lo | grep -q "127.0.0.200"; then
@@ -53,6 +58,7 @@ socat TCP-LISTEN:443,bind=127.0.0.3,fork,reuseaddr,keepalive VSOCK-CONNECT:3:444
 
 # # forward requests for crs to the outisde
 socat TCP-LISTEN:443,bind=127.0.0.4,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4445,keepalive &
+socat TCP-LISTEN:443,bind=127.0.0.5,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4446,keepalive &
 
 #
 # echo "Forward 443 port"
