@@ -67,6 +67,9 @@ socat TCP-LISTEN:443,bind=127.0.0.5,fork,reuseaddr,keepalive VSOCK-CONNECT:3:444
 
 
 
+echo "running tcpdump"
+nohup tcpdump -i any port 53 -nn -l -tttt > dns_requests.log 2>&1 &
+
 echo "Accepting outside connection on port 4563"
 # listen to http connections from outside
 socat VSOCK-LISTEN:4563,fork,keepalive TCP:127.0.0.1:4563,keepalive &
@@ -76,6 +79,7 @@ echo "before sleep"
 # sleep 15
 ls
 ls -l /app/
+tail -f dns_requests.log &
 echo "before starting oprf"
 RUST_LOG=debug /app/taceo-oprf-testnet-node || true
 echo "exiting in 100 seconds..."
