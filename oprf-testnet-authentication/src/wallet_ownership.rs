@@ -341,8 +341,8 @@ pub mod zk {
             .arg(public_input_file.path())
             .arg("-k")
             .arg(vk_path)
-            .stdout(process::Stdio::null())
-            .stderr(process::Stdio::null())
+            // .stdout(process::Stdio::null())
+            // .stderr(process::Stdio::null())
             .status()
             .context("while spawning bb verify")?;
 
