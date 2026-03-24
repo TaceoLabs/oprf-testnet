@@ -82,6 +82,7 @@ nitrocli-debug:
     if [ "$(printf '%s' "$describe_output" | tr -d '[:space:]')" = "[]" ]; then
         just --justfile {{ justfile() }} run-enclave
         enclave_id="$(extract_enclave_id < run_enclave.log)"
+        sleep 2
     else
         enclave_id="$(printf '%s' "$describe_output" | extract_enclave_id)"
     fi
@@ -90,5 +91,4 @@ nitrocli-debug:
         echo "Failed to determine enclave id." >&2
         exit 1
     fi
-
     nitro-cli console --enclave-id "$enclave_id"
