@@ -3,7 +3,8 @@ RUN apt-get update && apt-get install -y curl git ca-certificates jq
 # install bb
 RUN curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/next/barretenberg/bbup/install | bash 
 ENV PATH="$PATH:/root/.bb"
-RUN bbup -nv 1.0.0-beta.18
+RUN bbup 
+# RUN bbup -nv 1.0.0-beta.18
 
 FROM lukemathwalker/cargo-chef:0.1.77-rust-1.94.0-trixie AS chef
 WORKDIR /app
