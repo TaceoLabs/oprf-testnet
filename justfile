@@ -23,16 +23,6 @@ lint:
 run-setup:
     @bash ./local-setup.sh setup
 
-[group('tee')]
-sync-allowed-vsock:
-    @sudo bash -eu -c '\
-        target_file="/etc/nitro_enclaves/vsock-proxy.yaml"; \
-        [ -f "$target_file" ] || { echo "Missing $target_file" >&2; exit 1; }; \
-        while IFS= read -r line || [ -n "$line" ]; do \
-            [[ -z "${line//[[:space:]]/}" || "$line" =~ ^[[:space:]]*# ]] && continue; \
-            grep -Fqx -- "$line" "$target_file" || printf "%s\n" "$line" >> "$target_file"; \
-        done < allowed_vsock'
-
 [group('test')]
 setup-test:
     @bash ./local-setup.sh test
@@ -45,6 +35,16 @@ run-client *args:
 noir-tests:
     cd noir/blinded_query_proof && nargo test
     cd noir/verified_oprf_proof && nargo test
+
+[group('tee')]
+sync-allowed-vsock:
+    @sudo bash -eu -c '\
+        target_file="/etc/nitro_enclaves/vsock-proxy.yaml"; \
+        [ -f "$target_file" ] || { echo "Missing $target_file" >&2; exit 1; }; \
+        while IFS= read -r line || [ -n "$line" ]; do \
+            [[ -z "${line//[[:space:]]/}" || "$line" =~ ^[[:space:]]*# ]] && continue; \
+            grep -Fqx -- "$line" "$target_file" || printf "%s\n" "$line" >> "$target_file"; \
+        done < allowed_vsock'
 
 [group('tee')]
 build-docker:
@@ -67,3 +67,27 @@ start-socats:
 killall:
     echo "Terminating all running enclaves..."
     nitro-cli terminate-enclave --all
+
+[group('tee')]
+nitrocli-debug:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    extract_enclave_id() {
+        tr -d '\n' | sed -n 's/.*"EnclaveID"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
+    }
+
+    describe_output="$(nitro-cli describe-enclaves)"
+    if [ "$(printf '%s' "$describe_output" | tr -d '[:space:]')" = "[]" ]; then
+        just --justfile {{ justfile() }} run-enclave
+        enclave_id="$(extract_enclave_id < run_enclave.log)"
+    else
+        enclave_id="$(printf '%s' "$describe_output" | extract_enclave_id)"
+    fi
+
+    if [ -z "${enclave_id:-}" ]; then
+        echo "Failed to determine enclave id." >&2
+        exit 1
+    fi
+
+    nitro-cli console --enclave-id "$enclave_id"
