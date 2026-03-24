@@ -58,7 +58,7 @@ run-enclave: killall build-docker
 
 [group('tee')]
 start-socats:
-    pkill socat
+    pkill socat || true
     socat VSOCK-LISTEN:4444,fork,keepalive TCP:alchemy.com:443,keepalive &
     socat VSOCK-LISTEN:5432,fork,keepalive TCP:oprf-tee-testnet-${HOME}-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com:5432,keepalive &
     socat VSOCK-LISTEN:4445,fork,keepalive TCP:crs.aztec.network:80,keepalive &
