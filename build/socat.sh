@@ -10,7 +10,6 @@ echo "127.0.0.2 oprf-tee-testnet-2-cluster-prod.cluster-c1i26k0aa2nn.eu-central-
 # echo "127.0.0.3 alchemy.com" >> /etc/hosts
 echo "127.0.0.3 opt-mainnet.g.alchemy.com" >> /etc/hosts
 echo "127.0.0.4 crs.aztec.network" >> /etc/hosts
-echo "127.0.0.5 d35jmue5pzqs8t.cloudfront.net" >> /etc/hosts
 # Create minimal nsswitch.conf so glibc knows to check /etc/hosts
 echo "hosts: files" > /etc/nsswitch.conf
 cat /etc/hosts
