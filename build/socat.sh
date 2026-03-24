@@ -52,14 +52,14 @@ fi
 
 # echo "Forward 5432 port"
 # # forward db request from the enclave to outside
-socat TCP-LISTEN:5432,bind=127.0.0.2,fork,reuseaddr,keepalive VSOCK-CONNECT:3:5432,keepalive &
+socat -dddd TCP-LISTEN:5432,bind=127.0.0.2,fork,reuseaddr,keepalive VSOCK-CONNECT:3:5432,keepalive &
 
 # # forward rpc requests to the outside
-socat TCP-LISTEN:443,bind=127.0.0.3,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4444,keepalive &
+socat -dddd TCP-LISTEN:443,bind=127.0.0.3,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4444,keepalive &
 
 # # forward requests to get crs (bb) to the outisde
-socat TCP-LISTEN:80,bind=127.0.0.4,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4445,keepalive &
-socat TCP-LISTEN:443,bind=127.0.0.5,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4446,keepalive &
+socat -dddd TCP-LISTEN:80,bind=127.0.0.4,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4445,keepalive &
+# socat iTCP-LISTEN:443,bind=127.0.0.5,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4446,keepalive &
 
 #
 # echo "Forward 443 port"
