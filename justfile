@@ -53,15 +53,15 @@ build-docker:
 
 [group('tee')]
 run-enclave: killall build-docker
-    nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 --debug-mode > run_enclave.log
+    nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 --debug-mode
 
 [group('tee')]
 start-socats:
     pkill socat
     socat VSOCK-LISTEN:4444,fork,keepalive TCP:alchemy.com:443,keepalive &
-    socat VSOCK-LISTEN:5432,fork,keepalive TCP:oprf-tee-testnet-2-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com:5432,keepalive &
+    socat VSOCK-LISTEN:5432,fork,keepalive TCP:oprf-tee-testnet-${HOME}-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com:5432,keepalive &
     socat VSOCK-LISTEN:4445,fork,keepalive TCP:crs.aztec.network:80,keepalive &
-    # socat TCP-LISTEN:8000,bind=0.0.0.0,fork,reuseaddr,keepalive VSOCK-CONNECT:42:4563,keepalive
+    socat TCP-LISTEN:8000,bind=0.0.0.0,fork,reuseaddr,keepalive VSOCK-CONNECT:$(nitro-cli describe-enclaves | tr -d '\n' | sed -n 's/.*"EnclaveCID"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p'):4563,keepalive
 
 [group('tee')]
 killall:
