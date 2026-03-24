@@ -6,6 +6,8 @@ echo "sleep 5..."
 echo "start script"
 # Create minimal /etc/hosts so getaddrinfo can resolve 0.0.0.0 / 127.0.0.1
 echo "127.0.0.1 localhost" >> /etc/hosts
+echo "127.0.0.2 oprf-tee-testnet-0-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com" >> /etc/hosts
+echo "127.0.0.2 oprf-tee-testnet-1-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com" >> /etc/hosts
 echo "127.0.0.2 oprf-tee-testnet-2-cluster-prod.cluster-c1i26k0aa2nn.eu-central-1.rds.amazonaws.com" >> /etc/hosts
 # echo "127.0.0.3 alchemy.com" >> /etc/hosts
 echo "127.0.0.3 opt-mainnet.g.alchemy.com" >> /etc/hosts
@@ -55,7 +57,7 @@ socat TCP-LISTEN:5432,bind=127.0.0.2,fork,reuseaddr,keepalive VSOCK-CONNECT:3:54
 # # forward rpc requests to the outside
 socat TCP-LISTEN:443,bind=127.0.0.3,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4444,keepalive &
 
-# # forward requests for crs to the outisde
+# # forward requests to get crs (bb) to the outisde
 socat TCP-LISTEN:80,bind=127.0.0.4,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4445,keepalive &
 socat TCP-LISTEN:443,bind=127.0.0.5,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4446,keepalive &
 
