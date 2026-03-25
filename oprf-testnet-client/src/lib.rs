@@ -10,6 +10,7 @@ use oprf_testnet_authentication::{
     wallet_ownership::zk,
 };
 use rand::{CryptoRng, Rng};
+use std::collections::BTreeMap;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use taceo_oprf::client::{self, VerifiableOprfOutput};
 use taceo_oprf::{client::Connector, core::oprf::BlindingFactor};
@@ -33,41 +34,57 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
 
     let auth = BasicTestNetRequestAuth { api_key };
 
+    let nodes_http = nodes.clone();
     let nodes = taceo_oprf::client::to_oprf_uri_many(nodes, AuthModule::Basic)
         .context("while parsing URIs")?;
 
-    // // TODO: call attestation
-    // let client = reqwest::Client::new();
-    // let attestation_docs = stream::iter(nodes.iter())
-    //     .then(|node| {
-    //         let client = client.clone();
-    //         let url = format!("{node}/attest/44");
-    //         async move {
-    //             client
-    //                 .get(url)
-    //                 .send()
-    //                 .await?
-    //                 .error_for_status()?
-    //                 .bytes()
-    //                 .await
-    //         }
-    //     })
-    //     .collect::<Vec<_>>()
-    //     .await;
-    //
-    // for doc in attestation_docs {
-    //     match doc {
-    //         Ok(doc) => {
-    //             tracing::debug!("Received attestation doc: {:?}", doc);
-    //             if let Err(e) = oprf_attestation::handle_attestation_doc(doc) {
-    //                 tracing::error!("Error handling attestation document: {:?}", e);
-    //             }
-    //         }
-    //         Err(e) => {
-    //             tracing::error!("Error fetching attestation document: {:?}", e);
-    //         }
-    //     }
-    // }
+    let client = reqwest::Client::new();
+
+    let mut pcrs = BTreeMap::new();
+    pcrs.insert(0, "dummy pcr value".to_string());
+    pcrs.insert(0, "dummy pcr value".to_string());
+    pcrs.insert(0, "dummy pcr value".to_string());
+
+    let attest_values = oprf_attestation::AttestationValues {
+        nonce: 44,
+        pcrs: Default::default(),
+        public_key: vec![],
+        user_data: vec![],
+    };
+    let attestation_docs = stream::iter(nodes_http.iter())
+        .then(|node| {
+            let nonce = attest_values.nonce;
+            let client = client.clone();
+            let url = format!("{node}/attest/{nonce}");
+            async move {
+                client
+                    .get(url)
+                    .send()
+                    .await?
+                    .error_for_status()?
+                    .bytes()
+                    .await
+            }
+        })
+        .collect::<Vec<_>>()
+        .await;
+
+    for doc in attestation_docs {
+        match doc {
+            Ok(doc) => {
+                tracing::debug!("Received attestation doc: {:?}", doc);
+                if let Err(e) = oprf_attestation::handle_attestation_doc(doc, &attest_values) {
+                    tracing::error!("Error handling attestation document: {:?}", e);
+                }
+                tracing::info!(
+                    "Successfully handled attestation document from one of the nodes. Proceeding with OPRF protocol..."
+                );
+            }
+            Err(e) => {
+                tracing::error!("Error fetching attestation document: {:?}", e);
+            }
+        }
+    }
 
     let verifiable_oprf_output = client::distributed_oprf(
         &nodes,
