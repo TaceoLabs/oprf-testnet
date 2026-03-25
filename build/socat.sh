@@ -67,7 +67,7 @@ socat TCP-LISTEN:80,bind=127.0.0.4,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4445
 # socat TCP-LISTEN:443,bind=0.0.0.0,fork,reuseaddr,keepalive VSOCK-CONNECT:21:443,keepalive &
 #
 PORT=5005
-OUT_FILE=/tmp/config.json
+OUT_FILE=/app/.env
 
 echo "Listening and writing to $OUT_FILE..."
 

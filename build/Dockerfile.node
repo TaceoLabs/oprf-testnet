@@ -78,8 +78,6 @@ COPY --from=ubuntu /root/.bb/bb /usr/bin/
 COPY --from=socat-builder /usr/local/bin/socat /usr/local/bin/socat
 COPY --from=vcsproxy-builder /app/enclave-extras/vscproxy/vscproxy /usr/bin/vscproxy
 COPY build/socat.sh /app/socat.sh
-COPY build/.env /app/.env
-COPY build/.env .
 
 # ENTRYPOINT [ "/app/taceo-oprf-testnet-node" ]
 CMD [ "/app/socat.sh" ]
