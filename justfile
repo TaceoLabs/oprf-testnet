@@ -52,8 +52,13 @@ build-docker:
     nitro-cli build-enclave --docker-uri node --output-file node.eif
 
 [group('tee')]
-run-enclave: killall build-docker
+run-enclave-debug: killall build-docker
     nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 --debug-mode
+    just start-socats
+
+[group('tee')]
+run-enclave: killall build-docker
+    nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 > enclave.log 
     just start-socats
 
 [group('tee')]
@@ -80,7 +85,7 @@ nitrocli-debug:
 
     describe_output="$(nitro-cli describe-enclaves)"
     if [ "$(printf '%s' "$describe_output" | tr -d '[:space:]')" = "[]" ]; then
-        just --justfile {{ justfile() }} run-enclave
+        just --justfile {{ justfile() }} run-enclave-debug
         describe_output="$(nitro-cli describe-enclaves)"
         enclave_id="$(printf '%s' "$describe_output" | extract_enclave_id)"
     else
