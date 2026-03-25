@@ -3,4 +3,4 @@ PORT=5005
 
 CONFIG='{"api_key":"super-secret","mode":"prod"}'
 
-echo "$CONFIG" | socat - VSOCK-CONNECT:${CID}:${PORT}
+echo $(cat build/.env) | socat - VSOCK-CONNECT:${CID}:${PORT}
