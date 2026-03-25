@@ -113,6 +113,7 @@ debug-tee:
 print-pcr4:
     #!/usr/bin/env bash
     EC2_INSTANCE_ID=$(ec2-metadata -i |  awk '{print $2}')
+    echo "EC2_INSTANCE_ID: $EC2_INSTANCE_ID"
     python3 -c"import hashlib, sys; \
     h=hashlib.sha384(); h.update(b'\0'*48); \
     h.update(\"$INSTANCE_ID\".encode('utf-8')); \
