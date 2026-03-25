@@ -67,7 +67,7 @@ run-enclave: killall build-docker
 
 [group('tee')]
 run-enclave-only:
-    nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 > enclave.log 
+    nitro-cli run-enclave --eif-path ../node.eif --cpu-count 2 --memory 1024 > enclave.log 
     sleep 1
     ./send_conf.sh
     just start-socats
