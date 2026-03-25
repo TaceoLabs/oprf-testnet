@@ -66,6 +66,13 @@ run-enclave: killall build-docker
     just start-socats
 
 [group('tee')]
+run-enclave-only:
+    nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 > enclave.log 
+    sleep 1
+    ./send_conf.sh
+    just start-socats
+
+[group('tee')]
 start-socats: sync-allowed-vsock
     pkill socat || true
     socat VSOCK-LISTEN:4444,fork,keepalive TCP:alchemy.com:443,keepalive > alchemy.log 2>&1 &
