@@ -71,7 +71,7 @@ OUT_FILE=/tmp/config.json
 
 echo "Listening and writing to $OUT_FILE..."
 
-socat VSOCK-LISTEN:${PORT},fork,reuseaddr OPEN:${OUT_FILE},creat,append
+socat VSOCK-LISTEN:${PORT},fork,reuseaddr OPEN:${OUT_FILE},creat,append &
 
 echo "Config written to $OUT_FILE:"
 sleep 5
