@@ -73,10 +73,10 @@ echo "Listening and writing to $OUT_FILE..."
 
 socat VSOCK-LISTEN:${PORT},fork,reuseaddr OPEN:${OUT_FILE},creat,append &
 
-echo "Config written to $OUT_FILE:"
-sleep 5
+sleep 3
 echo "Contents of $OUT_FILE:"
 cat $OUT_FILE
+sleep 3
 
 
 
