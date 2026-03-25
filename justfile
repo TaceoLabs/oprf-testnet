@@ -109,3 +109,11 @@ debug-tee:
     fi
     echo "$enclave_id"
     nitro-cli console --enclave-id "$enclave_id"
+
+print-pcr4:
+    #!/usr/bin/env bash
+    EC2_INSTANCE_ID=$(ec2-metadata -i |  awk '{print $2}')
+    python3 -c"import hashlib, sys; \
+    h=hashlib.sha384(); h.update(b'\0'*48); \
+    h.update(\"$INSTANCE_ID\".encode('utf-8')); \
+    print(h.hexdigest())"

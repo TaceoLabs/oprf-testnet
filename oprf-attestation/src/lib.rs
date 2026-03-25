@@ -12,6 +12,7 @@ use std::collections::BTreeMap;
 pub struct AttestationValues {
     pub nonce: usize,
     pub pcrs: BTreeMap<usize, String>,
+    pub pcr4s: Vec<String>,
     pub public_key: Vec<u8>,
     pub user_data: Vec<u8>,
 }
@@ -98,74 +99,33 @@ pub fn handle_attestation_doc(doc: Bytes, expected_values: &AttestationValues) -
 
     tracing::info!("Verifying pcrs..");
 
-    // println!("PCR values in attestation document: {:?}", attest_doc.pcrs);
-    // println!("Expected PCR values: {:?}", expected_values.pcrs);
+    for i in 0..3 {
+        let expected = expected_values.pcrs[&i].clone();
+        let actual_value = attest_doc
+            .pcrs
+            .get(&i)
+            .map(|buf| hex::encode(&buf[..]))
+            .unwrap_or_else(|| "missing".to_string());
+        eyre::ensure!(
+            actual_value == *expected,
+            "PCR {i} value does not match expected value"
+        );
+        println!("PCR {i} value matches expected value: {actual_value}");
+    }
 
-    expected_values
-        .pcrs
-        .iter()
-        .for_each(|(index, expected_value)| {
-            let actual_value = attest_doc
-                .pcrs
-                .get(index)
-                .map(|buf| hex::encode(&buf[..]))
-                .unwrap_or_else(|| "missing".to_string());
-            println!("PCR {index} value:          {actual_value}");
-            println!("PCR {index} expected value: {expected_value}");
-        });
+    // for (index, expected_value) in &expected_values.pcrs {
+    //     let actual_value = attest_doc
+    //         .pcrs
+    //         .get(index)
+    //         .map(|buf| hex::encode(&buf[..]))
+    //         .unwrap_or_else(|| "missing".to_string());
+    //     eyre::ensure!(
+    //         actual_value == *expected_value,
+    //         "PCR {index} value does not match expected value"
+    //     );
+    // }
 
-    // let encoded_measurements = attest_doc
-    //     .pcrs
-    //     .iter()
-    //     .map(|(&index, buf)| (index, hex::encode(&buf[..])))
-    //     .collect::<BTreeMap<_, _>>();
-    //
-    // let pcr4 = expected_values
-    //     .pcrs
-    //     .get(&4)
-    //     .unwrap_or(&"missing".to_string())
-    //     .to_string();
-    // eyre::ensure!(
-    //     encoded_measurements
-    //         .get(&4)
-    //         .map(|v| *v == pcr4)
-    //         .unwrap_or(false),
-    //     "PCR 4 value does not match expected value"
-    // );
-    // println!(
-    //     "PCR 4 value:          {}",
-    //     encoded_measurements
-    //         .get(&4)
-    //         .unwrap_or(&"missing".to_string())
-    // );
-    // println!("PCR 4 expected value: {pcr4}");
-    //
-    // let pcr3 = expected_values
-    //     .pcrs
-    //     .get(&3)
-    //     .unwrap_or(&"missing".to_string())
-    //     .to_string();
-    // eyre::ensure!(
-    //     encoded_measurements
-    //         .get(&3)
-    //         .map(|v| *v == pcr3)
-    //         .unwrap_or(false),
-    //     "PCR 3 value does not match expected value"
-    // );
-    // println!(
-    //     "PCR 3 value:          {}",
-    //     encoded_measurements
-    //         .get(&3)
-    //         .unwrap_or(&"missing".to_string())
-    // );
-    // println!(
-    //     "PCR 8 value:          {}",
-    //     encoded_measurements
-    //         .get(&8)
-    //         .unwrap_or(&"missing".to_string())
-    // );
-
-    println!("Attestation document {:?}", attest_doc.module_id);
+    println!("Attestation document {:?}", attest_doc.pcrs);
 
     // Ok(doc)
     Ok(())
