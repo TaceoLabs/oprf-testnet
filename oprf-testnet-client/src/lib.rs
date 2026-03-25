@@ -41,13 +41,13 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
     let client = reqwest::Client::new();
 
     let mut pcrs = BTreeMap::new();
-    pcrs.insert(0, "dummy pcr value".to_string());
-    pcrs.insert(0, "dummy pcr value".to_string());
-    pcrs.insert(0, "dummy pcr value".to_string());
+    pcrs.insert(0, "11a3f2b956c6a7c8eb230a4eec926d24bce8f89d02949c8ad99f5dad20fcc72844bd04c72bc76eda4113ba6830581f3e".to_string());
+    pcrs.insert(1, "4b4d5b3661b3efc12920900c80e126e4ce783c522de6c02a2a5bf7af3a2b9327b86776f188e4be1c1c404a129dbda493".to_string());
+    pcrs.insert(2, "47dcdea433fa96940054289f48249611c7c2477ac293b0f663f8bcc1648504030f400003a5e24ecc865dc726735b6a31".to_string());
 
     let attest_values = oprf_attestation::AttestationValues {
         nonce: 44,
-        pcrs: Default::default(),
+        pcrs: pcrs,
         public_key: vec![],
         user_data: vec![],
     };
