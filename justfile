@@ -77,7 +77,7 @@ killall:
     nitro-cli terminate-enclave --all
 
 [group('tee')]
-debug:
+debug-tee:
     #!/usr/bin/env bash
     set -euo pipefail
 
