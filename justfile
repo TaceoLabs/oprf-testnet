@@ -116,5 +116,5 @@ print-pcr4:
     echo "EC2_INSTANCE_ID: $EC2_INSTANCE_ID"
     python3 -c"import hashlib, sys; \
     h=hashlib.sha384(); h.update(b'\0'*48); \
-    h.update(\"$INSTANCE_ID\".encode('utf-8')); \
+    h.update(\"$EC2_INSTANCE_ID\".encode('utf-8')); \
     print(h.hexdigest())"
