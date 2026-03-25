@@ -65,7 +65,18 @@ socat TCP-LISTEN:80,bind=127.0.0.4,fork,reuseaddr,keepalive VSOCK-CONNECT:3:4445
 # echo "Forward 443 port"
 # # forward rpc requests from the enclave to outside
 # socat TCP-LISTEN:443,bind=0.0.0.0,fork,reuseaddr,keepalive VSOCK-CONNECT:21:443,keepalive &
+#
+PORT=5005
+OUT_FILE=/tmp/config.json
 
+echo "Listening and writing to $OUT_FILE..."
+
+socat VSOCK-LISTEN:${PORT},fork,reuseaddr OPEN:${OUT_FILE},creat,append
+
+echo "Config written to $OUT_FILE:"
+sleep 5
+echo "Contents of $OUT_FILE:"
+cat $OUT_FILE
 
 
 
