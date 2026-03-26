@@ -12,14 +12,17 @@ publish.workspace = true
 [dependencies]
 axum = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
+config.workspace = true
 eyre.workspace = true
 humantime = { workspace = true }
+humantime-serde = { workspace = true }
 nodes-common = { workspace = true }
 nodes-observability = { workspace = true }
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
 rustls = { workspace = true }
 secrecy = { workspace = true, features = ["serde"] }
-taceo-oprf = { workspace = true, features = ["service", "types", "core"] }
+serde = { workspace = true, features = ["derive"] }
+taceo-oprf = { workspace = true, features = ["core", "service", "types"] }
 tokio = { workspace = true, features = [
   "net",
   "rt-multi-thread",

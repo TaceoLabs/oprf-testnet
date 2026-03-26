@@ -24,11 +24,13 @@ axum = "0.8"
 axum-test = "18"
 bn254_blackbox_solver = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
 clap = "4"
+config = "0.15.19"
 eddsa-babyjubjub = { package = "taceo-eddsa-babyjubjub", version = "^0.5.4" }
 eyre = { version = "0.6" }
 humantime = "2"
+humantime-serde = "1"
 nargo = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
-nodes-common = { package = "taceo-nodes-common", version = "0.2" }
+nodes-common = { package = "taceo-nodes-common", version = "0.4.3" }
 nodes-observability = { package = "taceo-nodes-observability", version = "0.1" }
 noir_artifact_cli = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
 noirc_artifacts = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
@@ -38,9 +40,9 @@ rand_chacha = { version = "0.3" }
 reqwest = { version = "0.12", default-features = false }
 rustls = "0.23"
 secrecy = "0.10"
-serde = { version = "1" }
+serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
-taceo-oprf = { version = "0.7", default-features = false }
+taceo-oprf = { version = "0.10", default-features = false }
 tempfile = "3"
 thiserror = { version = "2" }
 tokio = { version = "1" }

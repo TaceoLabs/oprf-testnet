@@ -117,7 +117,7 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
         &nodes,
         threshold,
         query,
-        blinding_factor.clone(),
+        blinding_factor,
         domain_separator,
         auth,
         connector,

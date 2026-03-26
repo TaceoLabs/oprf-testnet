@@ -7,10 +7,10 @@ use reqwest::StatusCode;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use taceo_oprf::{
-    service::config::Environment,
+    service::Environment,
     types::{
         OprfKeyId,
-        api::{OprfRequest, OprfRequestAuthenticator},
+        api::{OprfRequest, OprfRequestAuthenticator, OprfRequestAuthenticatorError},
     },
 };
 
@@ -75,12 +75,11 @@ impl BasicTestNetRequestAuthenticator {
 #[async_trait]
 impl OprfRequestAuthenticator for BasicTestNetRequestAuthenticator {
     type RequestAuth = BasicTestNetRequestAuth;
-    type RequestAuthError = BasicTestNetRequestAuthError;
 
     async fn authenticate(
         &self,
         req: &OprfRequest<Self::RequestAuth>,
-    ) -> Result<OprfKeyId, Self::RequestAuthError> {
+    ) -> Result<OprfKeyId, OprfRequestAuthenticatorError> {
         tracing::debug!("Authenticating with only API");
 
         //call API

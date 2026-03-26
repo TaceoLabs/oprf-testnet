@@ -3,7 +3,10 @@ use eyre::Context;
 use reqwest::{Client, StatusCode};
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
-use taceo_oprf::service::config::Environment;
+use taceo_oprf::{
+    service::Environment,
+    types::{api::OprfRequestAuthenticatorError, close_frame_message},
+};
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -33,6 +36,32 @@ pub enum ApiVerificationError {
     ApiRateLimitExceeded,
     #[error(transparent)]
     InternalServerError(#[from] eyre::Report),
+}
+
+impl From<ApiVerificationError> for OprfRequestAuthenticatorError {
+    fn from(value: ApiVerificationError) -> Self {
+        match value {
+            ApiVerificationError::ApiVerificationFailed => {
+                OprfRequestAuthenticatorError::with_message(
+                    StatusCode::UNAUTHORIZED.as_u16(),
+                    close_frame_message!("API Key not valid"),
+                )
+            }
+            ApiVerificationError::ApiRateLimitExceeded => {
+                OprfRequestAuthenticatorError::with_message(
+                    StatusCode::TOO_MANY_REQUESTS.as_u16(),
+                    close_frame_message!("API Key rate limit exceeded"),
+                )
+            }
+            ApiVerificationError::InternalServerError(err) => {
+                tracing::error!("Internal server error: {err:?}");
+                OprfRequestAuthenticatorError::with_message(
+                    StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                    close_frame_message!("Internal Server Error"),
+                )
+            }
+        }
+    }
 }
 
 impl IntoResponse for ApiVerificationError {

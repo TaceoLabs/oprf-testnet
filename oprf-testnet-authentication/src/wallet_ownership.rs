@@ -10,10 +10,11 @@ use reqwest::StatusCode;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use taceo_oprf::{
-    service::config::Environment,
+    service::Environment,
     types::{
         OprfKeyId,
-        api::{OprfRequest, OprfRequestAuthenticator},
+        api::{OprfRequest, OprfRequestAuthenticator, OprfRequestAuthenticatorError},
+        close_frame_message,
     },
 };
 
@@ -45,6 +46,25 @@ pub enum TestNetRequestAuthError {
     /// Generic internal server error.
     #[error(transparent)]
     InternalServerError(#[from] eyre::Report),
+}
+
+impl From<TestNetRequestAuthError> for OprfRequestAuthenticatorError {
+    fn from(value: TestNetRequestAuthError) -> Self {
+        match value {
+            TestNetRequestAuthError::ProofInvalid => OprfRequestAuthenticatorError::with_message(
+                StatusCode::BAD_REQUEST.as_u16(),
+                close_frame_message!("Proof is invalid"),
+            ),
+            TestNetRequestAuthError::ApiVerificationError(err) => err.into(),
+            TestNetRequestAuthError::InternalServerError(err) => {
+                tracing::error!("Internal server error: {err:?}");
+                OprfRequestAuthenticatorError::with_message(
+                    StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                    close_frame_message!("Internal Server Error"),
+                )
+            }
+        }
+    }
 }
 
 impl IntoResponse for TestNetRequestAuthError {
@@ -89,12 +109,11 @@ impl WalletOwnershipTestNetRequestAuthenticator {
 #[async_trait]
 impl OprfRequestAuthenticator for WalletOwnershipTestNetRequestAuthenticator {
     type RequestAuth = TestNetRequestAuth;
-    type RequestAuthError = TestNetRequestAuthError;
 
     async fn authenticate(
         &self,
         req: &OprfRequest<Self::RequestAuth>,
-    ) -> Result<OprfKeyId, Self::RequestAuthError> {
+    ) -> Result<OprfKeyId, OprfRequestAuthenticatorError> {
         tracing::debug!("Authenticating with API Key and Proof");
         //call API
         let api_valid = tokio::task::spawn({
@@ -106,7 +125,10 @@ impl OprfRequestAuthenticator for WalletOwnershipTestNetRequestAuthenticator {
         });
 
         zk::verify_proof(&req.auth.public_inputs, &req.auth.proof, &self.vk_path)?;
-        api_valid.await.context("awaiting api verification")??;
+        api_valid
+            .await
+            .context("awaiting api verification")
+            .map_err(TestNetRequestAuthError::InternalServerError)??;
         tracing::debug!("Authentication successful");
         Ok(AuthModule::WalletOwnership.oprf_key_id())
     }
@@ -184,8 +206,8 @@ pub mod zk {
                 y = \"{:?}\"",
                 signature,
                 beta.beta(),
-                verifiable_oprf_output.dlog_proof.e,
-                verifiable_oprf_output.dlog_proof.s,
+                verifiable_oprf_output.dlog_proof.e(),
+                verifiable_oprf_output.dlog_proof.s(),
                 msg_hash.to_vec(),
                 pubkey_x,
                 pubkey_y,

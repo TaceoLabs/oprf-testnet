@@ -23,7 +23,7 @@ pub async fn start(
     shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
 ) -> eyre::Result<()> {
     tracing::info!("starting oprf-testnet-node with config: {config:#?}");
-    let service_config = config.service_config;
+    let service_config = config.node_config.clone();
     let (cancellation_token, is_graceful_shutdown) =
         nodes_common::spawn_shutdown_task(shutdown_signal);
 
