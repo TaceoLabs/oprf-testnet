@@ -49,10 +49,9 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
         nonce: 44,
         pcrs: pcrs,
         pcr4s: vec![
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string(),
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string(),
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string(),
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string(),
+            "e859393d98ca07c7cc9f4d2076f00a0325251caa2d994772335f0996b3949e04defbac8f9c64c99ac0d9ef23a9bb1f11".to_string(),
+            "e4bee1e2be4920074b20ec72cdfc14109478be108fa8b0d00b4a73f153012e72faf98720f5322f3fa2e7893970e99879".to_string(),
+            "06a8110b525c5c7a049427a6eeeb45768e72ac42e47c0aaf4ce7657935c43f66020303e5b5b624ac775ca53ca4e03c74".to_string(),
         ],
         public_key: vec![],
         user_data: vec![],
