@@ -110,8 +110,26 @@ pub fn handle_attestation_doc(doc: Bytes, expected_values: &AttestationValues) -
             actual_value == *expected,
             "PCR {i} value does not match expected value"
         );
-        println!("PCR {i} value matches expected value: {actual_value}");
     }
+
+    //Check if PCR 4 values is in allowed pcr4 list
+    eyre::ensure!(
+        expected_values.pcr4s.iter().any(|expected_value| {
+            let expected_value_hex = expected_value.to_lowercase();
+            let actual_value_hex = hex::encode(
+                &attest_doc
+                    .pcrs
+                    .get(&4)
+                    .map(|buf| &buf[..])
+                    .unwrap_or_else(|| b"missing"),
+            );
+            if actual_value_hex == expected_value_hex {
+                return true;
+            }
+            false
+        }),
+        "PCR 4 value does not match any expected value"
+    );
 
     // for (index, expected_value) in &expected_values.pcrs {
     //     let actual_value = attest_doc
@@ -125,8 +143,9 @@ pub fn handle_attestation_doc(doc: Bytes, expected_values: &AttestationValues) -
     //     );
     // }
 
-    println!("Attestation document {:?}", attest_doc.pcrs);
+    // println!("Attestation document {:?}", attest_doc.pcrs);
 
     // Ok(doc)
+    tracing::info!("Attestation document validated successfully");
     Ok(())
 }
