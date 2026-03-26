@@ -39,8 +39,7 @@ pub struct TestNetNodeConfig {
 
 /// Loads the OPRF testnet node configuration from environment variables.
 pub fn load_oprf_testnet_config() -> eyre::Result<TestNetNodeConfig> {
-    let cfg =
-        Config::builder().add_source(Environment::with_prefix("TACEO_OPRF_NODE").separator("__"));
+    let cfg = Config::builder().add_source(Environment::with_prefix("OPRF_NODE").separator("__"));
 
     cfg.build()
         .context("while building from config")?
