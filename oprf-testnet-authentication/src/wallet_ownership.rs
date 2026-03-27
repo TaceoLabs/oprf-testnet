@@ -4,9 +4,7 @@
 use std::path::PathBuf;
 
 use async_trait::async_trait;
-use axum::response::{self, IntoResponse};
 use eyre::Context;
-use reqwest::StatusCode;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use taceo_oprf::{
@@ -14,7 +12,6 @@ use taceo_oprf::{
     types::{
         OprfKeyId,
         api::{OprfRequest, OprfRequestAuthenticator, OprfRequestAuthenticatorError},
-        close_frame_message,
     },
 };
 
@@ -48,36 +45,67 @@ pub enum TestNetRequestAuthError {
     InternalServerError(#[from] eyre::Report),
 }
 
-impl From<TestNetRequestAuthError> for OprfRequestAuthenticatorError {
-    fn from(value: TestNetRequestAuthError) -> Self {
+/// Numeric close-frame error codes sent to the client when [`TestNetRequestAuthError`] occurs.
+pub mod testnet_request_auth_error_codes {
+    /// Error code for [`super::TestNetRequestAuthError::ProofInvalid`]
+    pub const PROOF_INVALID: u16 = 4600;
+    /// Error code for [`super::TestNetRequestAuthError::ApiVerificationError`]
+    pub const API_VERIFICATION_ERROR: u16 = 4601;
+    /// Error code for [`super::TestNetRequestAuthError::InternalServerError`]
+    pub const INTERNAL: u16 = 1011;
+}
+
+impl From<&TestNetRequestAuthError> for u16 {
+    fn from(value: &TestNetRequestAuthError) -> Self {
         match value {
-            TestNetRequestAuthError::ProofInvalid => OprfRequestAuthenticatorError::with_message(
-                StatusCode::BAD_REQUEST.as_u16(),
-                close_frame_message!("Proof is invalid"),
-            ),
-            TestNetRequestAuthError::ApiVerificationError(err) => err.into(),
-            TestNetRequestAuthError::InternalServerError(err) => {
-                tracing::error!("Internal server error: {err:?}");
-                OprfRequestAuthenticatorError::with_message(
-                    StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                    close_frame_message!("Internal Server Error"),
-                )
+            TestNetRequestAuthError::ProofInvalid => {
+                testnet_request_auth_error_codes::PROOF_INVALID
+            }
+            TestNetRequestAuthError::ApiVerificationError(_) => {
+                testnet_request_auth_error_codes::API_VERIFICATION_ERROR
+            }
+            TestNetRequestAuthError::InternalServerError(_) => {
+                testnet_request_auth_error_codes::INTERNAL
             }
         }
     }
 }
 
-impl IntoResponse for TestNetRequestAuthError {
-    fn into_response(self) -> response::Response {
-        tracing::debug!("{self:?}");
-        match self {
-            Self::ProofInvalid => (StatusCode::BAD_REQUEST, "Proof is invalid").into_response(),
-            Self::InternalServerError(err) => {
-                tracing::error!("Internal server error: {err:?}");
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
+impl From<u16> for TestNetRequestAuthError {
+    fn from(value: u16) -> Self {
+        match value {
+            testnet_request_auth_error_codes::PROOF_INVALID => {
+                TestNetRequestAuthError::ProofInvalid
             }
-            Self::ApiVerificationError(err) => err.into_response(),
+            testnet_request_auth_error_codes::API_VERIFICATION_ERROR => {
+                TestNetRequestAuthError::ApiVerificationError(
+                    ApiVerificationError::ApiVerificationFailed,
+                )
+            }
+            testnet_request_auth_error_codes::INTERNAL => {
+                TestNetRequestAuthError::InternalServerError(eyre::eyre!("Internal Server Error"))
+            }
+            _ => TestNetRequestAuthError::InternalServerError(eyre::eyre!(
+                "Unknown authentication error code: {value}"
+            )),
         }
+    }
+}
+
+impl From<TestNetRequestAuthError> for OprfRequestAuthenticatorError {
+    fn from(value: TestNetRequestAuthError) -> Self {
+        let code = u16::from(&value);
+        let msg = match value {
+            TestNetRequestAuthError::ProofInvalid => {
+                taceo_oprf::types::close_frame_message!("Proof is invalid")
+            }
+            TestNetRequestAuthError::ApiVerificationError(err) => err.into(),
+            TestNetRequestAuthError::InternalServerError(err) => {
+                tracing::error!("Internal server error: {err:?}");
+                taceo_oprf::types::close_frame_message!("Internal Server Error")
+            }
+        };
+        Self::with_message(code, msg)
     }
 }
 

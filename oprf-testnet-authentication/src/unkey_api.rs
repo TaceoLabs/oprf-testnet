@@ -1,11 +1,13 @@
-use axum::{response, response::IntoResponse};
 use eyre::Context;
-use reqwest::{Client, StatusCode};
+use reqwest::Client;
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use taceo_oprf::{
     service::Environment,
-    types::{api::OprfRequestAuthenticatorError, close_frame_message},
+    types::{
+        api::{CloseFrameMessage, OprfRequestAuthenticatorError},
+        close_frame_message,
+    },
 };
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -38,47 +40,58 @@ pub enum ApiVerificationError {
     InternalServerError(#[from] eyre::Report),
 }
 
-impl From<ApiVerificationError> for OprfRequestAuthenticatorError {
+pub mod api_error_codes {
+    pub const API_VERIFICATION_FAILED: u16 = 4500;
+    pub const API_RATE_LIMIT_EXCEEDED: u16 = 4501;
+    pub const INTERNAL: u16 = 1011;
+}
+
+impl From<u16> for ApiVerificationError {
+    fn from(value: u16) -> Self {
+        match value {
+            api_error_codes::API_VERIFICATION_FAILED => ApiVerificationError::ApiVerificationFailed,
+            api_error_codes::API_RATE_LIMIT_EXCEEDED => ApiVerificationError::ApiRateLimitExceeded,
+            api_error_codes::INTERNAL => {
+                ApiVerificationError::InternalServerError(eyre::eyre!("Internal Server Error"))
+            }
+            _ => ApiVerificationError::InternalServerError(eyre::eyre!(
+                "Unknown API verification error code: {value}"
+            )),
+        }
+    }
+}
+
+impl From<&ApiVerificationError> for u16 {
+    fn from(value: &ApiVerificationError) -> Self {
+        match value {
+            ApiVerificationError::ApiVerificationFailed => api_error_codes::API_VERIFICATION_FAILED,
+            ApiVerificationError::ApiRateLimitExceeded => api_error_codes::API_RATE_LIMIT_EXCEEDED,
+            ApiVerificationError::InternalServerError(_) => api_error_codes::INTERNAL,
+        }
+    }
+}
+
+impl From<ApiVerificationError> for CloseFrameMessage {
     fn from(value: ApiVerificationError) -> Self {
         match value {
             ApiVerificationError::ApiVerificationFailed => {
-                OprfRequestAuthenticatorError::with_message(
-                    StatusCode::UNAUTHORIZED.as_u16(),
-                    close_frame_message!("API Key not valid"),
-                )
+                close_frame_message!("API Key not valid")
             }
             ApiVerificationError::ApiRateLimitExceeded => {
-                OprfRequestAuthenticatorError::with_message(
-                    StatusCode::TOO_MANY_REQUESTS.as_u16(),
-                    close_frame_message!("API Key rate limit exceeded"),
-                )
+                close_frame_message!("API Key rate limit exceeded")
             }
             ApiVerificationError::InternalServerError(err) => {
                 tracing::error!("Internal server error: {err:?}");
-                OprfRequestAuthenticatorError::with_message(
-                    StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                    close_frame_message!("Internal Server Error"),
-                )
+                close_frame_message!("Internal Server Error")
             }
         }
     }
 }
 
-impl IntoResponse for ApiVerificationError {
-    fn into_response(self) -> response::Response {
-        tracing::debug!("{self:?}");
-        match self {
-            Self::ApiVerificationFailed => {
-                (StatusCode::UNAUTHORIZED, "API Key not valid").into_response()
-            }
-            Self::ApiRateLimitExceeded => {
-                (StatusCode::TOO_MANY_REQUESTS, "API Key rate limit exceeded").into_response()
-            }
-            Self::InternalServerError(err) => {
-                tracing::error!("Internal server error: {err:?}");
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
-            }
-        }
+impl From<ApiVerificationError> for OprfRequestAuthenticatorError {
+    fn from(value: ApiVerificationError) -> Self {
+        let code = u16::from(&value);
+        Self::with_message(code, value.into())
     }
 }
 

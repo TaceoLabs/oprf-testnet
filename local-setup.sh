@@ -67,16 +67,17 @@ start_node() {
     local db_port=$((5440 + i))
     local db_conn="postgres://postgres:postgres@localhost:$db_port/postgres"
     RUST_LOG="taceo_oprf_service=trace,taceo_oprf_testnet_node=trace,taceo_oprf_testnet_authentication=trace,warn" \
+      OPRF_NODE__BIND_ADDR="127.0.0.1:$port" \
+      OPRF_NODE__SERVICE__ENVIRONMENT="dev" \
+      OPRF_NODE__SERVICE__VERSION_REQ=">=0.0.0" \
+      OPRF_NODE__SERVICE__CHAIN_WS_RPC_URL="ws://127.0.0.1:8545" \
+      OPRF_NODE__SERVICE__WS_MAX_MESSAGE_SIZE=51200 \
+      OPRF_NODE__SERVICE__OPRF_KEY_REGISTRY_CONTRACT="$oprf_key_registry" \
+      OPRF_NODE__POSTGRES__CONNECTION_STRING="$db_conn" \
+      OPRF_NODE__POSTGRES__SCHEMA="oprf" \
+      OPRF_NODE__UNKEY_VERIFY_KEY="test" \
+      OPRF_NODE__VK_PATH="./oprf-testnet-authentication/blinded_query_proof.vk" \
     ./target/release/taceo-oprf-testnet-node \
-        --bind-addr 127.0.0.1:$port \
-        --environment dev \
-        --version-req ">=0.0.0" \
-        --oprf-key-registry-contract $oprf_key_registry \
-        --db-connection-string $db_conn \
-        --db-schema oprf \
-        --unkey-verify-key "test" \
-        --ws-max-message-size 51200 \
-        --vk-path ./oprf-testnet-authentication/blinded_query_proof.vk \
         > logs/node$i.log 2>&1 &
     pid=$!
     echo "started taceo-oprf-testnet-node $i with PID $pid"

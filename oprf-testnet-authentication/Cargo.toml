@@ -12,7 +12,6 @@ publish.workspace = true
 [dependencies]
 alloy.workspace = true
 async-trait.workspace = true
-axum = { workspace = true, features = ["ws"] }
 bn254_blackbox_solver.workspace = true
 eyre.workspace = true
 nargo.workspace = true
@@ -25,7 +24,12 @@ reqwest = { workspace = true, features = [
 secrecy = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
-taceo-oprf = { workspace = true, features = ["types", "client", "service", "core"] }
+taceo-oprf = { workspace = true, features = [
+  "client",
+  "core",
+  "service",
+  "types"
+] }
 tempfile.workspace = true
 thiserror.workspace = true
 tokio.workspace = true

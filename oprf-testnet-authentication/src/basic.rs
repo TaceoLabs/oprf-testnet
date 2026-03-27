@@ -2,8 +2,6 @@
 //!
 //! It is intended as a very basic example of how to implement a request authenticator.
 use async_trait::async_trait;
-use axum::response::{self, IntoResponse};
-use reqwest::StatusCode;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use taceo_oprf::{
@@ -16,7 +14,7 @@ use taceo_oprf::{
 
 use crate::{
     AuthModule,
-    unkey_api::{self, ApiVerificationError},
+    unkey_api::{self},
 };
 
 /// The authentication information that is sent alongside the OPRF request in the basic module.
@@ -24,30 +22,6 @@ use crate::{
 pub struct BasicTestNetRequestAuth {
     /// The API key to verify against the unkey API.
     pub api_key: String,
-}
-
-/// The possible errors that can occur during authentication in the basic module.
-#[derive(Debug, thiserror::Error)]
-pub enum BasicTestNetRequestAuthError {
-    #[error(transparent)]
-    /// An error that occurs when verifying the API key with the unkey API.
-    ApiVerificationError(#[from] ApiVerificationError),
-    /// Generic internal server error.
-    #[error(transparent)]
-    InternalServerError(#[from] eyre::Report),
-}
-
-impl IntoResponse for BasicTestNetRequestAuthError {
-    fn into_response(self) -> response::Response {
-        tracing::debug!("{self:?}");
-        match self {
-            Self::InternalServerError(err) => {
-                tracing::error!("Internal server error: {err:?}");
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
-            }
-            Self::ApiVerificationError(err) => err.into_response(),
-        }
-    }
 }
 
 /// The server side implementation of the basic authentication module.

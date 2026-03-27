@@ -7946,7 +7946,6 @@ version = "0.1.0"
 dependencies = [
  "alloy",
  "async-trait",
- "axum",
  "bn254_blackbox_solver",
  "elliptic-curve 0.14.0-rc.17",
  "eyre",
@@ -7976,7 +7975,6 @@ dependencies = [
  "clap",
  "eyre",
  "rand 0.8.5",
- "rand_chacha 0.3.1",
  "rustls 0.23.36",
  "secrecy",
  "taceo-ark-babyjubjub",
@@ -7995,7 +7993,6 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "axum-test",
- "clap",
  "config",
  "eyre",
  "humantime",
