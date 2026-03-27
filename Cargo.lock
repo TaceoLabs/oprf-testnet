@@ -3656,6 +3656,36 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0cc23270f6e1808e30a928bdc84dea0b9b4136a8bc82338574f23baf47bbd280"
 
 [[package]]
+name = "gloo-net"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c06f627b1a58ca3d42b45d6104bf1e1a03799df472df00988b6ba21accc10580"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "futures-sink",
+ "gloo-utils",
+ "http 1.4.0",
+ "js-sys",
+ "pin-project",
+ "thiserror 1.0.69",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "gloo-utils"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b5555354113b18c547c1d3a98fbf7fb32a9ff4f6fa112ce823a21641a0ba3aa"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "group"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3925,6 +3955,16 @@ name = "humantime"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "135b12329e5e3ce057a9f972339ea52bc954fe1e9358ef27f95e89716fbc5424"
+
+[[package]]
+name = "humantime-serde"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57a3db5ea5923d99402c94e9feb261dc5ee9b4efa158b0315f788cf549cc200c"
+dependencies = [
+ "humantime",
+ "serde",
+]
 
 [[package]]
 name = "hybrid-array"
@@ -7579,6 +7619,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "taceo-nodes-common"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9faae853c9877475a4b50731ed80fe5325227d26acca1ad82092dac592400b4b"
+dependencies = [
+ "axum",
+ "backon",
+ "git-version",
+ "humantime-serde",
+ "secrecy",
+ "serde",
+ "sqlx",
+ "tokio",
+ "tokio-util",
+ "tower-http",
+ "tracing",
+]
+
+[[package]]
 name = "taceo-nodes-observability"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7598,9 +7657,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf"
-version = "0.7.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "412211d4d43aeb060c369a69213bd7ae941f769cc4361df83195d2a7936f22d5"
+checksum = "70f2d8a89181967875c3e130dca3d5e906e720b30568b82c68653c3048b1bb02"
 dependencies = [
  "taceo-oprf-client",
  "taceo-oprf-core",
@@ -7610,13 +7669,15 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf-client"
-version = "0.8.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42bbcb77821be63e228fa7ad408f03b212f91011c4ac5d4122d5a22126bcfc57"
+checksum = "b1624edfd12063146c6f3614c659cb178a8ae82bfac72b751a72133136000866"
 dependencies = [
  "ark-ec",
  "ciborium",
  "futures",
+ "getrandom 0.2.17",
+ "gloo-net",
  "http 1.4.0",
  "serde",
  "taceo-ark-babyjubjub",
@@ -7632,9 +7693,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf-core"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8105a6fa70adb6872ea2eef5ad21bfc5c943d90dc43332347ec021cd44987cb"
+checksum = "e55cbbe8357f837939f9cec171f44a217db4d897bea679521d555a24296ee39b"
 dependencies = [
  "ark-ec",
  "ark-ff 0.5.0",
@@ -7654,9 +7715,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf-service"
-version = "0.9.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3a4f153d2955fda29f9c7af949a4196567aa532156a5a68fa5fd4169661686a"
+checksum = "deb5eb26b47785abd7947e9566362fb40baa86b77d12aada979940f0e977e52c"
 dependencies = [
  "alloy",
  "ark-serialize 0.5.0",
@@ -7667,11 +7728,11 @@ dependencies = [
  "axum-extra",
  "backon",
  "ciborium",
- "clap",
  "eyre",
  "futures",
  "http 1.4.0",
  "humantime",
+ "humantime-serde",
  "metrics",
  "parking_lot",
  "rand 0.8.5",
@@ -7681,7 +7742,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "taceo-ark-babyjubjub",
- "taceo-nodes-common",
+ "taceo-nodes-common 0.4.3",
  "taceo-oprf-core",
  "taceo-oprf-types",
  "thiserror 2.0.18",
@@ -7755,7 +7816,7 @@ dependencies = [
  "rustls 0.23.37",
  "secrecy",
  "taceo-eddsa-babyjubjub",
- "taceo-nodes-common",
+ "taceo-nodes-common 0.2.1",
  "taceo-nodes-observability",
  "taceo-oprf",
  "taceo-oprf-testnet-authentication",
@@ -7767,9 +7828,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf-types"
-version = "0.9.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d348f78bcfbf8d626472da265d1c75499669ce7597cbe63b8c66def003f1b92"
+checksum = "b92ebe8693dfb75f2f1e7861785792747495f8f2be058ff07698f16046cb5fad"
 dependencies = [
  "alloy",
  "ark-ff 0.5.0",
@@ -7841,7 +7902,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0136791f7c95b1f6dd99f9cc786b91bb81c3800b639b3478e561ddb7be95e5f1"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.1",
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
