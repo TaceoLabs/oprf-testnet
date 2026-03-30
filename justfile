@@ -53,21 +53,21 @@ build-docker:
 
 [group('tee')]
 run-enclave-debug: killall build-docker
-    nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 --debug-mode
+    nitro-cli run-enclave --eif-path node.eif --cpu-count 1 --memory 1024 --debug-mode
     sleep 1
     ./send_conf.sh
     just start-socats
 
 [group('tee')]
 run-enclave: killall build-docker
-    nitro-cli run-enclave --eif-path node.eif --cpu-count 2 --memory 1024 > enclave.log 
+    nitro-cli run-enclave --eif-path node.eif --cpu-count 1 --memory 1024 > enclave.log 
     sleep 1
     ./send_conf.sh
     just start-socats
 
 [group('tee')]
 run-enclave-only:
-    nitro-cli run-enclave --eif-path ../node.eif --cpu-count 2 --memory 1024 > enclave.log 
+    nitro-cli run-enclave --eif-path ../node.eif --cpu-count 1 --memory 1024 > enclave.log 
     sleep 1
     ./send_conf.sh
     just start-socats
