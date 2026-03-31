@@ -3319,7 +3319,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4184,7 +4184,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.5.10",
+ "socket2 0.6.2",
  "tokio",
  "tower-service",
  "tracing",
@@ -4464,7 +4464,7 @@ checksum = "3640c1c38b8e4e43584d8df18be5fc6b0aa314ce6ebf51b53313d4306cca8e46"
 dependencies = [
  "hermit-abi",
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -6027,7 +6027,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash",
  "rustls 0.23.36",
- "socket2 0.5.10",
+ "socket2 0.6.2",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -6064,9 +6064,9 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.5.10",
+ "socket2 0.6.2",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -6641,7 +6641,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -7842,14 +7842,14 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70f2d8a89181967875c3e130dca3d5e906e720b30568b82c68653c3048b1bb02"
+checksum = "91e2b4f0c8650d5b66f01966d0bdabafcfb25cbd84b1bff46c9665368ba0a9d5"
 dependencies = [
  "taceo-oprf-client",
  "taceo-oprf-core",
  "taceo-oprf-service",
- "taceo-oprf-types",
+ "taceo-oprf-types 0.12.0",
 ]
 
 [[package]]
@@ -7867,7 +7867,7 @@ dependencies = [
  "serde",
  "taceo-ark-babyjubjub",
  "taceo-oprf-core",
- "taceo-oprf-types",
+ "taceo-oprf-types 0.11.0",
  "taceo-poseidon2",
  "thiserror 2.0.18",
  "tokio",
@@ -7900,15 +7900,13 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf-service"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "deb5eb26b47785abd7947e9566362fb40baa86b77d12aada979940f0e977e52c"
+checksum = "1ee77ba8397208d8815f385c50cda43f113d9e8248a9f9ec69f5c38f4737a949"
 dependencies = [
  "alloy",
  "ark-serialize 0.5.0",
  "async-trait",
- "aws-config",
- "aws-sdk-secretsmanager",
  "axum",
  "axum-extra",
  "backon",
@@ -7929,7 +7927,7 @@ dependencies = [
  "taceo-ark-babyjubjub",
  "taceo-nodes-common",
  "taceo-oprf-core",
- "taceo-oprf-types",
+ "taceo-oprf-types 0.12.0",
  "thiserror 2.0.18",
  "tokio",
  "tokio-util",
@@ -8033,6 +8031,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "taceo-oprf-types"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "694d80f5b74d32494f669049e48f18ff3fed6f4a88f12d8d5b7bbc15117fee18"
+dependencies = [
+ "alloy",
+ "ark-ff 0.5.0",
+ "ark-serialize 0.5.0",
+ "async-trait",
+ "eyre",
+ "http 1.4.0",
+ "serde",
+ "taceo-ark-babyjubjub",
+ "taceo-ark-serde-compat",
+ "taceo-circom-types",
+ "taceo-groth16-sol",
+ "taceo-oprf-core",
+ "uuid",
+]
+
+[[package]]
 name = "taceo-poseidon2"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8090,7 +8109,7 @@ dependencies = [
  "getrandom 0.4.1",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -9221,7 +9240,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

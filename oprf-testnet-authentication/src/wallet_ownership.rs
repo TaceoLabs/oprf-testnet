@@ -43,6 +43,9 @@ pub enum TestNetRequestAuthError {
     /// Generic internal server error.
     #[error(transparent)]
     InternalServerError(#[from] eyre::Report),
+    /// Unknown error code not mapped to a known variant.
+    #[error("unknown_error_{0}")]
+    Unknown(u16),
 }
 
 /// Numeric close-frame error codes sent to the client when [`TestNetRequestAuthError`] occurs.
@@ -61,12 +64,11 @@ impl From<&TestNetRequestAuthError> for u16 {
             TestNetRequestAuthError::ProofInvalid => {
                 testnet_request_auth_error_codes::PROOF_INVALID
             }
-            TestNetRequestAuthError::ApiVerificationError(_) => {
-                testnet_request_auth_error_codes::API_VERIFICATION_ERROR
-            }
+            TestNetRequestAuthError::ApiVerificationError(e) => e.into(),
             TestNetRequestAuthError::InternalServerError(_) => {
                 testnet_request_auth_error_codes::INTERNAL
             }
+            TestNetRequestAuthError::Unknown(other) => *other,
         }
     }
 }
@@ -99,10 +101,17 @@ impl From<TestNetRequestAuthError> for OprfRequestAuthenticatorError {
             TestNetRequestAuthError::ProofInvalid => {
                 taceo_oprf::types::close_frame_message!("Proof is invalid")
             }
-            TestNetRequestAuthError::ApiVerificationError(err) => err.into(),
+            TestNetRequestAuthError::ApiVerificationError(err) => {
+                tracing::error!("API verification error: {err:?}");
+                taceo_oprf::types::close_frame_message!("API verification failed")
+            }
             TestNetRequestAuthError::InternalServerError(err) => {
                 tracing::error!("Internal server error: {err:?}");
                 taceo_oprf::types::close_frame_message!("Internal Server Error")
+            }
+            TestNetRequestAuthError::Unknown(other) => {
+                tracing::error!("Unknown authentication error with code: {other}");
+                taceo_oprf::types::close_frame_message!("Unknown authentication error")
             }
         };
         Self::with_message(code, msg)

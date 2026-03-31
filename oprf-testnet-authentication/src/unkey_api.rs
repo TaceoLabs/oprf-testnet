@@ -2,13 +2,7 @@ use eyre::Context;
 use reqwest::Client;
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
-use taceo_oprf::{
-    service::Environment,
-    types::{
-        api::{CloseFrameMessage, OprfRequestAuthenticatorError},
-        close_frame_message,
-    },
-};
+use taceo_oprf::{service::Environment, types::api::OprfRequestAuthenticatorError};
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -38,6 +32,8 @@ pub enum ApiVerificationError {
     ApiRateLimitExceeded,
     #[error(transparent)]
     InternalServerError(#[from] eyre::Report),
+    #[error("unknown_error_{0}")]
+    Unknown(u16),
 }
 
 pub mod api_error_codes {
@@ -54,9 +50,7 @@ impl From<u16> for ApiVerificationError {
             api_error_codes::INTERNAL => {
                 ApiVerificationError::InternalServerError(eyre::eyre!("Internal Server Error"))
             }
-            _ => ApiVerificationError::InternalServerError(eyre::eyre!(
-                "Unknown API verification error code: {value}"
-            )),
+            other => Self::Unknown(other),
         }
     }
 }
@@ -67,23 +61,7 @@ impl From<&ApiVerificationError> for u16 {
             ApiVerificationError::ApiVerificationFailed => api_error_codes::API_VERIFICATION_FAILED,
             ApiVerificationError::ApiRateLimitExceeded => api_error_codes::API_RATE_LIMIT_EXCEEDED,
             ApiVerificationError::InternalServerError(_) => api_error_codes::INTERNAL,
-        }
-    }
-}
-
-impl From<ApiVerificationError> for CloseFrameMessage {
-    fn from(value: ApiVerificationError) -> Self {
-        match value {
-            ApiVerificationError::ApiVerificationFailed => {
-                close_frame_message!("API Key not valid")
-            }
-            ApiVerificationError::ApiRateLimitExceeded => {
-                close_frame_message!("API Key rate limit exceeded")
-            }
-            ApiVerificationError::InternalServerError(err) => {
-                tracing::error!("Internal server error: {err:?}");
-                close_frame_message!("Internal Server Error")
-            }
+            ApiVerificationError::Unknown(other) => *other,
         }
     }
 }
@@ -91,7 +69,23 @@ impl From<ApiVerificationError> for CloseFrameMessage {
 impl From<ApiVerificationError> for OprfRequestAuthenticatorError {
     fn from(value: ApiVerificationError) -> Self {
         let code = u16::from(&value);
-        Self::with_message(code, value.into())
+        let msg = match value {
+            ApiVerificationError::ApiVerificationFailed => {
+                taceo_oprf::types::close_frame_message!("API Key not valid")
+            }
+            ApiVerificationError::ApiRateLimitExceeded => {
+                taceo_oprf::types::close_frame_message!("API Key rate limit exceeded")
+            }
+            ApiVerificationError::InternalServerError(err) => {
+                tracing::error!("Internal server error: {err:?}");
+                taceo_oprf::types::close_frame_message!("Internal Server Error")
+            }
+            ApiVerificationError::Unknown(other) => {
+                tracing::error!("Unknown API verification error with code: {other}");
+                taceo_oprf::types::close_frame_message!("unknown")
+            }
+        };
+        Self::with_message(code, msg)
     }
 }
 

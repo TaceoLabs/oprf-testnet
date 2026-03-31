@@ -4,7 +4,7 @@ use std::{net::SocketAddr, path::PathBuf, time::Duration};
 
 use config::{Config, Environment};
 use eyre::Context;
-use nodes_common::postgres::PostgresConfig;
+use nodes_common::{postgres::PostgresConfig, web3};
 use secrecy::SecretString;
 use serde::Deserialize;
 use taceo_oprf::service::config::OprfNodeServiceConfig;
@@ -28,6 +28,10 @@ pub struct TestNetNodeConfig {
     /// The path to the wallet ownership verification key
     pub vk_path: PathBuf,
 
+    /// The blockchain RPC config
+    #[serde(rename = "rpc")]
+    pub rpc_provider_config: web3::RpcProviderConfig,
+
     /// The OPRF service config
     #[serde(rename = "service")]
     pub node_config: OprfNodeServiceConfig,
@@ -39,7 +43,13 @@ pub struct TestNetNodeConfig {
 
 /// Loads the OPRF testnet node configuration from environment variables.
 pub fn load_oprf_testnet_config() -> eyre::Result<TestNetNodeConfig> {
-    let cfg = Config::builder().add_source(Environment::with_prefix("OPRF_NODE").separator("__"));
+    let cfg = Config::builder().add_source(
+        Environment::with_prefix("OPRF_NODE")
+            .separator("__")
+            .list_separator(",")
+            .try_parsing(true)
+            .with_list_parse_key("rpc.http_urls"),
+    );
 
     cfg.build()
         .context("while building from config")?
