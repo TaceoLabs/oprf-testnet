@@ -153,23 +153,21 @@ fn make_server_errors_human_friendly(
 ) -> eyre::Result<VerifiableOprfOutput> {
     response.map_err(|e| match e {
         client::Error::ThresholdServiceError(service_error) => {
-                // authentication error
-                let message = service_error.msg.clone().unwrap_or("unknown message".to_owned());
-                if message.contains("API Key not valid") {
-                             eyre::eyre!(
-                                "The OPRF servers responded with an authentication error: {message}. Please check your API key and try again.")
-                } else if message.contains("API Key rate limit exceeded") {
-                             eyre::eyre!(
-                                "The used API key has been rate limited, please try again later or request a different API key."
-                            )
-                } else {
-                     eyre::eyre!(service_error)
-                }
+            tracing::warn!("{service_error:?}");
+            let message = service_error
+                .msg
+                .clone()
+                .unwrap_or("unknown message".to_owned());
+            if service_error.is_auth() {
+                eyre::eyre!("Authentication error from OPRF server: {message:?}")
+            } else {
+                eyre::eyre!(service_error)
+            }
         }
-        client::Error::Networking(errors) =>{
+        client::Error::Networking(errors) => {
             tracing::warn!("{errors:?}");
             eyre::eyre!("Networking errors - check your internet connection and try again")
-        },
+        }
         err => {
             tracing::warn!("{err:?}");
             eyre::eyre!(err)

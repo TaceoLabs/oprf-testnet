@@ -17,7 +17,7 @@ use taceo_oprf::{
 
 use crate::{
     AuthModule,
-    unkey_api::{self, ApiVerificationError},
+    unkey_api::{self},
 };
 
 /// The authentication information that is sent alongside the OPRF request in the `wallet_ownership` module.
@@ -37,9 +37,6 @@ pub enum TestNetRequestAuthError {
     /// The proof provided by the client is invalid.
     #[error("Proof invalid")]
     ProofInvalid,
-    /// An error occurred while verifying the API key with the unkey API.
-    #[error(transparent)]
-    ApiVerificationError(#[from] ApiVerificationError),
     /// Generic internal server error.
     #[error(transparent)]
     InternalServerError(#[from] eyre::Report),
@@ -52,8 +49,6 @@ pub enum TestNetRequestAuthError {
 pub mod testnet_request_auth_error_codes {
     /// Error code for [`super::TestNetRequestAuthError::ProofInvalid`]
     pub const PROOF_INVALID: u16 = 4600;
-    /// Error code for [`super::TestNetRequestAuthError::ApiVerificationError`]
-    pub const API_VERIFICATION_ERROR: u16 = 4601;
     /// Error code for [`super::TestNetRequestAuthError::InternalServerError`]
     pub const INTERNAL: u16 = 1011;
 }
@@ -64,7 +59,6 @@ impl From<&TestNetRequestAuthError> for u16 {
             TestNetRequestAuthError::ProofInvalid => {
                 testnet_request_auth_error_codes::PROOF_INVALID
             }
-            TestNetRequestAuthError::ApiVerificationError(e) => e.into(),
             TestNetRequestAuthError::InternalServerError(_) => {
                 testnet_request_auth_error_codes::INTERNAL
             }
@@ -78,11 +72,6 @@ impl From<u16> for TestNetRequestAuthError {
         match value {
             testnet_request_auth_error_codes::PROOF_INVALID => {
                 TestNetRequestAuthError::ProofInvalid
-            }
-            testnet_request_auth_error_codes::API_VERIFICATION_ERROR => {
-                TestNetRequestAuthError::ApiVerificationError(
-                    ApiVerificationError::ApiVerificationFailed,
-                )
             }
             testnet_request_auth_error_codes::INTERNAL => {
                 TestNetRequestAuthError::InternalServerError(eyre::eyre!("Internal Server Error"))
@@ -100,10 +89,6 @@ impl From<TestNetRequestAuthError> for OprfRequestAuthenticatorError {
         let msg = match value {
             TestNetRequestAuthError::ProofInvalid => {
                 taceo_oprf::types::close_frame_message!("Proof is invalid")
-            }
-            TestNetRequestAuthError::ApiVerificationError(err) => {
-                tracing::error!("API verification error: {err:?}");
-                taceo_oprf::types::close_frame_message!("API verification failed")
             }
             TestNetRequestAuthError::InternalServerError(err) => {
                 tracing::error!("Internal server error: {err:?}");
