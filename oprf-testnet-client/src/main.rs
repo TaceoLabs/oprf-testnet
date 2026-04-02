@@ -139,7 +139,7 @@ async fn main() -> eyre::Result<()> {
 
 fn check_bb_version() -> eyre::Result<()> {
     tracing::debug!("Checking if 'bb' version {BB_VERSION} is installed..");
-    let path_env = std::env!("PATH");
+    let path_env = std::env::var("PATH")?;
     let bb_output = std::process::Command::new("bb")
         .env_clear()
         .env("PATH", path_env)
