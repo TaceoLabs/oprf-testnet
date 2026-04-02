@@ -23,7 +23,7 @@ pub async fn start(
     shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
 ) -> eyre::Result<()> {
     tracing::info!("starting oprf-testnet-node with config: {config:#?}");
-    let service_config = config.service_config;
+    let service_config = config.node_config.clone();
     let (cancellation_token, is_graceful_shutdown) =
         nodes_common::spawn_shutdown_task(shutdown_signal);
 
@@ -42,9 +42,14 @@ pub async fn start(
         ));
 
     tracing::info!("init oprf service..");
+    let rpc_provider =
+        nodes_common::web3::RpcProviderBuilder::with_config(&config.rpc_provider_config)
+            .build()
+            .await?;
     let (oprf_service_router, key_event_watcher) = OprfServiceBuilder::init(
         service_config,
         secret_manager,
+        rpc_provider,
         StartedServices::default(),
         cancellation_token.clone(),
     )

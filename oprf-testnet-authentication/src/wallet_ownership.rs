@@ -4,22 +4,20 @@
 use std::path::PathBuf;
 
 use async_trait::async_trait;
-use axum::response::{self, IntoResponse};
 use eyre::Context;
-use reqwest::StatusCode;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use taceo_oprf::{
-    service::config::Environment,
+    service::Environment,
     types::{
         OprfKeyId,
-        api::{OprfRequest, OprfRequestAuthenticator},
+        api::{OprfRequest, OprfRequestAuthenticator, OprfRequestAuthenticatorError},
     },
 };
 
 use crate::{
     AuthModule,
-    unkey_api::{self, ApiVerificationError},
+    unkey_api::{self},
 };
 
 /// The authentication information that is sent alongside the OPRF request in the `wallet_ownership` module.
@@ -39,25 +37,69 @@ pub enum TestNetRequestAuthError {
     /// The proof provided by the client is invalid.
     #[error("Proof invalid")]
     ProofInvalid,
-    /// An error occurred while verifying the API key with the unkey API.
-    #[error(transparent)]
-    ApiVerificationError(#[from] ApiVerificationError),
     /// Generic internal server error.
     #[error(transparent)]
     InternalServerError(#[from] eyre::Report),
+    /// Unknown error code not mapped to a known variant.
+    #[error("unknown_error_{0}")]
+    Unknown(u16),
 }
 
-impl IntoResponse for TestNetRequestAuthError {
-    fn into_response(self) -> response::Response {
-        tracing::debug!("{self:?}");
-        match self {
-            Self::ProofInvalid => (StatusCode::BAD_REQUEST, "Proof is invalid").into_response(),
-            Self::InternalServerError(err) => {
-                tracing::error!("Internal server error: {err:?}");
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
+/// Numeric close-frame error codes sent to the client when [`TestNetRequestAuthError`] occurs.
+pub mod testnet_request_auth_error_codes {
+    /// Error code for [`super::TestNetRequestAuthError::ProofInvalid`]
+    pub const PROOF_INVALID: u16 = 4600;
+    /// Error code for [`super::TestNetRequestAuthError::InternalServerError`]
+    pub const INTERNAL: u16 = 1011;
+}
+
+impl From<&TestNetRequestAuthError> for u16 {
+    fn from(value: &TestNetRequestAuthError) -> Self {
+        match value {
+            TestNetRequestAuthError::ProofInvalid => {
+                testnet_request_auth_error_codes::PROOF_INVALID
             }
-            Self::ApiVerificationError(err) => err.into_response(),
+            TestNetRequestAuthError::InternalServerError(_) => {
+                testnet_request_auth_error_codes::INTERNAL
+            }
+            TestNetRequestAuthError::Unknown(other) => *other,
         }
+    }
+}
+
+impl From<u16> for TestNetRequestAuthError {
+    fn from(value: u16) -> Self {
+        match value {
+            testnet_request_auth_error_codes::PROOF_INVALID => {
+                TestNetRequestAuthError::ProofInvalid
+            }
+            testnet_request_auth_error_codes::INTERNAL => {
+                TestNetRequestAuthError::InternalServerError(eyre::eyre!("Internal Server Error"))
+            }
+            _ => TestNetRequestAuthError::InternalServerError(eyre::eyre!(
+                "Unknown authentication error code: {value}"
+            )),
+        }
+    }
+}
+
+impl From<TestNetRequestAuthError> for OprfRequestAuthenticatorError {
+    fn from(value: TestNetRequestAuthError) -> Self {
+        let code = u16::from(&value);
+        let msg = match value {
+            TestNetRequestAuthError::ProofInvalid => {
+                taceo_oprf::types::close_frame_message!("Proof is invalid")
+            }
+            TestNetRequestAuthError::InternalServerError(err) => {
+                tracing::error!("Internal server error: {err:?}");
+                taceo_oprf::types::close_frame_message!("Internal Server Error")
+            }
+            TestNetRequestAuthError::Unknown(other) => {
+                tracing::error!("Unknown authentication error with code: {other}");
+                taceo_oprf::types::close_frame_message!("Unknown authentication error")
+            }
+        };
+        Self::with_message(code, msg)
     }
 }
 
@@ -89,12 +131,11 @@ impl WalletOwnershipTestNetRequestAuthenticator {
 #[async_trait]
 impl OprfRequestAuthenticator for WalletOwnershipTestNetRequestAuthenticator {
     type RequestAuth = TestNetRequestAuth;
-    type RequestAuthError = TestNetRequestAuthError;
 
     async fn authenticate(
         &self,
         req: &OprfRequest<Self::RequestAuth>,
-    ) -> Result<OprfKeyId, Self::RequestAuthError> {
+    ) -> Result<OprfKeyId, OprfRequestAuthenticatorError> {
         tracing::debug!("Authenticating with API Key and Proof");
         //call API
         let api_valid = tokio::task::spawn({
@@ -106,7 +147,10 @@ impl OprfRequestAuthenticator for WalletOwnershipTestNetRequestAuthenticator {
         });
 
         zk::verify_proof(&req.auth.public_inputs, &req.auth.proof, &self.vk_path)?;
-        api_valid.await.context("awaiting api verification")??;
+        api_valid
+            .await
+            .context("awaiting api verification")
+            .map_err(TestNetRequestAuthError::InternalServerError)??;
         tracing::debug!("Authentication successful");
         Ok(AuthModule::WalletOwnership.oprf_key_id())
     }
@@ -184,8 +228,8 @@ pub mod zk {
                 y = \"{:?}\"",
                 signature,
                 beta.beta(),
-                verifiable_oprf_output.dlog_proof.e,
-                verifiable_oprf_output.dlog_proof.s,
+                verifiable_oprf_output.dlog_proof.e(),
+                verifiable_oprf_output.dlog_proof.s(),
                 msg_hash.to_vec(),
                 pubkey_x,
                 pubkey_y,

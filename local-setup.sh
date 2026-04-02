@@ -64,19 +64,22 @@ deploy_contracts() {
 start_node() {
     local i="$1"
     local port=$((10000 + i))
-    local db_port=$((5440 + i))
-    local db_conn="postgres://postgres:postgres@localhost:$db_port/postgres"
-    RUST_LOG="taceo_oprf_service=trace,taceo_oprf_testnet_node=trace,taceo_oprf_testnet_authentication=trace,warn" \
+    local db_schema=oprf$((i))
+    local db_conn="postgres://postgres:postgres@localhost:5440/postgres"
+    RUST_LOG="taceo=trace,info" \
+      OPRF_NODE__BIND_ADDR="127.0.0.1:$port" \
+      OPRF_NODE__SERVICE__ENVIRONMENT="dev" \
+      OPRF_NODE__SERVICE__VERSION_REQ=">=0.0.0" \
+      OPRF_NODE__SERVICE__WS_MAX_MESSAGE_SIZE=51200 \
+      OPRF_NODE__SERVICE__OPRF_KEY_REGISTRY_CONTRACT="$oprf_key_registry" \
+      OPRF_NODE__POSTGRES__CONNECTION_STRING="$db_conn" \
+      OPRF_NODE__POSTGRES__SCHEMA="$db_schema" \
+      OPRF_NODE__UNKEY_VERIFY_KEY="test" \
+      OPRF_NODE__VK_PATH="./oprf-testnet-authentication/blinded_query_proof.vk" \
+      OPRF_NODE__RPC__HTTP_URLS=http://127.0.0.1:8545 \
+      OPRF_NODE__RPC__WS_URL=ws://127.0.0.1:8545 \
+      OPRF_NODE__RPC__CHAIN_ID=31337 \
     ./target/release/taceo-oprf-testnet-node \
-        --bind-addr 127.0.0.1:$port \
-        --environment dev \
-        --version-req ">=0.0.0" \
-        --oprf-key-registry-contract $oprf_key_registry \
-        --db-connection-string $db_conn \
-        --db-schema oprf \
-        --unkey-verify-key "test" \
-        --ws-max-message-size 51200 \
-        --vk-path ./oprf-testnet-authentication/blinded_query_proof.vk \
         > logs/node$i.log 2>&1 &
     pid=$!
     echo "started taceo-oprf-testnet-node $i with PID $pid"
@@ -98,16 +101,16 @@ setup() {
 
     anvil  &> logs/anvil.log &
 
-    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d localstack oprf-node-db0 oprf-node-db1 oprf-node-db2
+    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d oprf-node-db
 
     echo -e "${GREEN}deploying contracts..${NOCOLOR}"
     deploy_contracts
 
     echo -e "${GREEN}starting OPRF key-gen nodes..${NOCOLOR}"
-    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml exec localstack sh -c "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 --region us-east-1 secretsmanager create-secret --name oprf/eth/n0 --secret-string 0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356"
-    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml exec localstack sh -c "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 --region us-east-1 secretsmanager create-secret --name oprf/eth/n1 --secret-string 0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97"
-    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml exec localstack sh -c "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 --region us-east-1 secretsmanager create-secret --name oprf/eth/n2 --secret-string 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
-    OPRF_KEY_GEN_OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d oprf-key-gen0 oprf-key-gen1 oprf-key-gen2
+    TACEO_OPRF_KEY_GEN__SERVICE__OPRF_KEY_REGISTRY_CONTRACT=$oprf_key_registry docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml up -d oprf-key-gen0 oprf-key-gen1 oprf-key-gen2
+    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml logs -f oprf-key-gen0 > logs/key-gen0.log 2>&1 &
+    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml logs -f oprf-key-gen1 > logs/key-gen1.log 2>&1 &
+    docker compose -f ./oprf-testnet-node/deploy/docker-compose.yml logs -f oprf-key-gen2 > logs/key-gen2.log 2>&1 &
     wait_for_health 20000 "oprf-key-gen0" 300
     wait_for_health 20001 "oprf-key-gen1" 300
     wait_for_health 20002 "oprf-key-gen2" 300
@@ -119,7 +122,6 @@ setup() {
     wait_for_health 10000 "taceo-oprf-testnet-node0" 300
     wait_for_health 10001 "taceo-oprf-testnet-node1" 300
     wait_for_health 10002 "taceo-oprf-testnet-node2" 300
-
     echo -e "${GREEN}init OPRF keys for basic and wallet ownership modules..${NOCOLOR}"
     (cd contracts && OPRF_KEY_REGISTRY_PROXY=$oprf_key_registry OPRF_KEY_ID=1 forge script script/InitKeyGen.s.sol --broadcast --fork-url http://127.0.0.1:8545 --private-key $PK)
     (cd contracts && OPRF_KEY_REGISTRY_PROXY=$oprf_key_registry OPRF_KEY_ID=2 forge script script/InitKeyGen.s.sol --broadcast --fork-url http://127.0.0.1:8545 --private-key $PK)
