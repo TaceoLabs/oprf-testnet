@@ -329,7 +329,10 @@ pub mod zk {
         witness: &Path,
         vk: &Path,
     ) -> eyre::Result<(Vec<u8>, Vec<u8>)> {
+        let path_env = std::env!("PATH");
         let bb_prove_status = Command::new("bb")
+            .env_clear()
+            .env("PATH", path_env)
             .arg("prove")
             .arg("-b")
             .arg(program_artifact)
@@ -375,7 +378,10 @@ pub mod zk {
             .context("writing proof to temp file")?;
 
         tracing::debug!("Verifying proof with bb");
+        let path_env = std::env!("PATH");
         let bb_verify_status = Command::new("bb")
+            .env_clear()
+            .env("PATH", path_env)
             .arg("verify")
             .arg("-t")
             .arg("noir-recursive")
