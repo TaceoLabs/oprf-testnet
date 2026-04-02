@@ -2,38 +2,65 @@
 
 use std::{net::SocketAddr, path::PathBuf, time::Duration};
 
-use clap::Parser;
+use config::{Config, Environment};
+use eyre::Context;
+use nodes_common::{postgres::PostgresConfig, web3};
 use secrecy::SecretString;
-use taceo_oprf::service::config::OprfNodeConfig;
+use serde::Deserialize;
+use taceo_oprf::service::config::OprfNodeServiceConfig;
 
 /// The configuration for the OPRF node.
 ///
 /// It can be configured via environment variables or command line arguments using `clap`.
-#[derive(Parser, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct TestNetNodeConfig {
     /// The bind addr of the AXUM server
-    #[clap(long, env = "OPRF_NODE_BIND_ADDR", default_value = "0.0.0.0:4321")]
+    #[serde(default = "default_bind_addr")]
     pub bind_addr: SocketAddr,
-
     /// Max wait time the service waits for its workers during shutdown.
-    #[clap(
-        long,
-        env = "OPRF_NODE_MAX_WAIT_TIME_SHUTDOWN",
-        default_value = "10s",
-        value_parser = humantime::parse_duration
-
-    )]
+    #[serde(default = "default_max_wait_shutdown")]
+    #[serde(with = "humantime_serde")]
     pub max_wait_time_shutdown: Duration,
 
     /// The Unkey root key
-    #[clap(long, env = "OPRF_NODE_UNKEY_VERIFY_KEY")]
     pub unkey_verify_key: SecretString,
 
     /// The path to the wallet ownership verification key
-    #[clap(long, env = "OPRF_NODE_VK_PATH")]
     pub vk_path: PathBuf,
 
+    /// The blockchain RPC config
+    #[serde(rename = "rpc")]
+    pub rpc_provider_config: web3::RpcProviderConfig,
+
     /// The OPRF service config
-    #[clap(flatten)]
-    pub service_config: OprfNodeConfig,
+    #[serde(rename = "service")]
+    pub node_config: OprfNodeServiceConfig,
+
+    /// The postgres config for the secret-manager
+    #[serde(rename = "postgres")]
+    pub postgres_config: PostgresConfig,
+}
+
+/// Loads the OPRF testnet node configuration from environment variables.
+pub fn load_oprf_testnet_config() -> eyre::Result<TestNetNodeConfig> {
+    let cfg = Config::builder().add_source(
+        Environment::with_prefix("OPRF_NODE")
+            .separator("__")
+            .list_separator(",")
+            .try_parsing(true)
+            .with_list_parse_key("rpc.http_urls"),
+    );
+
+    cfg.build()
+        .context("while building from config")?
+        .try_deserialize()
+        .context("while parsing config")
+}
+
+fn default_bind_addr() -> SocketAddr {
+    "0.0.0.0:4321".parse().expect("valid SocketAddr")
+}
+
+const fn default_max_wait_shutdown() -> Duration {
+    Duration::from_secs(10)
 }

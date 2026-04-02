@@ -24,7 +24,6 @@ eyre.workspace = true
 nodes-observability.workspace = true
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
 rand.workspace = true
-rand_chacha.workspace = true
 rustls.workspace = true
 secrecy.workspace = true
 taceo-oprf = { workspace = true, features = ["client", "core", "types"] }
