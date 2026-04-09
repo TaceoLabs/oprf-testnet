@@ -12,11 +12,12 @@ wait_for_health() {
     local port=$1
     local name=$2
     local timeout=${3:-60}
+    local health_path=${4:-health}
     local start_time=$(date +%s)
     echo "waiting for $name on port $port to be healthy..."
 
     while true; do
-        http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$port/health" || echo "000")
+        http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$port/$health_path" || echo "000")
         if [[ "$http_code" == "200" ]]; then
             echo "$name is healthy!"
             break
@@ -31,6 +32,8 @@ wait_for_health() {
 }
 
 wait_for_oprf_pub() {
+    sleep 2 # give the node some time to process the new key after health check passes
+    return
     local port=$1
     local timeout=${3:-60}
     local start_time=$(date +%s)
@@ -119,9 +122,9 @@ setup() {
     start_node 0
     start_node 1
     start_node 2
-    wait_for_health 10000 "taceo-oprf-testnet-node0" 300
-    wait_for_health 10001 "taceo-oprf-testnet-node1" 300
-    wait_for_health 10002 "taceo-oprf-testnet-node2" 300
+    wait_for_health 10000 "taceo-oprf-testnet-node0" 300 health1
+    wait_for_health 10001 "taceo-oprf-testnet-node1" 300 health1
+    wait_for_health 10002 "taceo-oprf-testnet-node2" 300 health1
     echo -e "${GREEN}init OPRF keys for basic and wallet ownership modules..${NOCOLOR}"
     (cd contracts && OPRF_KEY_REGISTRY_PROXY=$oprf_key_registry OPRF_KEY_ID=1 forge script script/InitKeyGen.s.sol --broadcast --fork-url http://127.0.0.1:8545 --private-key $PK)
     (cd contracts && OPRF_KEY_REGISTRY_PROXY=$oprf_key_registry OPRF_KEY_ID=2 forge script script/InitKeyGen.s.sol --broadcast --fork-url http://127.0.0.1:8545 --private-key $PK)
@@ -134,7 +137,7 @@ setup() {
 
 client() {
     cargo build --workspace --release
-    ./target/release/taceo-oprf-testnet-client "$@"
+    RUST_LOG=taceo=debug,info ./target/release/taceo-oprf-testnet-client "$@"
 }
 
 main() {
