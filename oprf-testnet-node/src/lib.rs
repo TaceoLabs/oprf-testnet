@@ -4,6 +4,9 @@
 #![deny(missing_docs)]
 use std::sync::{Arc, atomic::Ordering};
 
+use crate::config::TestNetNodeConfig;
+use alloy_primitives::address;
+use axum::{Router, http::StatusCode, routing::get};
 use oprf_testnet_authentication::{
     AuthModule, basic::BasicTestNetRequestAuthenticator,
     wallet_ownership::WalletOwnershipTestNetRequestAuthenticator,
@@ -11,11 +14,11 @@ use oprf_testnet_authentication::{
 use taceo_oprf::service::{
     OprfServiceBuilder, StartedServices, secret_manager::SecretManagerService,
 };
-
-use crate::config::TestNetNodeConfig;
+use x402_axum::X402Middleware;
+use x402_chain_eip155::{KnownNetworkEip155, V1Eip155Exact};
+use x402_types::networks::USDC;
 
 pub mod config;
-
 /// Starts the OPRF testnet node with the given configuration and secret manager. The node will run until the provided shutdown signal is triggered, at which point it will attempt to gracefully shut down all services within the specified maximum wait time.
 pub async fn start(
     config: TestNetNodeConfig,
@@ -61,6 +64,19 @@ pub async fn start(
     )
     .build();
 
+    let new_health_router: Router = Router::new().route(
+        "/health1",
+        get(|| async move { (StatusCode::OK, "healthy") }),
+    );
+
+    let x402 = X402Middleware::new("https://facilitator.x402.rs").settle_before_execution();
+    let app = oprf_service_router.layer(x402.with_price_tag(V1Eip155Exact::price_tag(
+        address!("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"),
+        USDC::base_sepolia().parse("0.01").unwrap(),
+    )));
+
+    let app = app.merge(new_health_router);
+
     let listener = tokio::net::TcpListener::bind(config.bind_addr).await?;
     let axum_cancel_token = cancellation_token.clone();
     let server = tokio::spawn(async move {
@@ -72,7 +88,7 @@ pub async fn start(
                 .unwrap_or(String::from("invalid addr"))
         );
         let axum_shutdown_signal = axum_cancel_token.clone();
-        let axum_result = axum::serve(listener, oprf_service_router)
+        let axum_result = axum::serve(listener, app)
             .with_graceful_shutdown(async move { axum_shutdown_signal.cancelled().await })
             .await;
         tracing::info!("axum server shutdown");

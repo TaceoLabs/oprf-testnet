@@ -10,6 +10,8 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+alloy = { workspace = true, default-features = false }
+alloy-primitives = { workspace = true }
 axum = { workspace = true }
 config.workspace = true
 eyre.workspace = true
@@ -31,6 +33,9 @@ tokio = { workspace = true, features = [
   "tokio-macros",
 ] }
 tracing.workspace = true
+x402-axum.workspace = true
+x402-chain-eip155 = { workspace = true, features = ["server"] }
+x402-types = { workspace = true }
 
 [dev-dependencies]
 axum-test = { workspace = true }
