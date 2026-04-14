@@ -33,7 +33,7 @@ tokio = { workspace = true, features = [
   "tokio-macros",
 ] }
 tracing.workspace = true
-x402-axum.workspace = true
+x402-axum = { workspace = true, features = ["telemetry"] }
 x402-chain-eip155 = { workspace = true, features = ["server"] }
 x402-types = { workspace = true }
 

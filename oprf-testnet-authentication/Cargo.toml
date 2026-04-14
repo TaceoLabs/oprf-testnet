@@ -19,7 +19,7 @@ noir_artifact_cli.workspace = true
 noirc_artifacts.workspace = true
 reqwest = { workspace = true, features = [
   "json",
-  "rustls-tls",
+  "rustls",
 ] }
 secrecy = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
