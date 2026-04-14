@@ -69,7 +69,7 @@ start_node() {
     local port=$((10000 + i))
     local db_schema=oprf$((i))
     local db_conn="postgres://postgres:postgres@localhost:5440/postgres"
-    RUST_LOG="taceo=trace,info" \
+    RUST_LOG="taceo=trace,debug" \
       OPRF_NODE__BIND_ADDR="127.0.0.1:$port" \
       OPRF_NODE__SERVICE__ENVIRONMENT="dev" \
       OPRF_NODE__SERVICE__VERSION_REQ=">=0.0.0" \

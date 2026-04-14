@@ -6,7 +6,14 @@ use std::sync::{Arc, atomic::Ordering};
 
 use crate::config::TestNetNodeConfig;
 use alloy_primitives::address;
-use axum::{Router, http::StatusCode, routing::get};
+use axum::{
+    Router,
+    extract::Request,
+    http::StatusCode,
+    middleware::{Next, from_fn},
+    response::Response,
+    routing::get,
+};
 use oprf_testnet_authentication::{
     AuthModule, basic::BasicTestNetRequestAuthenticator,
     wallet_ownership::WalletOwnershipTestNetRequestAuthenticator,
@@ -15,10 +22,42 @@ use taceo_oprf::service::{
     OprfServiceBuilder, StartedServices, secret_manager::SecretManagerService,
 };
 use x402_axum::X402Middleware;
-use x402_chain_eip155::{KnownNetworkEip155, V1Eip155Exact};
+use x402_chain_eip155::{KnownNetworkEip155, V1Eip155Exact, V2Eip155Exact};
 use x402_types::networks::USDC;
 
 pub mod config;
+
+async fn log_x402_request(req: Request, next: Next) -> Response {
+    let method = req.method().clone();
+    let uri = req.uri().clone();
+    let has_x_payment = req.headers().contains_key("X-Payment");
+    let has_payment_signature = req.headers().contains_key("Payment-Signature");
+
+    tracing::info!(
+        %method,
+        %uri,
+        has_x_payment,
+        has_payment_signature,
+        "x402 request received"
+    );
+
+    let response = next.run(req).await;
+    let status = response.status();
+    let has_payment_required = response.headers().contains_key("Payment-Required");
+    let has_payment_response = response.headers().contains_key("Payment-Response");
+
+    tracing::info!(
+        %method,
+        %uri,
+        %status,
+        has_payment_required,
+        has_payment_response,
+        "x402 request completed"
+    );
+
+    response
+}
+
 /// Starts the OPRF testnet node with the given configuration and secret manager. The node will run until the provided shutdown signal is triggered, at which point it will attempt to gracefully shut down all services within the specified maximum wait time.
 pub async fn start(
     config: TestNetNodeConfig,
@@ -69,11 +108,23 @@ pub async fn start(
         get(|| async move { (StatusCode::OK, "healthy") }),
     );
 
-    let x402 = X402Middleware::new("https://facilitator.x402.rs").settle_before_execution();
-    let app = oprf_service_router.layer(x402.with_price_tag(V1Eip155Exact::price_tag(
-        address!("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"),
-        USDC::base_sepolia().parse("0.01").unwrap(),
-    )));
+    let x402 = X402Middleware::try_from("https://facilitator.x402.rs")
+        .expect("valid x402 facilitator url");
+    tracing::info!(
+        facilitator = "https://facilitator.x402.rs",
+        settlement = "before_execution",
+        network = "base-sepolia",
+        amount = 10u64,
+        asset = "USDC",
+        recipient = "0xC8549f30Ec22EebD0977eE495E5EC2e01ca436f9",
+        "configured x402 middleware for paid routes"
+    );
+    let app = oprf_service_router
+        .layer(x402.with_price_tag(V2Eip155Exact::price_tag(
+            address!("0xC8549f30Ec22EebD0977eE495E5EC2e01ca436f9"),
+            USDC::base_sepolia().amount(10u64),
+        )))
+        .layer(from_fn(log_x402_request));
 
     let app = app.merge(new_health_router);
 

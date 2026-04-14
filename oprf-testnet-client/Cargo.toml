@@ -17,17 +17,25 @@ alloy = { workspace = true, features = [
   "rpc-client-ws",
   "serde",
 ] }
+alloy-primitives = { workspace = true }
+alloy-signer-local.workspace = true
 ark-babyjubjub = { workspace = true }
 ark-ff = { workspace = true }
+axum = { workspace = true }
+ciborium = "0.2"
 clap = { workspace = true, features = ["derive", "env"] }
 eyre.workspace = true
+futures-util = "0.3"
 nodes-observability.workspace = true
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
+oprf-types-compat = { package = "taceo-oprf-types", version = "0.11" }
 rand.workspace = true
+reqwest = { workspace = true, features = ["rustls"] }
 rustls.workspace = true
 secrecy.workspace = true
-taceo-oprf = { workspace = true, features = ["core", "types"] }
-taceo-oprf-client.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+taceo-oprf = { workspace = true, features = ["client", "core", "types"] }
 tempfile.workspace = true
 tokio = { workspace = true, features = [
   "net",
@@ -37,5 +45,10 @@ tokio = { workspace = true, features = [
   "time",
   "tokio-macros",
 ] }
+tokio-tungstenite = { workspace = true }
 tracing.workspace = true
+uuid = "1"
 webpki-roots.workspace = true
+x402-chain-eip155 = { workspace = true, features = ["client"] }
+x402-reqwest.workspace = true
+x402-types = { workspace = true, features = ["full"] }

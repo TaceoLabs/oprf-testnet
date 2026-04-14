@@ -18,6 +18,7 @@ publish = false
 [workspace.dependencies]
 alloy = { version = "1.4", default-features = false }
 alloy-primitives = "1.5.7"
+alloy-signer-local = "2"
 ark-babyjubjub = { package = "taceo-ark-babyjubjub", version = "^0.5.3" }
 ark-ff = "0.5"
 async-trait = "0.1"
@@ -37,7 +38,7 @@ noir_artifact_cli = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0
 noirc_artifacts = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
 poseidon2 = { package = "taceo-poseidon2", version = "0.2", default-features = false }
 rand = { version = "0.8" }
-reqwest = { version = "0.12", default-features = false }
+reqwest = { version = "0.13", default-features = false }
 rustls = "0.23"
 secrecy = "0.10"
 serde = { version = "1", features = ["derive"] }
@@ -47,11 +48,13 @@ taceo-oprf-client = { package = "taceo-oprf-client", path = "/Users/guggi/Docume
 tempfile = "3"
 thiserror = { version = "2" }
 tokio = { version = "1" }
+tokio-tungstenite = { version = "0.28", features = ["rustls-tls-webpki-roots"] }
 tracing = { version = "0.1" }
 webpki-roots = { version = "1.0" }
-x402-axum = "1.4.5"
-x402-chain-eip155 = "1.4.4"
-x402-types = "1.4.4"
+x402-axum = "1.4.6"
+x402-chain-eip155 = "1.4.6"
+x402-reqwest = "1.4.6"
+x402-types = "1.4.6"
 
 # This profile can be used for CI in pull requests.
 [profile.ci-dev]
