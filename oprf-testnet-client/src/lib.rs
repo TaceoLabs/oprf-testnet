@@ -56,7 +56,7 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
     threshold: usize,
     api_key: String,
     action: ark_babyjubjub::Fq,
-    payment_signing_key: Option<SigningKey>,
+    payment_signing_key: SigningKey,
     connector: Connector,
     rng: &mut R,
 ) -> eyre::Result<VerifiableOprfOutput> {
@@ -76,7 +76,7 @@ pub async fn basic_verifiable_oprf<R: Rng + CryptoRng>(
         blinding_factor,
         domain_separator,
         auth,
-        payment_signing_key.as_ref(),
+        &payment_signing_key,
         connector,
     )
     .await
@@ -94,7 +94,7 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     threshold: usize,
     api_key: String,
     private_key: SigningKey,
-    payment_signing_key: Option<SigningKey>,
+    payment_signing_key: SigningKey,
     connector: Connector,
     rng: &mut R,
 ) -> eyre::Result<(VerifiableOprfOutput, Vec<u8>, Vec<u8>)> {
@@ -146,7 +146,6 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
 
     let nodes = oprf_client::to_oprf_uri_many(nodes, AuthModule::WalletOwnership)
         .context("while parsing URIs")?;
-    let payment_signing_key = payment_signing_key.as_ref().unwrap_or(&private_key);
 
     let verifiable_oprf_output = distributed_oprf_with_x402(
         &nodes,
@@ -155,7 +154,7 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
         blinding_factor,
         domain_separator,
         auth,
-        Some(payment_signing_key),
+        &payment_signing_key,
         connector,
     )
     .await
@@ -283,7 +282,7 @@ impl WebSocketSession {
     async fn new(
         endpoint: Uri,
         connector: Connector,
-        payment_signing_key: Option<&SigningKey>,
+        payment_signing_key: &SigningKey,
     ) -> Result<Self, NodeError> {
         let service = endpoint
             .authority()
@@ -375,7 +374,7 @@ fn build_request(endpoint: Uri, payment_header: Option<(&str, String)>) -> Clien
 async fn open_websocket(
     endpoint: Uri,
     connector: Connector,
-    payment_signing_key: Option<&SigningKey>,
+    payment_signing_key: &SigningKey,
 ) -> Result<WebSocket, NodeError> {
     match connect_async_tls_with_config(
         build_request(endpoint.clone(), None),
@@ -391,8 +390,7 @@ async fn open_websocket(
                 NodeError::Unknown(Box::new(std::io::Error::other(format!("x402: {err}"))))
             })?;
             tracing::info!(
-                "Received 402 Payment Required during websocket handshake for {}",
-                endpoint
+                "Received 402 Payment Required during websocket handshake for {endpoint}"
             );
             let (header_name, header_value) =
                 sign_payment_required(&payment_required, payment_signing_key)
@@ -424,14 +422,8 @@ async fn open_websocket(
 
 async fn sign_payment_required(
     payment_required: &proto::PaymentRequired,
-    payment_signing_key: Option<&SigningKey>,
+    payment_signing_key: &SigningKey,
 ) -> eyre::Result<(&'static str, String)> {
-    let payment_signing_key = payment_signing_key.ok_or_else(|| {
-        eyre::eyre!(
-            "received 402 Payment Required during websocket handshake, but no payment signer is configured; provide --payment-private-key"
-        )
-    })?;
-
     let signer = Arc::new(PrivateKeySigner::from_signing_key(
         payment_signing_key.clone(),
     ));
@@ -499,7 +491,7 @@ async fn init_session<Auth: Clone + serde::Serialize>(
     service: Uri,
     req: OprfRequest<Auth>,
     connector: Connector,
-    payment_signing_key: Option<&SigningKey>,
+    payment_signing_key: &SigningKey,
 ) -> Result<(WebSocketSession, OprfResponse), NodeError> {
     tracing::debug!("Trying to connect to service: {:?}", service.authority());
     let mut session = WebSocketSession::new(service, connector, payment_signing_key).await?;
@@ -539,9 +531,8 @@ async fn init_sessions<Auth: Clone + serde::Serialize + 'static>(
     threshold: usize,
     req: OprfRequest<Auth>,
     connector: Connector,
-    payment_signing_key: Option<&SigningKey>,
+    payment_signing_key: &SigningKey,
 ) -> Result<LocalOprfSessions, Vec<NodeError>> {
-    let payment_signing_key = payment_signing_key.cloned();
     let mut futures = futures_util::stream::FuturesUnordered::new();
     for service in services {
         let req = req.clone();
@@ -549,14 +540,9 @@ async fn init_sessions<Auth: Clone + serde::Serialize + 'static>(
         let service = service.clone();
         let payment_signing_key = payment_signing_key.clone();
         futures.push(async move {
-            init_session(
-                service.clone(),
-                req,
-                connector,
-                payment_signing_key.as_ref(),
-            )
-            .await
-            .map_err(|err| (service, err))
+            init_session(service.clone(), req, connector, &payment_signing_key)
+                .await
+                .map_err(|err| (service, err))
         });
     }
 
@@ -712,7 +698,7 @@ async fn distributed_oprf_with_x402<Auth: Clone + serde::Serialize + 'static>(
     blinding_factor: BlindingFactor,
     domain_separator: ark_babyjubjub::Fq,
     auth: Auth,
-    payment_signing_key: Option<&SigningKey>,
+    payment_signing_key: &SigningKey,
     connector: Connector,
 ) -> eyre::Result<VerifiableOprfOutput> {
     if threshold == 0 || threshold > services.len() {
