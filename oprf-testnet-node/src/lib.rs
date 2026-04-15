@@ -22,7 +22,7 @@ use taceo_oprf::service::{
     OprfServiceBuilder, StartedServices, secret_manager::SecretManagerService,
 };
 use x402_axum::X402Middleware;
-use x402_chain_eip155::{KnownNetworkEip155, V1Eip155Exact, V2Eip155Exact};
+use x402_chain_eip155::{KnownNetworkEip155, V2Eip155Exact};
 use x402_types::networks::USDC;
 
 pub mod config;
