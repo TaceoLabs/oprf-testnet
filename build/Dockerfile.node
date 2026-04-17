@@ -5,7 +5,7 @@ RUN curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/
 ENV PATH="$PATH:/root/.bb"
 RUN bbup -nv 1.0.0-beta.18
 
-FROM lukemathwalker/cargo-chef:0.1.73-rust-1.93.0-bookworm AS chef
+FROM lukemathwalker/cargo-chef:0.1.73-rust-1.94.0-bookworm AS chef
 WORKDIR /app
 
 FROM chef AS planner
@@ -25,7 +25,7 @@ RUN cargo build --release --bin taceo-oprf-testnet-node
 
 
 # Build healthcheck
-FROM rust:1.93-bookworm AS healthcheck-builder
+FROM rust:1.94-bookworm AS healthcheck-builder
 RUN cargo install simple-web-healthcheck
 
 
