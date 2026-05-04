@@ -77,7 +77,6 @@ start_node() {
       OPRF_NODE__UNKEY_VERIFY_KEY="test" \
       OPRF_NODE__VK_PATH="./oprf-testnet-authentication/blinded_query_proof.vk" \
       OPRF_NODE__RPC__HTTP_URLS=http://127.0.0.1:8545 \
-      OPRF_NODE__RPC__WS_URL=ws://127.0.0.1:8545 \
       OPRF_NODE__RPC__CHAIN_ID=31337 \
     ./target/release/taceo-oprf-testnet-node \
         > logs/node$i.log 2>&1 &
