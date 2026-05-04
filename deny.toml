@@ -73,9 +73,6 @@ ignore = [
   { id = "RUSTSEC-2024-0436", reason = "Paste crate is unmaintained, but arkworks is still using it." },
   { id = "RUSTSEC-2024-0388", reason = "derivative crate is unmaintained, but arkworks is still using it." },
   { id = "RUSTSEC-2025-0141", reason = "bincode crate is unmaintained, but its used by noir" },
-  { id = "RUSTSEC-2026-0098", reason = "rustls-webpki 0.101.7 pinned by aws-smithy-http-client; awaiting AWS SDK update" },
-  { id = "RUSTSEC-2026-0099", reason = "rustls-webpki 0.101.7 pinned by aws-smithy-http-client; awaiting AWS SDK update" },
-  { id = "RUSTSEC-2026-0104", reason = "rustls-webpki 0.101.7 pinned by aws-smithy-http-client; awaiting AWS SDK update" },
 ]
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
