@@ -30,7 +30,7 @@ pub struct TestNetNodeConfig {
 
     /// The blockchain RPC config
     #[serde(rename = "rpc")]
-    pub rpc_provider_config: web3::RpcProviderConfig,
+    pub rpc_provider_config: web3::HttpRpcProviderConfig,
 
     /// The OPRF service config
     #[serde(rename = "service")]

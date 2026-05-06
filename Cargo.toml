@@ -8,7 +8,7 @@ members = [
 
 [workspace.package]
 edition = "2024"
-rust-version = "1.90"
+rust-version = "1.91"
 readme = "./README.md"
 homepage = "https://www.taceo.io"
 repository = "https://github.com/TaceoLabs/"
@@ -30,7 +30,7 @@ eyre = { version = "0.6" }
 humantime = "2"
 humantime-serde = "1"
 nargo = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
-nodes-common = { package = "taceo-nodes-common", version = "0.4.3" }
+nodes-common = { package = "taceo-nodes-common", version = "0.5.1" }
 nodes-observability = { package = "taceo-nodes-observability", version = "0.1" }
 noir_artifact_cli = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
 noirc_artifacts = { git = "https://github.com/noir-lang/noir.git", rev = "v1.0.0-beta.18" }
@@ -41,7 +41,7 @@ rustls = "0.23"
 secrecy = "0.10"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
-taceo-oprf = { version = "0.11", default-features = false }
+taceo-oprf = { version = "0.13", default-features = false }
 tempfile = "3"
 thiserror = { version = "2" }
 tokio = { version = "1" }

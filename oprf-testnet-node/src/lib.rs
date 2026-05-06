@@ -43,9 +43,8 @@ pub async fn start(
 
     tracing::info!("init oprf service..");
     let rpc_provider =
-        nodes_common::web3::RpcProviderBuilder::with_config(&config.rpc_provider_config)
-            .build()
-            .await?;
+        nodes_common::web3::HttpRpcProviderBuilder::with_config(&config.rpc_provider_config)
+            .build()?;
     let (oprf_service_router, key_event_watcher) = OprfServiceBuilder::init(
         service_config,
         secret_manager,
