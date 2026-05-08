@@ -7958,7 +7958,7 @@ dependencies = [
  "ark-ff 0.5.0",
  "clap",
  "eyre",
- "rand 0.8.6",
+ "rand 0.9.4",
  "rustls",
  "secrecy",
  "taceo-ark-babyjubjub",
