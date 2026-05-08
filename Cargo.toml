@@ -18,7 +18,7 @@ publish = false
 [workspace.dependencies]
 alloy = { version = "1.4", default-features = false }
 ark-babyjubjub = { package = "taceo-ark-babyjubjub", version = "^0.5.3" }
-ark-ff = "0.5"
+ark-ff = "0.6"
 async-trait = "0.1"
 axum = "0.8"
 axum-test = "19"
