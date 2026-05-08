@@ -16,7 +16,7 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [workspace.dependencies]
-alloy = { version = "1.4", default-features = false }
+alloy = { version = "2.0", default-features = false }
 ark-babyjubjub = { package = "taceo-ark-babyjubjub", version = "^0.5.3" }
 ark-ff = "0.5"
 async-trait = "0.1"
