@@ -23,6 +23,7 @@ oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", p
 rustls = { workspace = true }
 secrecy = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
+taceo-merces1-x402 = { workspace = true, features = ["client", "server"] }
 taceo-oprf = { workspace = true, features = ["core", "service", "types"] }
 tokio = { workspace = true, features = [
   "net",

@@ -35,6 +35,7 @@ rustls.workspace = true
 secrecy.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+taceo-merces1-x402 = { workspace = true, features = ["client", "server"] }
 taceo-oprf = { workspace = true, features = ["client", "core", "types"] }
 tempfile.workspace = true
 tokio = { workspace = true, features = [

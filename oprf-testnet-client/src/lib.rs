@@ -21,6 +21,7 @@ use std::{
     sync::Arc,
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
+use taceo_merces1_x402::V2Eip155ConfidentialClient;
 use taceo_oprf::client::{
     self as oprf_client, Connector, NodeError, ServiceError, Uri, VerifiableOprfOutput,
 };
@@ -424,21 +425,20 @@ async fn sign_payment_required(
     payment_required: &proto::PaymentRequired,
     payment_signing_key: &SigningKey,
 ) -> eyre::Result<(&'static str, String)> {
-    let signer = Arc::new(PrivateKeySigner::from_signing_key(
-        payment_signing_key.clone(),
-    ));
+    let signer = PrivateKeySigner::from_signing_key(payment_signing_key.clone());
     let signed_payload = match payment_required {
         proto::PaymentRequired::V1(_) => {
-            let client = V1Eip155ExactClient::new(signer);
-            let candidate = client
-                .accept(payment_required)
-                .into_iter()
-                .next()
-                .ok_or_else(|| eyre::eyre!("no supported x402 V1 payment option was offered"))?;
-            candidate.sign().await.map_err(|err| eyre::eyre!(err))?
+            // let client = V1Eip155ExactClient::new(signer);
+            // let candidate = client
+            //     .accept(payment_required)
+            //     .into_iter()
+            //     .next()
+            //     .ok_or_else(|| eyre::eyre!("no supported x402 V1 payment option was offered"))?;
+            // candidate.sign().await.map_err(|err| eyre::eyre!(err))?
+            todo!()
         }
         proto::PaymentRequired::V2(_) => {
-            let client = V2Eip155ExactClient::new(signer);
+            let client = V2Eip155ConfidentialClient::new(signer);
             let candidate = client
                 .accept(payment_required)
                 .into_iter()
