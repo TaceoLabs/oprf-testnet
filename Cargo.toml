@@ -16,7 +16,7 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [workspace.dependencies]
-alloy = { version = "1.4", default-features = false }
+alloy = { version = "2.0", default-features = false }
 alloy-primitives = "1.5.7"
 alloy-signer-local = "2"
 ark-babyjubjub = { package = "taceo-ark-babyjubjub", version = "^0.5.3" }
@@ -43,6 +43,10 @@ rustls = "0.23"
 secrecy = "0.10"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
+taceo-merces1-x402 = { git = "https://github.com/TaceoLabs/merces1-x402.git", branch = "fg/chores", version = "0.1", features = [
+  "client",
+  "server"
+] }
 taceo-oprf = { version = "0.11", default-features = false }
 taceo-oprf-client = { package = "taceo-oprf-client", path = "/Users/guggi/Documents/projects/oprf-service/oprf-client/", version = "0.9.2" }
 tempfile = "3"

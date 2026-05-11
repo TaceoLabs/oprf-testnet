@@ -6,6 +6,8 @@ use std::sync::{Arc, atomic::Ordering};
 
 use crate::config::TestNetNodeConfig;
 use alloy_primitives::address;
+use std::str::FromStr;
+
 use axum::{
     Router,
     extract::Request,
@@ -18,12 +20,12 @@ use oprf_testnet_authentication::{
     AuthModule, basic::BasicTestNetRequestAuthenticator,
     wallet_ownership::WalletOwnershipTestNetRequestAuthenticator,
 };
+use taceo_merces1_x402::{ConfidentialUSDC, V2Eip155Confidential};
 use taceo_oprf::service::{
     OprfServiceBuilder, StartedServices, secret_manager::SecretManagerService,
 };
 use x402_axum::X402Middleware;
 use x402_chain_eip155::{KnownNetworkEip155, V2Eip155Exact};
-use x402_types::networks::USDC;
 
 pub mod config;
 
@@ -108,7 +110,7 @@ pub async fn start(
         get(|| async move { (StatusCode::OK, "healthy") }),
     );
 
-    let x402 = X402Middleware::try_from("https://facilitator.x402.rs")
+    let x402 = X402Middleware::try_from("https://x402-facilitator.merces1.stage.taceo.io")
         .expect("valid x402 facilitator url");
     tracing::info!(
         facilitator = "https://facilitator.x402.rs",
@@ -119,10 +121,24 @@ pub async fn start(
         recipient = "0xC8549f30Ec22EebD0977eE495E5EC2e01ca436f9",
         "configured x402 middleware for paid routes"
     );
+    // let app = Router::new().route(
+    //     "/api/protected",
+    //     get(handler).layer(
+    //         x402.with_price_tag(V2Eip155Confidential::price_tag(address, usdc.parse("$1")?)),
+    //     ),
+    // );
+    //
+    // let app = oprf_service_router
+    //     .layer(x402.with_price_tag(V2Eip155Confidential::price_tag(
+    //         address!("0xC8549f30Ec22EebD0977eE495E5EC2e01ca436f9"),
+    //         USDC::base_sepolia().amount(10u64),
+    //     )))
+    //     .layer(from_fn(log_x402_request));
+
     let app = oprf_service_router
-        .layer(x402.with_price_tag(V2Eip155Exact::price_tag(
-            address!("0xC8549f30Ec22EebD0977eE495E5EC2e01ca436f9"),
-            USDC::base_sepolia().amount(10u64),
+        .layer(x402.with_price_tag(V2Eip155Confidential::price_tag(
+            address!("0x2AA787Ad0E04Ab8D02c4f3Fd3165e3FE6b1b3b05"),
+            ConfidentialUSDC::base_sepolia().parse("$1.50")?,
         )))
         .layer(from_fn(log_x402_request));
 
