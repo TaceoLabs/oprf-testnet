@@ -1,4 +1,4 @@
-use babyjubjub::BabyJubJubPoint;
+use babyjubjub::{BabyJubJubPoint, BabyJubJubPointInSubgroup};
 use ecrecover::ecrecover;
 use oprf::oprf_output::verified_oprf;
 pub global DS_N: Field = 24546418369108709687614662004; // b"OPRF TestNet"
@@ -12,10 +12,9 @@ fn main(
     signature: [u8; 64],
     beta: Field,
     // These are the inputs needed for the second part of the OPRF protocol, the verified OPRF output.
-    oprf_pk: pub BabyJubJubPoint,
+    oprf_pk: pub BabyJubJubPointInSubgroup,
     dlog_e: Field,
     dlog_s: Field,
-    oprf_response_blinded: BabyJubJubPoint,
     oprf_response: BabyJubJubPoint,
 ) -> pub Field {
     // Similar to the blinded query proof, we first recover the user input (address) from the signature.
@@ -26,7 +25,6 @@ fn main(
         oprf_pk,
         dlog_e,
         dlog_s,
-        oprf_response_blinded,
         oprf_response,
         address,
         DS_DLOG,
@@ -36,19 +34,14 @@ fn main(
 
 #[test]
 fn test_main() {
-    let oprf_pk = BabyJubJubPoint::new(
+    let oprf_pk = BabyJubJubPointInSubgroup::from_point_unchecked(BabyJubJubPoint::new(
         15003657924788399520423800501973962387080403835278072811641574091656004606719,
         14529415343323015636900366522580262473735574267701282924026299349812458958307,
-    );
+    ));
 
     let oprf_response = BabyJubJubPoint::new(
         1065949620655181774308101197704033100236194646567058021926722685606992436847,
         14787959160106034745010522499467846959920195067540224472248153986015143882065,
-    );
-
-    let oprf_response_blinded = BabyJubJubPoint::new(
-        4412395052256565047298638251655830431466984686274840433808703772709569110803,
-        20256127588343150090186757350315422452391433342385468273813865055940593724572,
     );
 
     let signature = [
@@ -85,7 +78,6 @@ fn test_main() {
         oprf_pk,
         dlog_e,
         dlog_s,
-        oprf_response_blinded,
         oprf_response,
     );
     assert(result == expected_output, "OPRF output does not match expected value");
