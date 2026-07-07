@@ -4,6 +4,7 @@
 #![deny(missing_docs)]
 use std::sync::{Arc, atomic::Ordering};
 
+use eyre::Context;
 use oprf_testnet_authentication::{
     AuthModule, basic::BasicTestNetRequestAuthenticator,
     wallet_ownership::WalletOwnershipTestNetRequestAuthenticator,
@@ -42,17 +43,16 @@ pub async fn start(
         ));
 
     tracing::info!("init oprf service..");
-    let rpc_provider =
-        nodes_common::web3::HttpRpcProviderBuilder::with_config(&config.rpc_provider_config)
-            .build()?;
-    let (oprf_service_router, key_event_watcher) = OprfServiceBuilder::init(
+    let node_information = secret_manager
+        .load_node_information()
+        .await
+        .context("while loading node information")?;
+    let oprf_service_router = OprfServiceBuilder::init(
         service_config,
         secret_manager,
-        rpc_provider,
         StartedServices::default(),
-        cancellation_token.clone(),
+        &node_information,
     )
-    .await?
     .module(&AuthModule::Basic.to_path(), basic_oprf_req_auth_service)
     .module(
         &AuthModule::WalletOwnership.to_path(),
@@ -89,11 +89,7 @@ pub async fn start(
         "waiting for shutdown of services (max wait time {:?})..",
         config.max_wait_time_shutdown
     );
-    match tokio::time::timeout(config.max_wait_time_shutdown, async move {
-        tokio::join!(server, key_event_watcher)
-    })
-    .await
-    {
+    match tokio::time::timeout(config.max_wait_time_shutdown, server).await {
         Ok(_) => tracing::info!("successfully finished shutdown in time"),
         Err(_) => tracing::warn!("could not finish shutdown in time"),
     }

@@ -15,13 +15,13 @@ config.workspace = true
 eyre.workspace = true
 humantime = { workspace = true }
 humantime-serde = { workspace = true }
-nodes-common = { workspace = true }
+nodes-common = { workspace = true, features = ["postgres"] }
 nodes-observability = { workspace = true }
 oprf-testnet-authentication = { package = "taceo-oprf-testnet-authentication", path = "../oprf-testnet-authentication", version = "0.1" }
 rustls = { workspace = true }
 secrecy = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
-taceo-oprf = { workspace = true, features = ["core", "service", "types"] }
+taceo-oprf = { workspace = true, features = ["postgres", "service", "types"] }
 tokio = { workspace = true, features = [
   "net",
   "rt-multi-thread",
