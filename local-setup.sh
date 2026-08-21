@@ -7,6 +7,10 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 
 PK=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+# well-known anvil dev keys for wallets 7, 8, 9 (the registered key-gen participants)
+export OPRF_KEY_GEN0_WALLET_PK=0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356
+export OPRF_KEY_GEN1_WALLET_PK=0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97
+export OPRF_KEY_GEN2_WALLET_PK=0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
 
 wait_for_health() {
     local port=$1
@@ -71,14 +75,10 @@ start_node() {
       OPRF_NODE__SERVICE__ENVIRONMENT="dev" \
       OPRF_NODE__SERVICE__VERSION_REQ=">=0.0.0" \
       OPRF_NODE__SERVICE__WS_MAX_MESSAGE_SIZE=51200 \
-      OPRF_NODE__SERVICE__OPRF_KEY_REGISTRY_CONTRACT="$oprf_key_registry" \
       OPRF_NODE__POSTGRES__CONNECTION_STRING="$db_conn" \
       OPRF_NODE__POSTGRES__SCHEMA="$db_schema" \
       OPRF_NODE__UNKEY_VERIFY_KEY="test" \
       OPRF_NODE__VK_PATH="./oprf-testnet-authentication/blinded_query_proof.vk" \
-      OPRF_NODE__RPC__HTTP_URLS=http://127.0.0.1:8545 \
-      OPRF_NODE__SERVICE__WS_RPC_URL=ws://127.0.0.1:8545 \
-      OPRF_NODE__RPC__CHAIN_ID=31337 \
     ./target/release/taceo-oprf-testnet-node \
         > logs/node$i.log 2>&1 &
     pid=$!
