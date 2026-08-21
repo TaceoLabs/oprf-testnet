@@ -214,16 +214,10 @@ pub mod zk {
                 hashed_message = {:?}
                 pub_key_x = {:?}
                 pub_key_y = {:?}
+                oprf_response_x = \"{:?}\"
+                oprf_response_y = \"{:?}\"
 
-                [oprf_pk]
-                x = \"{:?}\"
-                y = \"{:?}\"
-
-                [oprf_response]
-                x = \"{:?}\"
-                y = \"{:?}\"
-
-                [oprf_response_blinded]
+                [oprf_pk.point]
                 x = \"{:?}\"
                 y = \"{:?}\"",
                 signature,
@@ -233,12 +227,10 @@ pub mod zk {
                 msg_hash.to_vec(),
                 pubkey_x,
                 pubkey_y,
-                verifiable_oprf_output.oprf_public_key.inner().x,
-                verifiable_oprf_output.oprf_public_key.inner().y,
                 verifiable_oprf_output.unblinded_response.x,
                 verifiable_oprf_output.unblinded_response.y,
-                verifiable_oprf_output.blinded_response.x,
-                verifiable_oprf_output.blinded_response.y
+                verifiable_oprf_output.oprf_public_key.inner().x,
+                verifiable_oprf_output.oprf_public_key.inner().y
             ),
         )?;
 
@@ -309,7 +301,7 @@ pub mod zk {
         }
         .build_with_base(transcript_executor);
 
-        let blackbox_solver = Bn254BlackBoxSolver(false);
+        let blackbox_solver = Bn254BlackBoxSolver;
 
         let execution_res = noir_artifact_cli::execution::execute(
             &circuit,
