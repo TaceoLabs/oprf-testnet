@@ -72,7 +72,7 @@ You'll need [Barretenberg](https://barretenberg.aztec.network/docs/getting_start
 curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/next/barretenberg/bbup/install | bash
 
 # Add to PATH and restart shell, then:
-bbup -nv 1.0.0-beta.26
+bbup -v 5.0.0
 ```
 
 **Run the command:**
