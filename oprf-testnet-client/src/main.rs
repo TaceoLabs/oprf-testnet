@@ -8,7 +8,7 @@ use secrecy::{ExposeSecret, SecretString};
 use std::{path::PathBuf, sync::Arc};
 use taceo_oprf::client::Connector;
 
-const BB_VERSION: &str = "3.0.0-nightly.20260102";
+const BB_VERSION: &str = "5.0.0";
 
 #[derive(Parser, Debug, Clone)]
 pub struct BasicConfig {
@@ -150,7 +150,7 @@ fn check_bb_version() -> eyre::Result<()> {
     let version = version.trim();
     eyre::ensure!(
         version == BB_VERSION,
-        "The 'bb' binary version is {version}, but version {BB_VERSION} is required. Please install the correct version using 'bbup -nv 1.0.0-beta.18'"
+        "The 'bb' binary version is {version}, but version {BB_VERSION} is required. Please install the correct version using 'bbup -v {BB_VERSION}'"
     );
     Ok(())
 }

@@ -1,7 +1,7 @@
 services:
   oprf-key-gen0:
     # this tag/sha must match the versions of taceo crates in Cargo.toml
-    image: ghcr.io/taceolabs/oprf-service/oprf-key-gen:v1.1.0-rc.7
+    image: ghcr.io/taceolabs/oprf-service/oprf-key-gen:v1.2.5
     network_mode: "host"
     environment:
       RUST_LOG: taceo=trace,info
@@ -9,18 +9,19 @@ services:
       TACEO_OPRF_KEY_GEN__SERVICE__ENVIRONMENT: dev
       TACEO_OPRF_KEY_GEN__BIND_ADDR: 0.0.0.0:20000
       TACEO_OPRF_KEY_GEN__SERVICE__RPC__HTTP_URLS: http://127.0.0.1:8545
-      TACEO_OPRF_KEY_GEN__SERVICE__RPC__WS_URL: ws://127.0.0.1:8545
-      TACEO_OPRF_KEY_GEN__SERVICE__WALLET_PRIVATE_KEY: REMOVED
+      TACEO_OPRF_KEY_GEN__SERVICE__WS_RPC_URL: ws://127.0.0.1:8545
+      TACEO_OPRF_KEY_GEN__SERVICE__WALLET_PRIVATE_KEY: ${OPRF_KEY_GEN0_WALLET_PK:-}
       TACEO_OPRF_KEY_GEN__SERVICE__EXPECTED_NUM_PEERS: 3
       TACEO_OPRF_KEY_GEN__SERVICE__EXPECTED_THRESHOLD: 2
       TACEO_OPRF_KEY_GEN__SERVICE__ZKEY_PATH: /app/OPRFKeyGen.13.arks.zkey
       TACEO_OPRF_KEY_GEN__SERVICE__WITNESS_GRAPH_PATH: /app/OPRFKeyGenGraph.13.bin
       TACEO_OPRF_KEY_GEN__SERVICE__CONFIRMATIONS_FOR_TRANSACTION: 1
+      TACEO_OPRF_KEY_GEN__SERVICE__BACKFILL__SKIP_BACKFILL: "yes"
       TACEO_OPRF_KEY_GEN__POSTGRES__CONNECTION_STRING: postgres://postgres:postgres@localhost:5440/postgres
       TACEO_OPRF_KEY_GEN__POSTGRES__SCHEMA: oprf0
   oprf-key-gen1:
     # this tag/sha must match the versions of taceo crates in Cargo.toml
-    image: ghcr.io/taceolabs/oprf-service/oprf-key-gen:v1.1.0-rc.7
+    image: ghcr.io/taceolabs/oprf-service/oprf-key-gen:v1.2.5
     network_mode: "host"
     environment:
       RUST_LOG: taceo=trace,info
@@ -28,18 +29,19 @@ services:
       TACEO_OPRF_KEY_GEN__SERVICE__ENVIRONMENT: dev
       TACEO_OPRF_KEY_GEN__BIND_ADDR: 0.0.0.0:20001
       TACEO_OPRF_KEY_GEN__SERVICE__RPC__HTTP_URLS: http://127.0.0.1:8545
-      TACEO_OPRF_KEY_GEN__SERVICE__RPC__WS_URL: ws://127.0.0.1:8545
-      TACEO_OPRF_KEY_GEN__SERVICE__WALLET_PRIVATE_KEY: REMOVED
+      TACEO_OPRF_KEY_GEN__SERVICE__WS_RPC_URL: ws://127.0.0.1:8545
+      TACEO_OPRF_KEY_GEN__SERVICE__WALLET_PRIVATE_KEY: ${OPRF_KEY_GEN1_WALLET_PK:-}
       TACEO_OPRF_KEY_GEN__SERVICE__EXPECTED_NUM_PEERS: 3
       TACEO_OPRF_KEY_GEN__SERVICE__EXPECTED_THRESHOLD: 2
       TACEO_OPRF_KEY_GEN__SERVICE__ZKEY_PATH: /app/OPRFKeyGen.13.arks.zkey
       TACEO_OPRF_KEY_GEN__SERVICE__WITNESS_GRAPH_PATH: /app/OPRFKeyGenGraph.13.bin
       TACEO_OPRF_KEY_GEN__SERVICE__CONFIRMATIONS_FOR_TRANSACTION: 1
+      TACEO_OPRF_KEY_GEN__SERVICE__BACKFILL__SKIP_BACKFILL: "yes"
       TACEO_OPRF_KEY_GEN__POSTGRES__CONNECTION_STRING: postgres://postgres:postgres@localhost:5440/postgres
       TACEO_OPRF_KEY_GEN__POSTGRES__SCHEMA: oprf1
   oprf-key-gen2:
     # this tag/sha must match the versions of taceo crates in Cargo.toml
-    image: ghcr.io/taceolabs/oprf-service/oprf-key-gen:v1.1.0-rc.7
+    image: ghcr.io/taceolabs/oprf-service/oprf-key-gen:v1.2.5
     network_mode: "host"
     environment:
       RUST_LOG: taceo=trace,info
@@ -47,13 +49,14 @@ services:
       TACEO_OPRF_KEY_GEN__SERVICE__ENVIRONMENT: dev
       TACEO_OPRF_KEY_GEN__BIND_ADDR: 0.0.0.0:20002
       TACEO_OPRF_KEY_GEN__SERVICE__RPC__HTTP_URLS: http://127.0.0.1:8545
-      TACEO_OPRF_KEY_GEN__SERVICE__RPC__WS_URL: ws://127.0.0.1:8545
-      TACEO_OPRF_KEY_GEN__SERVICE__WALLET_PRIVATE_KEY: REMOVED
+      TACEO_OPRF_KEY_GEN__SERVICE__WS_RPC_URL: ws://127.0.0.1:8545
+      TACEO_OPRF_KEY_GEN__SERVICE__WALLET_PRIVATE_KEY: ${OPRF_KEY_GEN2_WALLET_PK:-}
       TACEO_OPRF_KEY_GEN__SERVICE__EXPECTED_NUM_PEERS: 3
       TACEO_OPRF_KEY_GEN__SERVICE__EXPECTED_THRESHOLD: 2
       TACEO_OPRF_KEY_GEN__SERVICE__ZKEY_PATH: /app/OPRFKeyGen.13.arks.zkey
       TACEO_OPRF_KEY_GEN__SERVICE__WITNESS_GRAPH_PATH: /app/OPRFKeyGenGraph.13.bin
       TACEO_OPRF_KEY_GEN__SERVICE__CONFIRMATIONS_FOR_TRANSACTION: 1
+      TACEO_OPRF_KEY_GEN__SERVICE__BACKFILL__SKIP_BACKFILL: "yes"
       TACEO_OPRF_KEY_GEN__POSTGRES__CONNECTION_STRING: postgres://postgres:postgres@localhost:5440/postgres
       TACEO_OPRF_KEY_GEN__POSTGRES__SCHEMA: oprf2
   oprf-node-db:

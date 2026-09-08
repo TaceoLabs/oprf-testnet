@@ -31,11 +31,11 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
       - uses: foundry-rs/foundry-toolchain@v1
-      - run: cd contracts && forge install && forge build
+      - run: cd contracts && forge build
       - run: |
           curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/next/barretenberg/bbup/install | bash
           echo "${HOME}/.bb" >> $GITHUB_PATH
-          ${HOME}/.bb/bbup -nv 1.0.0-beta.18
+          ${HOME}/.bb/bbup -v 5.0.0
       # - uses: Swatinem/rust-cache@v2
       - name: E2E-Test
         run: bash local-setup.sh test

@@ -1,4 +1,4 @@
-use babyjubjub::BabyJubJubPoint;
+use babyjubjub::BabyJubJubPointInSubgroup;
 use ecrecover::ecrecover;
 use oprf::blinded_query::blinded_query;
 
@@ -31,7 +31,7 @@ fn main(
     pub_key_y: [u8; 32],
     signature: [u8; 64],
     beta: Field,
-) -> pub BabyJubJubPoint {
+) -> pub BabyJubJubPointInSubgroup {
     // The function ecrecover takes in a hashed message, a public key (x and y coordinates) and a signature, verifies the signature and returns the recovered ETH address, which is used as the input to the OPRF protocol.
     let address = ecrecover(pub_key_x, pub_key_y, signature, hashed_message);
 
@@ -61,14 +61,14 @@ fn test_main() {
         215, 77, 194, 49, 9, 177, 21, 157, 90, 29, 26, 7,
     ];
 
-    let expected_query_request = BabyJubJubPoint::new(
+    let expected_query_request = BabyJubJubPointInSubgroup::new(
         20769343801606875644580992560767002733477266146250829360177308891153456763932,
         717924508062895681512301498190527672768108096190869247123342479357366276555,
     );
 
     let result = main(hashed_message, pub_key_x, pub_key_y, signature, beta);
     assert(
-        (result.x == expected_query_request.x) & (result.y == expected_query_request.y),
+        (result.x() == expected_query_request.x()) & (result.y() == expected_query_request.y()),
         "Query request point does not match expected value",
     );
 }
