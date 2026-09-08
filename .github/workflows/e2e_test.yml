@@ -31,11 +31,6 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
       - uses: foundry-rs/foundry-toolchain@v1
-      # `forge install` is redundant here: actions/checkout already fetches the
-      # contracts submodule recursively, so lib/ is populated at the pinned
-      # gitlinks. It also fails since forge 1.8.0, which turned the mismatch
-      # between contracts/foundry.lock and those gitlinks into a hard error and
-      # tries to `git checkout` a tag the shallow submodule clone doesn't have.
       - run: cd contracts && forge build
       - run: |
           curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/next/barretenberg/bbup/install | bash
