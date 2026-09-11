@@ -2791,7 +2791,7 @@ checksum = "f8c49632b5dd114acd72982823888124a7f25c97801e6e38df893548f3c45b3b"
 dependencies = [
  "der 0.8.1",
  "digest 0.11.3",
- "elliptic-curve 0.14.0-rc.36",
+ "elliptic-curve 0.14.1",
  "rfc6979 0.6.0-pre.0",
  "signature 3.0.0",
  "spki 0.8.0",
@@ -2841,9 +2841,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.14.0-rc.36"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abda41bf4d801bd9bfe2ef26ab37ae40d8c703374985b5c642e141d23de3f556"
+checksum = "9d65aa39b3a5c1c9c1b745c9a019234bb7a21b77abcb4f4d266d706e2d577d65"
 dependencies = [
  "base16ct 1.0.0",
  "crypto-bigint 0.7.5",
@@ -4336,7 +4336,7 @@ checksum = "9091be862a7068868b9e8a5cb0dd5bead9b630b521037deaca98d853598c5499"
 dependencies = [
  "cpubits",
  "ecdsa 0.17.0-rc.21",
- "elliptic-curve 0.14.0-rc.36",
+ "elliptic-curve 0.14.1",
  "primeorder",
  "sha2 0.11.0",
  "signature 3.0.0",
@@ -5247,7 +5247,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a42cda5f3b49f9619c30ffe0941dd1d3be34ad38bca891e90d86813c6bbbda36"
 dependencies = [
  "ecdsa 0.17.0-rc.21",
- "elliptic-curve 0.14.0-rc.36",
+ "elliptic-curve 0.14.1",
  "primefield",
  "primeorder",
  "sha2 0.11.0",
@@ -5597,7 +5597,7 @@ version = "0.14.0-rc.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d77fbae6669cecbe9b1b334fd4ff8acae6d4f3632e9fc74f5d1630e59fd72813"
 dependencies = [
- "elliptic-curve 0.14.0-rc.36",
+ "elliptic-curve 0.14.1",
  "once_cell",
  "primefield",
  "serdect 0.4.3",
@@ -7690,7 +7690,7 @@ dependencies = [
  "alloy",
  "async-trait",
  "bn254_blackbox_solver",
- "elliptic-curve 0.14.0-rc.36",
+ "elliptic-curve 0.14.1",
  "eyre",
  "k256 0.14.0-rc.13",
  "nargo",
