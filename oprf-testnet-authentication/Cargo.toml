@@ -36,7 +36,7 @@ tokio.workspace = true
 tracing.workspace = true
 
 # pinned versions to make noir compile
-elliptic-curve = { version = "=0.14.0-rc.36", default-features = false, features = [
+elliptic-curve = { version = "=0.14.1", default-features = false, features = [
   "sec1"
 ] }
 k256 = "=0.14.0-rc.13"
