@@ -168,7 +168,7 @@ pub mod zk {
     use bn254_blackbox_solver::Bn254BlackBoxSolver;
     use eyre::Context;
     use nargo::foreign_calls::DefaultForeignCallBuilder;
-    use noir_artifact_cli::Artifact;
+    use noir_artifact_cli::{Artifact, commands::execute_cmd::InputSource};
     use noirc_artifacts::program::CompiledProgram;
     use taceo_oprf::{client::VerifiableOprfOutput, core::oprf::BlindingFactor};
     use tempfile::{NamedTempFile, TempDir};
@@ -307,7 +307,7 @@ pub mod zk {
             &circuit,
             &blackbox_solver,
             &mut foreign_call_executor,
-            prover_file,
+            &InputSource::ProverFile(prover_file),
         )?;
 
         std::fs::write(witness_path, execution_res.witness_stack.serialize()?)?;

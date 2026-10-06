@@ -4,8 +4,8 @@ version = 4
 
 [[package]]
 name = "acir"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acir_field",
  "base64 0.23.1",
@@ -25,8 +25,8 @@ dependencies = [
 
 [[package]]
 name = "acir_field"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "ark-bn254",
  "ark-ff 0.6.0",
@@ -40,8 +40,8 @@ dependencies = [
 
 [[package]]
 name = "acvm"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acir",
  "acvm_blackbox_solver",
@@ -56,15 +56,15 @@ dependencies = [
 
 [[package]]
 name = "acvm_blackbox_solver"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acir",
  "aes",
  "blake2",
  "blake3",
  "cbc",
- "k256 0.14.0-rc.13",
+ "k256 0.14.0",
  "keccak",
  "log",
  "p256",
@@ -696,7 +696,7 @@ dependencies = [
  "alloy-rlp",
  "alloy-serde",
  "alloy-sol-types",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "serde",
  "serde_json",
  "serde_with",
@@ -875,7 +875,7 @@ checksum = "0e79a2c1793afc61eed9ca0963da370a988b27d2bbfa67c78013e262d47424c4"
 dependencies = [
  "alloy-json-rpc",
  "alloy-transport",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "reqwest 0.13.4",
  "serde_json",
  "tower",
@@ -1014,6 +1014,12 @@ name = "anyhow"
 version = "1.0.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
+
+[[package]]
+name = "archery"
+version = "1.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33ca55ee147b1926dbea904f50fe4902494e97bc742205abbbf10c709e43815f"
 
 [[package]]
 name = "ark-bn254"
@@ -1717,15 +1723,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bitmaps"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "031043d04099746d8db04daf1fa424b2bc8bd69d92b25962dcde24da39ab64a2"
-dependencies = [
- "typenum",
-]
-
-[[package]]
 name = "bitvec"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1800,8 +1797,8 @@ dependencies = [
 
 [[package]]
 name = "bn254_blackbox_solver"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acir",
  "acvm_blackbox_solver",
@@ -1913,8 +1910,8 @@ dependencies = [
 
 [[package]]
 name = "brillig"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acir_field",
  "itertools 0.15.0",
@@ -1924,8 +1921,8 @@ dependencies = [
 
 [[package]]
 name = "brillig_vm"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acir",
  "acvm_blackbox_solver",
@@ -1965,6 +1962,12 @@ name = "byte-slice-cast"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7575182f7272186991736b70173b0ea045398f984bf5ebbb3804736ce1330c9d"
+
+[[package]]
+name = "bytemuck"
+version = "1.25.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95832e849adfb21180ccb6826a99da14e5d266ae5c2e668e1602cf234f153797"
 
 [[package]]
 name = "byteorder"
@@ -2805,14 +2808,14 @@ dependencies = [
 
 [[package]]
 name = "ecdsa"
-version = "0.17.0-rc.21"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8c49632b5dd114acd72982823888124a7f25c97801e6e38df893548f3c45b3b"
+checksum = "c0681a4fc24c767085329728d8dfba959af91228aa4610cca4f8ce317ba46ae0"
 dependencies = [
  "der 0.8.1",
  "digest 0.11.3",
- "elliptic-curve 0.14.0-rc.36",
- "rfc6979 0.6.0-pre.0",
+ "elliptic-curve 0.14.1",
+ "rfc6979 0.6.0",
  "signature 3.0.0",
  "spki 0.8.0",
  "zeroize",
@@ -2861,9 +2864,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.14.0-rc.36"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abda41bf4d801bd9bfe2ef26ab37ae40d8c703374985b5c642e141d23de3f556"
+checksum = "9d65aa39b3a5c1c9c1b745c9a019234bb7a21b77abcb4f4d266d706e2d577d65"
 dependencies = [
  "base16ct 1.0.0",
  "crypto-bigint 0.7.5",
@@ -3148,8 +3151,8 @@ dependencies = [
 
 [[package]]
 name = "fm"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "codespan-reporting",
  "iter-extended",
@@ -3936,19 +3939,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "im"
-version = "15.1.0"
+name = "imbl"
+version = "7.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0acd33ff0285af998aaf9b57342af478078f53492322fafc47450e09397e0e9"
+checksum = "46bad832b9b463ed9398b8506488cc2e3b897a9d44f13af115f382aac71f4fec"
 dependencies = [
- "bitmaps",
- "rand_core 0.6.4",
- "rand_xoshiro 0.6.0",
- "serde",
- "sized-chunks",
- "typenum",
+ "archery",
+ "equivalent",
+ "imbl-sized-chunks",
+ "rand_core 0.9.5",
+ "rand_xoshiro",
+ "serde_core",
  "version_check",
+ "wide",
 ]
+
+[[package]]
+name = "imbl-sized-chunks"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a0813be332553f857953298749fa19549e8b61b80589757c29b4e2a804fa9c6"
 
 [[package]]
 name = "impl-codec"
@@ -4047,8 +4057,8 @@ checksum = "a6cb138bb79a146c1bd460005623e142ef0181e3d0219cb493e02f7d08a35695"
 
 [[package]]
 name = "iter-extended"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 
 [[package]]
 name = "itertools"
@@ -4350,13 +4360,13 @@ dependencies = [
 
 [[package]]
 name = "k256"
-version = "0.14.0-rc.13"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9091be862a7068868b9e8a5cb0dd5bead9b630b521037deaca98d853598c5499"
+checksum = "93f50113171a713f4a4231ef82eb26703607139b35dcb56241f0ceab2ae1f7d8"
 dependencies = [
  "cpubits",
- "ecdsa 0.17.0-rc.21",
- "elliptic-curve 0.14.0-rc.36",
+ "ecdsa 0.17.0",
+ "elliptic-curve 0.14.1",
  "primeorder",
  "sha2 0.11.0",
  "signature 3.0.0",
@@ -4615,7 +4625,7 @@ dependencies = [
  "metrics",
  "quanta",
  "rand 0.9.5",
- "rand_xoshiro 0.7.0",
+ "rand_xoshiro",
  "sketches-ddsketch",
 ]
 
@@ -4635,7 +4645,7 @@ dependencies = [
  "quanta",
  "radix_trie",
  "rand 0.9.5",
- "rand_xoshiro 0.7.0",
+ "rand_xoshiro",
  "rapidhash",
  "sketches-ddsketch",
 ]
@@ -4699,8 +4709,8 @@ dependencies = [
 
 [[package]]
 name = "msgpack_tagged"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "msgpack_tagged_derive",
  "rmp",
@@ -4711,8 +4721,8 @@ dependencies = [
 
 [[package]]
 name = "msgpack_tagged_derive"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4721,8 +4731,8 @@ dependencies = [
 
 [[package]]
 name = "nargo"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acvm",
  "fm",
@@ -4757,8 +4767,8 @@ dependencies = [
 
 [[package]]
 name = "noir_artifact_cli"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acir",
  "acvm",
@@ -4773,7 +4783,6 @@ dependencies = [
  "noirc_artifacts",
  "noirc_driver",
  "noirc_errors",
- "noirc_printable_type",
  "serde",
  "serde_json",
  "thiserror 2.0.20",
@@ -4783,8 +4792,8 @@ dependencies = [
 
 [[package]]
 name = "noir_greybox_fuzzer"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acvm",
  "build-data",
@@ -4804,8 +4813,8 @@ dependencies = [
 
 [[package]]
 name = "noirc_abi"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acvm",
  "iter-extended",
@@ -4821,13 +4830,13 @@ dependencies = [
 
 [[package]]
 name = "noirc_arena"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 
 [[package]]
 name = "noirc_artifacts"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acir",
  "acvm",
@@ -4846,8 +4855,8 @@ dependencies = [
 
 [[package]]
 name = "noirc_driver"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acvm",
  "build-data",
@@ -4866,8 +4875,8 @@ dependencies = [
 
 [[package]]
 name = "noirc_errors"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "codespan-reporting",
  "fm",
@@ -4879,8 +4888,8 @@ dependencies = [
 
 [[package]]
 name = "noirc_evaluator"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acvm",
  "bit-vec 0.9.1",
@@ -4888,7 +4897,7 @@ dependencies = [
  "cfg-if",
  "chrono",
  "fm",
- "im",
+ "imbl",
  "indexmap 2.14.0",
  "iter-extended",
  "itertools 0.15.0",
@@ -4913,14 +4922,14 @@ dependencies = [
 
 [[package]]
 name = "noirc_frontend"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acvm",
  "bn254_blackbox_solver",
  "cfg-if",
  "fm",
- "im",
+ "imbl",
  "indexmap 2.14.0",
  "iter-extended",
  "itertools 0.15.0",
@@ -4946,8 +4955,8 @@ dependencies = [
 
 [[package]]
 name = "noirc_printable_type"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "acvm",
  "iter-extended",
@@ -4958,8 +4967,8 @@ dependencies = [
 
 [[package]]
 name = "noirc_span"
-version = "1.0.0-beta.26"
-source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-beta.26#40d6574f851d926f93e0c3a271bac3e6e82ac905"
+version = "1.0.0-rc.3"
+source = "git+https://github.com/noir-lang/noir.git?rev=v1.0.0-rc.3#5a7ee9bf5ed8973076df7bb0d2b723024db09ae7"
 dependencies = [
  "codespan",
  "serde",
@@ -5262,12 +5271,12 @@ checksum = "d211803b9b6b570f68772237e415a029d5a50c65d382910b879fb19d3271f94d"
 
 [[package]]
 name = "p256"
-version = "0.14.0-rc.13"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a42cda5f3b49f9619c30ffe0941dd1d3be34ad38bca891e90d86813c6bbbda36"
+checksum = "d2c9239b2dbc807adbbe147e8cf72ea7450c3a0aabe62cb8e75ff4ec22e1f72a"
 dependencies = [
- "ecdsa 0.17.0-rc.21",
- "elliptic-curve 0.14.0-rc.36",
+ "ecdsa 0.17.0",
+ "elliptic-curve 0.14.1",
  "primefield",
  "primeorder",
  "sha2 0.11.0",
@@ -5613,14 +5622,15 @@ dependencies = [
 
 [[package]]
 name = "primeorder"
-version = "0.14.0-rc.13"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d77fbae6669cecbe9b1b334fd4ff8acae6d4f3632e9fc74f5d1630e59fd72813"
+checksum = "5c9f42978c78a00e3d68f69fc03e57a234debae69da4020a4fb588fcdcd07b06"
 dependencies = [
- "elliptic-curve 0.14.0-rc.36",
+ "elliptic-curve 0.14.1",
  "once_cell",
  "primefield",
  "serdect 0.4.3",
+ "wnaf",
 ]
 
 [[package]]
@@ -5708,7 +5718,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b570b25f7617e43d59005d0990ccb79e950a423952cea19671b7a876da390adf"
 dependencies = [
  "anyhow",
- "itertools 0.14.0",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 2.0.119",
@@ -5936,15 +5946,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60aa6af80be32871323012e02e6e65f8a7cc7890931ae421d217ad8fe0df2ccf"
 dependencies = [
  "rand_core 0.10.1",
-]
-
-[[package]]
-name = "rand_xoshiro"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f97cdb2a36ed4183de61b2f824cc45c9f1037f28afe0a322e9fff4c108b5aaa"
-dependencies = [
- "rand_core 0.6.4",
 ]
 
 [[package]]
@@ -6182,11 +6183,11 @@ dependencies = [
 
 [[package]]
 name = "rfc6979"
-version = "0.6.0-pre.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9935425142ac6e252364413291d96c8bc9898d0876a801824c7af4eae397b689"
+checksum = "b4a459cddafb3fe76b31fd8f1108007566c40301feb64dc7b54656eb7388172b"
 dependencies = [
- "ctutils",
+ "crypto-bigint 0.7.5",
  "hmac 0.13.0",
 ]
 
@@ -6572,6 +6573,15 @@ checksum = "2768de7e6ef19f59c5fd3c3ac207ef12b68a49f95e3172d67e4a04cfd992ca06"
 dependencies = [
  "safe-proc-macro2",
  "safe-regex-compiler",
+]
+
+[[package]]
+name = "safe_arch"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96b02de82ddbe1b636e6170c21be622223aea188ef2e139be0a5b219ec215323"
+dependencies = [
+ "bytemuck",
 ]
 
 [[package]]
@@ -7071,16 +7081,6 @@ name = "siphasher"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ee5873ec9cce0195efcb7a4e9507a04cd49aec9c83d0389df45b1ef7ba2e649"
-
-[[package]]
-name = "sized-chunks"
-version = "0.6.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16d69225bde7a69b235da73377861095455d298f2b970996eec25ddbb42b3d1e"
-dependencies = [
- "bitmaps",
- "typenum",
-]
 
 [[package]]
 name = "sketches-ddsketch"
@@ -7710,9 +7710,9 @@ dependencies = [
  "alloy",
  "async-trait",
  "bn254_blackbox_solver",
- "elliptic-curve 0.14.0-rc.36",
+ "elliptic-curve 0.14.1",
  "eyre",
- "k256 0.14.0-rc.13",
+ "k256 0.14.0",
  "nargo",
  "noir_artifact_cli",
  "noirc_artifacts",
@@ -7855,7 +7855,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.3",
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
@@ -8840,6 +8840,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "wide"
+version = "0.7.33"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ce5da8ecb62bcd8ec8b7ea19f69a51275e91299be594ea5cc6ef7819e16cd03"
+dependencies = [
+ "bytemuck",
+ "safe_arch",
+]
+
+[[package]]
 name = "widestring"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8867,7 +8877,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -9184,13 +9194,14 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 
 [[package]]
 name = "wnaf"
-version = "0.14.0-rc.0"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1dd5ee3ed0cacf709ec8681413bf22da12190f5b9a9d1ecc853eb62fae5fd8c"
+checksum = "795ca18b3fdb5e62bf982199278341ddcf7ebf7d32e25e212ad05d496e95f6fa"
 dependencies = [
  "ff 0.14.0",
  "group 0.14.0",
  "hybrid-array",
+ "primefield",
 ]
 
 [[package]]
