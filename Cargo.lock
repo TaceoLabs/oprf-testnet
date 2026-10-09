@@ -696,7 +696,7 @@ dependencies = [
  "alloy-rlp",
  "alloy-serde",
  "alloy-sol-types",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "serde",
  "serde_json",
  "serde_with",
@@ -875,7 +875,7 @@ checksum = "0e79a2c1793afc61eed9ca0963da370a988b27d2bbfa67c78013e262d47424c4"
 dependencies = [
  "alloy-json-rpc",
  "alloy-transport",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "reqwest 0.13.4",
  "serde_json",
  "tower",
@@ -2951,7 +2951,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4980,7 +4980,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -5718,7 +5718,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b570b25f7617e43d59005d0990ccb79e950a423952cea19671b7a876da390adf"
 dependencies = [
  "anyhow",
- "itertools 0.10.5",
+ "itertools 0.14.0",
  "proc-macro2",
  "quote",
  "syn 2.0.119",
@@ -5802,7 +5802,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -6415,7 +6415,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -6495,7 +6495,7 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "webpki-root-certs 1.0.9",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -7571,6 +7571,24 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b4168806bc8f2e5a7fe2210783ecdbc86a24c7678290113a4f143efa7f7ccbf"
 dependencies = [
+ "backon",
+ "git-version",
+ "humantime-serde",
+ "secrecy",
+ "serde",
+ "sqlx",
+ "thiserror 2.0.20",
+ "tokio",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "taceo-nodes-common"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fac5f8c097d3cb3130af170d1b1c7bf14a9affb4a91f9c9564e7883c408de84"
+dependencies = [
  "axum",
  "backon",
  "git-version",
@@ -7605,9 +7623,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf"
-version = "0.18.2"
+version = "0.18.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "617cc21e04912e2b4989a110459e07b072ccac250d666f65bba5ffccc5b90795"
+checksum = "8cd9c385abfe5eb21ea57e294fc1bb4e5642517e0091a753359d768235b59e3b"
 dependencies = [
  "taceo-oprf-client",
  "taceo-oprf-core",
@@ -7617,9 +7635,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf-client"
-version = "0.10.6"
+version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44c9c86f6cffe6633079c314d98416afcbd0f78758a2dfe0ef8e03f450a67702"
+checksum = "9bf0f0226b5f1be31a11c4f248e567268fa0551199c0c3e1ac08cf15329710e2"
 dependencies = [
  "ark-ec",
  "ciborium",
@@ -7665,9 +7683,9 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf-service"
-version = "0.19.2"
+version = "0.19.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cd9db64e85d21219277c3c0a7d3497c23f8f1fa702818b122baed82580805f6"
+checksum = "dcdc9702ca2edd882f7c023084319d3fe9b3c0276f0bbbf5ad3cce12667aac96"
 dependencies = [
  "ark-ec",
  "ark-serialize 0.6.0",
@@ -7689,7 +7707,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "taceo-ark-babyjubjub",
- "taceo-nodes-common",
+ "taceo-nodes-common 0.10.1",
  "taceo-oprf-client",
  "taceo-oprf-core",
  "taceo-oprf-types",
@@ -7764,7 +7782,7 @@ dependencies = [
  "secrecy",
  "serde",
  "taceo-eddsa-babyjubjub",
- "taceo-nodes-common",
+ "taceo-nodes-common 0.9.0",
  "taceo-nodes-observability",
  "taceo-oprf",
  "taceo-oprf-testnet-authentication",
@@ -7858,7 +7876,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -8877,7 +8895,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
