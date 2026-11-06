@@ -77,6 +77,8 @@ ignore = [
   { id = "RUSTSEC-2026-0248", reason = "im crate is unmaintained, but its used by noir" },
   { id = "RUSTSEC-2026-0251", reason = "sized-chunks crate is unmaintained, but its pulled in by noir via im" },
   { id = "RUSTSEC-2026-0387", reason = "crypto-bigint 0.5.5 is pulled in by alloy via elliptic-curve 0.13 and there is no patched 0.5.x release; remove once alloy moves to elliptic-curve 0.14" },
+  { id = "RUSTSEC-2026-0440", reason = "astral-tokio-tar crate is unmaintained, but its pulled in by testcontainers (dev-dependency only)" },
+  { id = "RUSTSEC-2026-0441", reason = "pin-utils crate is unmaintained, but its pulled in by alloy via wasmtimer" },
 ]
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
