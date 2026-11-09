@@ -157,4 +157,3 @@ The hosted dev setup is operated entirely by TACEO. As a result, the MPC thresho
 > 
 
 There are no guarantees of liveness or stability, and the API may change without notice.
-
