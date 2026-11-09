@@ -35,3 +35,16 @@ run-client *args:
 noir-tests:
     cd noir/blinded_query_proof && nargo test
     cd noir/verified_oprf_proof && nargo test
+
+# Recompiles the circuits and copies the artifacts used by the node/client (requires the toolchain versions pinned in the artifacts).
+[group('noir')]
+noir-compile:
+    cd noir/blinded_query_proof && nargo compile && cp target/blinded_query_proof.json ../../oprf-testnet-authentication/
+    cd noir/verified_oprf_proof && nargo compile && cp target/verified_oprf_proof.json ../../oprf-testnet-authentication/
+
+# Fails if the checked-in artifacts no longer match the noir sources.
+# Only bytecode and ABI are compared; file_map/debug_symbols embed machine-specific paths.
+[group('ci')]
+noir-check-artifacts:
+    cd noir/blinded_query_proof && nargo compile && diff <(jq '{abi,bytecode}' target/blinded_query_proof.json) <(jq '{abi,bytecode}' ../../oprf-testnet-authentication/blinded_query_proof.json)
+    cd noir/verified_oprf_proof && nargo compile && diff <(jq '{abi,bytecode}' target/verified_oprf_proof.json) <(jq '{abi,bytecode}' ../../oprf-testnet-authentication/verified_oprf_proof.json)
