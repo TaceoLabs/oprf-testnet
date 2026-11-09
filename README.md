@@ -119,6 +119,8 @@ Verify your proof:
 bb verify -p proof -i public_inputs -k verified_oprf_proof.vk
 ```
 
+> **Note for verifiers:** a valid proof alone is not sufficient. The circuit takes the OPRF public key as a *public input* and does not (and cannot) know which key is legitimate, so a prover could use a key of their own choosing. Any third party relying on the nullifier must additionally check that the public inputs match what they expect: words 0–31 are the bytes of the signed message hash, words 32–33 are the x/y coordinates of the OPRF public key (which must equal the key registered by the OPRF network for the relevant epoch), and word 34 is the nullifier.
+
 ### What the Proofs Demonstrate
 
 The wallet ownership example uses **two zero-knowledge proofs**:
