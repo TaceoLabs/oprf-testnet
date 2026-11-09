@@ -146,6 +146,11 @@ impl OprfRequestAuthenticator for WalletOwnershipTestNetRequestAuthenticator {
             async move { unkey_api::verify_api_key(client, root_api_key, api_key, env).await }
         });
 
+        // The proof attests ownership for the blinded query it outputs, so it must match the one being evaluated.
+        if !zk::public_inputs_match_blinded_query(&req.auth.public_inputs, &req.blinded_query) {
+            tracing::warn!("Blinded query in request does not match proof public inputs");
+            return Err(TestNetRequestAuthError::ProofInvalid.into());
+        }
         zk::verify_proof(&req.auth.public_inputs, &req.auth.proof, &self.vk_path)?;
         api_valid
             .await
@@ -165,6 +170,7 @@ pub mod zk {
     };
 
     use alloy::primitives::FixedBytes;
+    use ark_ff::{BigInteger as _, PrimeField as _};
     use bn254_blackbox_solver::Bn254BlackBoxSolver;
     use eyre::Context;
     use nargo::foreign_calls::DefaultForeignCallBuilder;
@@ -182,6 +188,22 @@ pub mod zk {
         include_bytes!("../verified_oprf_proof.json");
     /// The verification key for the proof that verifies the OPRF output and wallet ownership.
     pub const VERIFIED_OPRF_PROOF_VK: &[u8] = include_bytes!("../verified_oprf_proof.vk");
+
+    /// Public inputs of the blinded query proof: 32 words for `hashed_message` followed by the x and y coordinate of the blinded query.
+    const BLINDED_QUERY_PROOF_PUBLIC_INPUTS_LEN: usize = 34 * 32;
+
+    /// Checks that the blinded query point output by the blinded query proof (the last two public input words) equals `blinded_query`.
+    pub fn public_inputs_match_blinded_query(
+        public_inputs: &[u8],
+        blinded_query: &ark_babyjubjub::EdwardsAffine,
+    ) -> bool {
+        if public_inputs.len() != BLINDED_QUERY_PROOF_PUBLIC_INPUTS_LEN {
+            return false;
+        }
+        let (x, y) = public_inputs[32 * 32..].split_at(32);
+        x == blinded_query.x.into_bigint().to_bytes_be()
+            && y == blinded_query.y.into_bigint().to_bytes_be()
+    }
 
     /// Computes a zero-knowledge proof that the client owns the wallet corresponding to the public key used in the OPRF request and that the OPRF output was correctly computed.
     pub fn compute_nullifier_proof(
@@ -398,5 +420,30 @@ pub mod zk {
         }
 
         Ok(())
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use ark_babyjubjub::{EdwardsAffine, Fq};
+
+        fn public_inputs_for(p: &ark_babyjubjub::EdwardsAffine) -> Vec<u8> {
+            let mut v = vec![0u8; 32 * 32];
+            v.extend(p.x.into_bigint().to_bytes_be());
+            v.extend(p.y.into_bigint().to_bytes_be());
+            v
+        }
+
+        #[test]
+        fn blinded_query_binding() {
+            // Only byte comparison is tested here, so the points need not be on the curve.
+            let g = EdwardsAffine::new_unchecked(Fq::from(1u64), Fq::from(2u64));
+            let other = EdwardsAffine::new_unchecked(Fq::from(1u64), Fq::from(3u64));
+            let pi = public_inputs_for(&g);
+            assert!(public_inputs_match_blinded_query(&pi, &g));
+            assert!(!public_inputs_match_blinded_query(&pi, &other));
+            assert!(!public_inputs_match_blinded_query(&pi[..pi.len() - 1], &g));
+            assert!(!public_inputs_match_blinded_query(&[], &g));
+        }
     }
 }
