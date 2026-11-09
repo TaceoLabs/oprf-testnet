@@ -11,6 +11,8 @@ publish.workspace = true
 
 [dependencies]
 alloy.workspace = true
+ark-babyjubjub.workspace = true
+ark-ff.workspace = true
 async-trait.workspace = true
 bn254_blackbox_solver.workspace = true
 eyre.workspace = true
