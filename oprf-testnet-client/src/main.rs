@@ -128,6 +128,7 @@ async fn main() -> eyre::Result<()> {
                     &mut rng,
                 )
                 .await?;
+            std::fs::create_dir_all(&output_path)?;
             std::fs::write(output_path.join("proof"), &proof)?;
             std::fs::write(output_path.join("public_inputs"), &pulic_inputs)?;
             tracing::info!("Nullifier: {}", verifiable_oprf_output.output);
