@@ -1,5 +1,5 @@
-use dep::keccak256;
-use dep::array_helpers;
+use keccak256;
+use array_helpers;
 
 pub struct PubKey {
     pub_x: [u8; 32],
