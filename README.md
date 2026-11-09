@@ -65,14 +65,14 @@ You'll see the deterministic OPRF output in your terminal. Running the same comm
 This advanced example demonstrates zero-knowledge wallet ownership verification.
 
 **Prerequisites:**
-You'll need [Barretenberg](https://barretenberg.aztec.network/docs/getting_started) `v5.0.0`:
+You'll need [Barretenberg](https://barretenberg.aztec.network/docs/getting_started) `v6.0.0`:
 
 ```bash
 # Install bbup
 curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/next/barretenberg/bbup/install | bash
 
 # Add to PATH and restart shell, then:
-bbup -v 5.0.0
+bbup -v 6.0.0
 ```
 
 **Run the command:**
