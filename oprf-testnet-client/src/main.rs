@@ -8,7 +8,7 @@ use secrecy::{ExposeSecret, SecretString};
 use std::{path::PathBuf, sync::Arc};
 use taceo_oprf::client::Connector;
 
-const BB_VERSION: &str = "5.0.0";
+const BB_VERSION: &str = "6.0.0";
 
 #[derive(Parser, Debug, Clone)]
 pub struct BasicConfig {
