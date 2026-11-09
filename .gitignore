@@ -12,3 +12,4 @@ proof
 public_inputs
 out
 .ignore
+.bb-crs
