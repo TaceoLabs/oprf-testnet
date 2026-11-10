@@ -141,10 +141,10 @@ The wallet ownership example uses **two zero-knowledge proofs**:
 Ready to experiment more? Set up your own [local OPRF network](https://docs.taceo.io/docs/identity-solutions/nullifiers/getting-started/quicklocal/) for development.
 
 ### Custom Authorization
-Want to build your own authorization logic? Learn about [Authorization Modules](https://docs.taceo.io/docs/taceo-oprf/authorization/).
+Want to build your own authorization logic? Learn about [Authorization Modules](https://docs.taceo.io/docs/services/taceo-oprf/authorization/).
 
 ### Integration  
-Ready to integrate into your application? Check the [API Reference](https://docs.taceo.io/docs/taceo-oprf/api/).
+Ready to integrate into your application? Check the [API Reference](https://docs.taceo.io/docs/services/taceo-oprf/api/).
 
 ### Use Cases
 Looking for inspiration? Explore our [Use Cases & Examples](https://docs.taceo.io/docs/identity-solutions/nullifiers/use-cases/).
