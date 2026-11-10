@@ -6,11 +6,11 @@ use alloy::signers::local::PrivateKeySigner;
 use ark_ff::PrimeField as _;
 use eyre::Context;
 use oprf_testnet_authentication::{
-    AuthModule, basic::BasicTestNetRequestAuth, wallet_ownership::TestNetRequestAuth,
-    wallet_ownership::zk,
+    AuthModule, basic::BasicTestNetRequestAuth, wallet_ownership::SIGNED_MESSAGE,
+    wallet_ownership::TestNetRequestAuth, wallet_ownership::zk,
 };
 use rand::{CryptoRng, Rng};
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::Instant;
 use taceo_oprf::client::{self, VerifiableOprfOutput};
 use taceo_oprf::{client::Connector, core::oprf::BlindingFactor};
 use tempfile::NamedTempFile;
@@ -85,25 +85,15 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     let signer = PrivateKeySigner::from_signing_key(private_key);
     let query = ark_babyjubjub::Fq::from_be_bytes_mod_order(signer.address().as_ref());
 
-    let ts = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards")
-        .as_secs();
-
-    let msg = format!("TACEO Oprf Input: {ts}");
-    let msg_hash = eip191_hash_message(msg.as_bytes());
+    // The circuits only accept signatures over this fixed message.
+    let msg_hash = eip191_hash_message(SIGNED_MESSAGE);
     let mut signature = signer.sign_hash_sync(&msg_hash)?.as_bytes().to_vec();
 
     //Remove recovery id
     _ = signature.pop();
 
-    let (public_inputs, proof) = zk::compute_wallet_ownership_proof(
-        &blinding_factor,
-        &x_affine,
-        &y_affine,
-        &signature,
-        msg_hash.as_ref(),
-    )?;
+    let (public_inputs, proof) =
+        zk::compute_wallet_ownership_proof(&blinding_factor, &x_affine, &y_affine, &signature)?;
 
     let auth = TestNetRequestAuth {
         public_inputs,
@@ -130,7 +120,6 @@ pub async fn wallet_ownership_verifiable_oprf<R: Rng + CryptoRng>(
     let (public_inputs, proof) = zk::compute_nullifier_proof(
         verifiable_oprf_output.clone(),
         signature,
-        msg_hash,
         &blinding_factor,
         x_affine,
         y_affine,
