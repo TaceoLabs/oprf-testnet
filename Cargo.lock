@@ -7694,7 +7694,7 @@ dependencies = [
 
 [[package]]
 name = "taceo-oprf-testnet-client"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "alloy",
  "ark-ff 0.6.0",
