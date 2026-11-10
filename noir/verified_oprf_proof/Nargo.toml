@@ -4,6 +4,6 @@ type = "bin"
 authors = [""]
 
 [dependencies]
-ecrecover = { path = "../vendor/ecrecover" }
+wallet_ownership = { path = "../wallet_ownership" }
 babyjubjub = { git = "https://github.com/TaceoLabs/oprf-nr", tag = "v2.0.0", directory = "babyjubjub" }
 oprf = { git = "https://github.com/TaceoLabs/oprf-nr", tag = "v2.0.0", directory = "oprf" }

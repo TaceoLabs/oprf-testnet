@@ -33,6 +33,7 @@ run-client *args:
 
 [group('test')]
 noir-tests:
+    cd noir/wallet_ownership && nargo test
     cd noir/blinded_query_proof && nargo test
     cd noir/verified_oprf_proof && nargo test
 

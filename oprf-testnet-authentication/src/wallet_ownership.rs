@@ -20,6 +20,11 @@ use crate::{
     unkey_api::{self},
 };
 
+/// The fixed message the wallet signs (as EIP-191 `personal_sign`) to prove ownership.
+///
+/// Its hash is hard-coded in the circuits (`noir/wallet_ownership`), so signatures over any other message are rejected.
+pub const SIGNED_MESSAGE: &str = "TACEO Oprf Input";
+
 /// The authentication information that is sent alongside the OPRF request in the `wallet_ownership` module.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TestNetRequestAuth {
@@ -169,7 +174,6 @@ pub mod zk {
         process::{self, Command},
     };
 
-    use alloy::primitives::FixedBytes;
     use ark_ff::{BigInteger as _, PrimeField as _};
     use bn254_blackbox_solver::Bn254BlackBoxSolver;
     use eyre::Context;
@@ -189,10 +193,10 @@ pub mod zk {
     /// The verification key for the proof that verifies the OPRF output and wallet ownership.
     pub const VERIFIED_OPRF_PROOF_VK: &[u8] = include_bytes!("../verified_oprf_proof.vk");
 
-    /// Public inputs of the blinded query proof: 32 words for `hashed_message` followed by the x and y coordinate of the blinded query.
-    const BLINDED_QUERY_PROOF_PUBLIC_INPUTS_LEN: usize = 34 * 32;
+    /// Public inputs of the blinded query proof: the x and y coordinate of the blinded query.
+    const BLINDED_QUERY_PROOF_PUBLIC_INPUTS_LEN: usize = 2 * 32;
 
-    /// Checks that the blinded query point output by the blinded query proof (the last two public input words) equals `blinded_query`.
+    /// Checks that the blinded query point output by the blinded query proof (its only public inputs) equals `blinded_query`.
     pub fn public_inputs_match_blinded_query(
         public_inputs: &[u8],
         blinded_query: &ark_babyjubjub::EdwardsAffine,
@@ -200,7 +204,7 @@ pub mod zk {
         if public_inputs.len() != BLINDED_QUERY_PROOF_PUBLIC_INPUTS_LEN {
             return false;
         }
-        let (x, y) = public_inputs[32 * 32..].split_at(32);
+        let (x, y) = public_inputs.split_at(32);
         x == blinded_query.x.into_bigint().to_bytes_be()
             && y == blinded_query.y.into_bigint().to_bytes_be()
     }
@@ -209,7 +213,6 @@ pub mod zk {
     pub fn compute_nullifier_proof(
         verifiable_oprf_output: VerifiableOprfOutput,
         signature: Vec<u8>,
-        msg_hash: FixedBytes<32>,
         beta: &BlindingFactor,
         pubkey_x: Vec<u8>,
         pubkey_y: Vec<u8>,
@@ -233,7 +236,6 @@ pub mod zk {
                 beta = \"{:?}\"
                 dlog_e = \"{:?}\"
                 dlog_s = \"{:?}\"
-                hashed_message = {:?}
                 pub_key_x = {:?}
                 pub_key_y = {:?}
                 oprf_response_x = \"{:?}\"
@@ -246,7 +248,6 @@ pub mod zk {
                 beta.beta(),
                 verifiable_oprf_output.dlog_proof.e(),
                 verifiable_oprf_output.dlog_proof.s(),
-                msg_hash.to_vec(),
                 pubkey_x,
                 pubkey_y,
                 verifiable_oprf_output.unblinded_response.x,
@@ -269,7 +270,6 @@ pub mod zk {
         pubkey_x: &[u8],
         pubkey_y: &[u8],
         signature: &[u8],
-        hashed_msg: &[u8],
     ) -> eyre::Result<(Vec<u8>, Vec<u8>)> {
         let temp_dir =
             TempDir::new().context("creating temporary directory for proof generation")?;
@@ -286,12 +286,11 @@ pub mod zk {
         std::fs::write(
             &input,
             format!(
-                "beta = \"{:?}\"\npub_key_x = {:?}\npub_key_y = {:?}\nsignature = {:?}\nhashed_message = {:?}",
+                "beta = \"{:?}\"\npub_key_x = {:?}\npub_key_y = {:?}\nsignature = {:?}",
                 beta.beta(),
                 pubkey_x,
                 pubkey_y,
-                signature,
-                hashed_msg
+                signature
             ),
         )?;
 
@@ -428,8 +427,7 @@ pub mod zk {
         use ark_babyjubjub::{EdwardsAffine, Fq};
 
         fn public_inputs_for(p: &ark_babyjubjub::EdwardsAffine) -> Vec<u8> {
-            let mut v = vec![0u8; 32 * 32];
-            v.extend(p.x.into_bigint().to_bytes_be());
+            let mut v = p.x.into_bigint().to_bytes_be();
             v.extend(p.y.into_bigint().to_bytes_be());
             v
         }

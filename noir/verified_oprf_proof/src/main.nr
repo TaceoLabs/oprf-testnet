@@ -1,12 +1,11 @@
 use babyjubjub::{BabyJubJubPoint, BabyJubJubPointInSubgroup};
-use ecrecover::ecrecover;
 use oprf::oprf_output::verified_oprf;
+use wallet_ownership::wallet_address;
 pub global DS_N: Field = 24546418369108709687614662004; // b"OPRF TestNet"
 pub global DS_DLOG: Field = 1523098184080632582082867317389990410064981862; // b"DLOG Equality Proof"
 
 fn main(
     // These are the inputs needed for the first part of the OPRF protocol, the query proof.
-    hashed_message: pub [u8; 32],
     pub_key_x: [u8; 32],
     pub_key_y: [u8; 32],
     signature: [u8; 64],
@@ -19,8 +18,8 @@ fn main(
     oprf_response_x: Field,
     oprf_response_y: Field,
 ) -> pub Field {
-    // Similar to the blinded query proof, we first recover the user input (address) from the signature.
-    let address = ecrecover(pub_key_x, pub_key_y, signature, hashed_message);
+    // Similar to the blinded query proof, we first recover the user input (address) from the signature over the fixed message.
+    let address = wallet_address(pub_key_x, pub_key_y, signature);
     // Construct the unblinded OPRF response point, checking it is on the curve.
     let oprf_response = BabyJubJubPoint::new(oprf_response_x, oprf_response_y);
     // Inside the verified_oprf function, we recompute the blinded query proof to check that the original query was computed correctly, verify the dlog equality proof, verify the unblinding was done correctly, and then generate the final verified OPRF output.
@@ -39,11 +38,9 @@ fn main(
 mod tests {
     use super::main;
     use babyjubjub::BabyJubJubPointInSubgroup;
+    use wallet_ownership::{TEST_PUB_KEY_X, TEST_PUB_KEY_Y, TEST_SIGNATURE};
 
     struct Kat {
-        hashed_message: [u8; 32],
-        pub_key_x: [u8; 32],
-        pub_key_y: [u8; 32],
         signature: [u8; 64],
         beta: Field,
         oprf_pk: BabyJubJubPointInSubgroup,
@@ -54,44 +51,27 @@ mod tests {
         expected_output: Field,
     }
 
+    // OPRF secret key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd.
     fn kat() -> Kat {
         Kat {
-            hashed_message: [
-                218, 239, 222, 213, 190, 193, 112, 62, 182, 226, 19, 202, 51, 169, 222, 157, 155,
-                222, 83, 32, 18, 31, 187, 249, 49, 128, 244, 131, 204, 206, 107, 226,
-            ],
-            pub_key_x: [
-                158, 30, 136, 123, 120, 204, 6, 226, 64, 216, 96, 95, 238, 120, 20, 91, 44, 2, 181,
-                15, 171, 210, 100, 74, 243, 208, 255, 91, 222, 248, 18, 190,
-            ],
-            pub_key_y: [
-                151, 145, 124, 206, 255, 36, 241, 99, 254, 200, 250, 151, 236, 57, 81, 36, 165, 7,
-                139, 205, 215, 77, 194, 49, 9, 177, 21, 157, 90, 29, 26, 7,
-            ],
-            signature: [
-                34, 94, 125, 19, 113, 129, 1, 254, 222, 37, 77, 59, 21, 235, 106, 193, 166, 124,
-                104, 4, 118, 162, 234, 211, 115, 66, 94, 150, 59, 199, 57, 183, 59, 250, 14, 152,
-                118, 130, 19, 3, 212, 55, 92, 127, 128, 188, 84, 190, 85, 212, 225, 151, 89, 155,
-                47, 162, 87, 134, 208, 226, 7, 161, 5, 168,
-            ],
+            signature: TEST_SIGNATURE,
             beta: 1498760273557913456370459222027449040163634869948415528344868600761947487523,
             oprf_pk: BabyJubJubPointInSubgroup::new(
-                15003657924788399520423800501973962387080403835278072811641574091656004606719,
-                14529415343323015636900366522580262473735574267701282924026299349812458958307,
+                0x0f4583e516f077314fb7c7b8a87fae07166068e3dddb4200fff32bf399b2349d,
+                0x1a289edfe55dabcc66eb07a2e53d7683afe0d6dcb27ac72dfbdd76bba9b949a8,
             ),
-            dlog_e: 2815834045141047248296014764766921370888833365641393041932225141550944894751,
-            dlog_s: 1023284613684976434280267589564951651741782634037934709388634324034792989992,
-            oprf_response_x: 1065949620655181774308101197704033100236194646567058021926722685606992436847,
-            oprf_response_y: 14787959160106034745010522499467846959920195067540224472248153986015143882065,
-            expected_output: 4950770752664949154430470844859569966167289863513636892677190123059944174158,
+            dlog_e: 0x040e6bf380b2cf23744c604ecea4ce8b060bdcfac33e4aabfe67cfcb53066f82,
+            dlog_s: 0xb89a7e66ea91835b3d6841734ee7a766cac8606c5dce26006a68f2629b761a,
+            oprf_response_x: 0x19e48cf0f614b50f0656d25f9b742fb8660a8e56fef9ecf64f3a625b69374670,
+            oprf_response_y: 0x1211ac4fca68ebc215dfdb62f679637e0c4bb46b07555702d27ed0f446b5d766,
+            expected_output: 0x3026ff285fe4388e1b9c62361f23ef502c4fb6e411356cbe753bb7a9d672c572,
         }
     }
 
     fn run(k: Kat) -> Field {
         main(
-            k.hashed_message,
-            k.pub_key_x,
-            k.pub_key_y,
+            TEST_PUB_KEY_X,
+            TEST_PUB_KEY_Y,
             k.signature,
             k.beta,
             k.oprf_pk,
