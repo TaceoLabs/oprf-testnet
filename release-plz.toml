@@ -1,3 +1,21 @@
+[workspace]
+# Every crate is publish = false, so versions come from git tags, not crates.io.
+git_only = true
+
+[[package]]
+name = "taceo-oprf-testnet-client"
+# release.yml triggers on v* tags, creates the GitHub release and uploads the binaries.
+git_tag_name = "v{{ version }}"
+git_release_enable = false
+
+[[package]]
+name = "taceo-oprf-testnet-node"
+release = false
+
+[[package]]
+name = "taceo-oprf-testnet-authentication"
+release = false
+
 [changelog]
 header = """# Changelog
 
