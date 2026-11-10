@@ -21,6 +21,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: taiki-e/create-gh-release-action@045e5c0ed9c50cc1f96de7e891a09ad3daea245f # v1.12.0
         with:
+          # Releases are immutable once published (org policy), so assets can
+          # only be attached to a draft. publish-release publishes it after
+          # every binary is uploaded.
+          draft: true
           # (optional) Path to changelog.
           # changelog: CHANGELOG.md
           # (required) GitHub token for creating GitHub Releases.
@@ -75,3 +79,11 @@ jobs:
           zip: windows
           # (required) GitHub token for uploading assets to GitHub Releases.
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-release:
+    needs: upload-testnet-client-binary
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
